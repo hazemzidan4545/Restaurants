@@ -103,7 +103,6 @@ Create a comprehensive web-based Restaurant Management System with the following
 ### Service & Communication
 
 1. **ServiceRequest**: Waiter service requests
-   - Fields: request_id, user_id, table_id, request_type (Clean table/Refill coals/Adjust AC), status, timestamp
    - Real-time notification system for staff
 
 2. **Notification**: System-wide messaging
