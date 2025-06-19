@@ -343,26 +343,20 @@ Create a comprehensive web-based Restaurant Management System with the following
 restaurant-system/
 ├── app/
 │   ├── modules/
-│   │   ├── admin/
-│   │   ├── waiter/
-│   │   ├── customer/
-│   │   ├── menu/
-│   │   ├── order/
-│   │   ├── service/
-│   │   ├── loyalty/
-│   │   └── auth/
+│   │   ├── admin/ templates/, admin/api/
+│   │   ├── waiter/ templates/, waiter/api/
+│   │   ├── customer/ templates/, customer/api/
+│   │   ├── menu/ templates/, menu/api/
+│   │   ├── order/ templates/, order/api/ 
+│   │   ├── service/ templates/, service/api/
+│   │   ├── loyalty/ templates/, loyalty/api/
+│   │   └── auth/templates/, auth/api/
 │   ├── templates/
-│   │   ├── admin/
-│   │   ├── waiter/
-│   │   ├── customer/
-│   │   ├── loyalty/
 │   │   └── shared/
 │   ├── static/
 │   │   ├── css/
-│   │   ├── js/
 │   │   ├── images/
 │   │   └── uploads/
-│   ├── api/
 │   └── extensions.py
 ├── instance/
 ├── uploads/
@@ -372,6 +366,7 @@ restaurant-system/
 ├── config.py
 ├── requirements.txt
 └── run.py
+
 ```
 
 ## Loyalty Program Features
