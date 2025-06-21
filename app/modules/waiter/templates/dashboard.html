@@ -1,0 +1,309 @@
+{% extends "shared/base.html" %}
+
+{% block title %}Waiter Dashboard - Restaurant Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-gradient mb-4">
+                <i class="fas fa-concierge-bell me-2"></i>Waiter Dashboard
+            </h1>
+        </div>
+    </div>
+    
+    <!-- Order Status Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary active" data-status="all">All Orders</button>
+                <button type="button" class="btn btn-secondary" data-status="new">New (3)</button>
+                <button type="button" class="btn btn-secondary" data-status="processing">In Progress (2)</button>
+                <button type="button" class="btn btn-secondary" data-status="completed">Completed (8)</button>
+                <button type="button" class="btn btn-secondary" data-status="rejected">Rejected (0)</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Orders -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>Active Orders
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="orders-container">
+                        <!-- New Order -->
+                        <div class="col-lg-4 col-md-6 mb-3 order-card" data-status="new">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong>Order #001</strong></span>
+                                        <span class="status-badge status-new">New</span>
+                                    </div>
+                                    <small>Table T001 • 10:30 AM</small>
+                                </div>
+                                <div class="card-body">
+                                    <h6>Customer: John Doe</h6>
+                                    <ul class="list-unstyled mb-3">
+                                        <li>1x Apple Mint Hookah</li>
+                                        <li>1x Turkish Coffee</li>
+                                    </ul>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <strong>Total: 175.00 EGP</strong>
+                                    </div>
+                                    <div class="btn-group w-100" role="group">
+                                        <button class="btn btn-success btn-sm" onclick="updateOrderStatus(1, 'processing')">
+                                            Accept
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="updateOrderStatus(1, 'rejected')">
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Processing Order -->
+                        <div class="col-lg-4 col-md-6 mb-3 order-card" data-status="processing">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong>Order #002</strong></span>
+                                        <span class="status-badge status-processing">Processing</span>
+                                    </div>
+                                    <small>Table T003 • 10:15 AM</small>
+                                </div>
+                                <div class="card-body">
+                                    <h6>Customer: Jane Smith</h6>
+                                    <ul class="list-unstyled mb-3">
+                                        <li>1x Egyptian Breakfast</li>
+                                        <li>1x Fresh Orange Juice</li>
+                                        <li>1x Chocolate Cake</li>
+                                    </ul>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <strong>Total: 160.00 EGP</strong>
+                                        <small class="text-muted">Est. 15 min</small>
+                                    </div>
+                                    <button class="btn btn-success w-100" onclick="updateOrderStatus(2, 'completed')">
+                                        Mark Complete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Completed Order -->
+                        <div class="col-lg-4 col-md-6 mb-3 order-card" data-status="completed">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong>Order #003</strong></span>
+                                        <span class="status-badge status-completed">Completed</span>
+                                    </div>
+                                    <small>Table T002 • 09:45 AM</small>
+                                </div>
+                                <div class="card-body">
+                                    <h6>Customer: Ahmed Ali</h6>
+                                    <ul class="list-unstyled mb-3">
+                                        <li>1x Double Apple Hookah</li>
+                                        <li>1x Mint Tea</li>
+                                    </ul>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <strong>Total: 165.00 EGP</strong>
+                                        <small class="text-success">Delivered</small>
+                                    </div>
+                                    <button class="btn btn-outline-primary w-100" onclick="printReceipt(3)">
+                                        Print Receipt
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Service Requests -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>Service Requests
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Table T001</strong><br>
+                                <small class="text-muted">Clean table • 10:35 AM</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-success me-2" onclick="acknowledgeRequest(1)">
+                                    Acknowledge
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="completeRequest(1)">
+                                    Complete
+                                </button>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Table T003</strong><br>
+                                <small class="text-muted">Refill coals • 10:20 AM</small>
+                            </div>
+                            <div>
+                                <span class="badge bg-info me-2">Acknowledged</span>
+                                <button class="btn btn-sm btn-primary" onclick="completeRequest(2)">
+                                    Complete
+                                </button>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Table T002</strong><br>
+                                <small class="text-muted">Custom: Need extra napkins • 10:40 AM</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-success me-2" onclick="acknowledgeRequest(3)">
+                                    Acknowledge
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="completeRequest(3)">
+                                    Complete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Table Status -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>Table Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 col-sm-4 mb-3">
+                            <div class="card text-center table-status available">
+                                <div class="card-body">
+                                    <h5>T001</h5>
+                                    <span class="badge bg-success">Available</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-4 mb-3">
+                            <div class="card text-center table-status occupied">
+                                <div class="card-body">
+                                    <h5>T002</h5>
+                                    <span class="badge bg-warning">Occupied</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-4 mb-3">
+                            <div class="card text-center table-status occupied">
+                                <div class="card-body">
+                                    <h5>T003</h5>
+                                    <span class="badge bg-warning">Occupied</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-4 mb-3">
+                            <div class="card text-center table-status reserved">
+                                <div class="card-body">
+                                    <h5>T004</h5>
+                                    <span class="badge bg-info">Reserved</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-4 mb-3">
+                            <div class="card text-center table-status available">
+                                <div class="card-body">
+                                    <h5>T005</h5>
+                                    <span class="badge bg-success">Available</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Order status filtering
+document.querySelectorAll('[data-status]').forEach(button => {
+    if (button.tagName === 'BUTTON') {
+        button.addEventListener('click', function() {
+            const status = this.dataset.status;
+            
+            // Update active button
+            document.querySelectorAll('.btn-group .btn').forEach(btn => {
+                btn.classList.remove('btn-primary', 'active');
+                btn.classList.add('btn-secondary');
+            });
+            this.classList.remove('btn-secondary');
+            this.classList.add('btn-primary', 'active');
+            
+            // Filter order cards
+            document.querySelectorAll('.order-card').forEach(card => {
+                if (status === 'all' || card.dataset.status === status) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+
+function updateOrderStatus(orderId, status) {
+    // This would make an AJAX call to update the order status
+    RestaurantApp.showNotification('Success', `Order #${orderId} status updated to ${status}`, 'success');
+    
+    // Update the UI
+    const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+    if (orderCard) {
+        orderCard.dataset.status = status;
+        // Update the status badge and card styling
+    }
+}
+
+function acknowledgeRequest(requestId) {
+    RestaurantApp.showNotification('Success', 'Service request acknowledged', 'success');
+}
+
+function completeRequest(requestId) {
+    RestaurantApp.showNotification('Success', 'Service request completed', 'success');
+}
+
+function printReceipt(orderId) {
+    RestaurantApp.showNotification('Info', `Printing receipt for order #${orderId}`, 'info');
+}
+
+// Real-time updates
+if (typeof socket !== 'undefined') {
+    socket.on('new_order', function(data) {
+        RestaurantApp.showNotification('New Order', `Order #${data.order_id} from Table ${data.table}`, 'info');
+        // Add new order card to the UI
+    });
+    
+    socket.on('service_request', function(data) {
+        RestaurantApp.showNotification('Service Request', `${data.type} requested at Table ${data.table}`, 'warning');
+        // Add new service request to the UI
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Restaurant Management System{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+    <style>
+    /* Global CSS Variables */
+    :root {
+        --primary-yellow: #f3cd21;
+        --primary-dark: #1c1d1f;
+        --text-dark: #333;
+        --success-green: #28a745;
+        --danger-red: #dc3545;
+        --light-gray: #f8f9fa;
+        --border-color: #e9ecef;
+    }
+
+    /* Enhanced Modal Styles - Global for all pages */
+    .enhanced-modal {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        max-height: 90vh;
+        background: white;
+    }
+
+    .enhanced-modal-header {
+        position: relative;
+        padding: 0;
+        border: none;
+        background: transparent;
+        height: 0; /* Remove header height since close button is absolute */
+    }
+
+    .enhanced-close-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255,255,255,0.95);
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .enhanced-close-btn:hover {
+        background: rgba(255,255,255,1);
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .enhanced-close-btn i {
+        font-size: 16px;
+        color: var(--text-dark);
+    }
+
+    .enhanced-modal-body {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        max-height: 85vh;
+        overflow: hidden; /* Remove auto scroll from body */
+        background: white;
+    }
+
+    /* Image Section */
+    .modal-image-section {
+        position: relative;
+        height: 250px;
+        overflow: hidden;
+        background: #f8f9fa;
+        flex-shrink: 0;
+        z-index: 1;
+    }
+
+    .enhanced-item-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+        display: block;
+        background: #e9ecef;
+    }
+
+    .enhanced-item-image:hover {
+        transform: scale(1.02);
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.4) 100%);
+        display: flex;
+        align-items: flex-end;
+        padding: 20px;
+    }
+
+    .item-category-badge {
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Details Section */
+    .modal-details-section {
+        padding: 30px;
+        flex: 1;
+        overflow-y: auto; /* Allow scrolling in details section */
+        background: white;
+    }
+
+    .item-header {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+
+    .enhanced-item-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 10px;
+        line-height: 1.3;
+    }
+
+    .item-rating {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .stars {
+        color: #ffc107;
+        font-size: 1rem;
+        display: flex;
+        gap: 2px;
+    }
+
+    .rating-text {
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    /* Price Section */
+    .price-section {
+        margin-bottom: 25px;
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .price-container {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .current-price {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-yellow);
+        line-height: 1;
+    }
+
+    .currency {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-yellow);
+        line-height: 1;
+    }
+
+    .old-price {
+        font-size: 1rem;
+        color: #999;
+        text-decoration: line-through;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    /* Section Styling */
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+    }
+
+    .section-title i {
+        color: var(--primary-yellow);
+        width: 18px;
+        font-size: 1rem;
+    }
+
+    /* Ingredients Section */
+    .ingredients-section {
+        margin-bottom: 25px;
+    }
+
+    .ingredients-text {
+        background: #f8f9fa;
+        padding: 18px;
+        border-radius: 12px;
+        color: #555;
+        line-height: 1.6;
+        margin: 0;
+        border-left: 4px solid var(--primary-yellow);
+        font-size: 0.95rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Quantity Section */
+    .quantity-section {
+        margin-bottom: 25px;
+    }
+
+    .modal-details-section .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-top: 15px;
+        justify-content: flex-start;
+    }
+
+    .modal-details-section .quantity-btn {
+        width: 50px;
+        height: 50px;
+        border: 2px solid var(--primary-yellow);
+        background: white;
+        color: var(--primary-dark);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .modal-details-section .quantity-btn:hover {
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .modal-details-section .quantity-btn.decrease:hover {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+
+    .modal-details-section .quantity-btn.increase:hover {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+
+    .modal-details-section .quantity-display {
+        font-size: 1.8rem;
+        font-weight: 700;
+        min-width: 50px;
+        text-align: center;
+        color: var(--primary-dark);
+        background: #f8f9fa;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+    }
+
+    /* Instructions Section */
+    .instructions-section {
+        margin-bottom: 30px;
+    }
+
+    .enhanced-textarea {
+        width: 100%;
+        padding: 18px;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        font-size: 1rem;
+        resize: vertical;
+        min-height: 90px;
+        transition: all 0.3s ease;
+        font-family: inherit;
+        background: #fafafa;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .enhanced-textarea:focus {
+        outline: none;
+        border-color: var(--primary-yellow);
+        box-shadow: 0 0 0 3px rgba(243, 205, 33, 0.15);
+        background: white;
+    }
+
+    .enhanced-textarea::placeholder {
+        color: #aaa;
+        font-style: italic;
+    }
+
+    /* Action Buttons */
+    .modal-actions {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .enhanced-btn {
+        flex: 1;
+        padding: 18px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 55px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .enhanced-btn.primary {
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+        font-weight: 700;
+    }
+
+    .enhanced-btn.primary:hover {
+        background: var(--primary-dark);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    .enhanced-btn.secondary {
+        background: white;
+        color: var(--primary-dark);
+        border: 2px solid #e9ecef;
+    }
+
+    .enhanced-btn.secondary:hover {
+        background: #f8f9fa;
+        border-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    /* Cart badge styling */
+    .cart-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background-color: #dc3545 !important;
+        color: white !important;
+        border-radius: 50% !important;
+        min-width: 20px !important;
+        height: 20px !important;
+        font-size: 12px !important;
+        font-weight: bold !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .cart-nav-icon {
+        position: relative !important;
+    }
+
+    /* Responsive Enhanced Modal */
+    @media (max-width: 768px) {
+        .enhanced-modal {
+            margin: 5px;
+            max-height: 95vh;
+            border-radius: 15px;
+        }
+
+        .modal-image-section {
+            height: 180px;
+        }
+
+        .modal-details-section {
+            padding: 20px;
+        }
+
+        .enhanced-item-title {
+            font-size: 1.5rem;
+        }
+
+        .current-price {
+            font-size: 1.6rem;
+        }
+
+        .currency {
+            font-size: 1rem;
+        }
+
+        .modal-actions {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .enhanced-btn {
+            width: 100%;
+            padding: 16px 20px;
+            min-height: 50px;
+        }
+
+        .modal-details-section .quantity-controls {
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-details-section .quantity-btn {
+            width: 45px;
+            height: 45px;
+        }
+
+        .modal-details-section .quantity-display {
+            font-size: 1.5rem;
+            padding: 6px 12px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+        }
+
+        .enhanced-close-btn {
+            top: 10px;
+            right: 10px;
+            width: 35px;
+            height: 35px;
+        }
+    }
+
+    /* Additional Modal Fixes */
+    .modal-dialog {
+        margin: 1.75rem auto;
+    }
+
+    .modal-content {
+        border: none;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    /* Ensure proper modal backdrop */
+    .modal-backdrop {
+        background-color: rgba(0,0,0,0.6);
+    }
+
+    /* Fix for modal scrolling */
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out;
+        transform: translate(0, -50px);
+    }
+
+    .modal.show .modal-dialog {
+        transform: none;
+    }
+
+    /* Ensure modal content is properly contained */
+    .enhanced-modal-body {
+        position: relative;
+        width: 100%;
+    }
+
+    /* Fix for potential overflow issues */
+    .modal-details-section {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Empty cart button styling */
+    .empty-cart-btn {
+        margin-top: 20px;
+        padding: 12px 30px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+
+    .empty-cart-btn.hero-btn.primary {
+        background: #f3cd21;
+        color: #1c1d1f;
+        border: none;
+    }
+
+    .empty-cart-btn.hero-btn.primary:hover {
+        background: #1c1d1f;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .empty-cart-message {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .empty-cart-icon {
+        font-size: 3rem;
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+
+    .empty-cart-title {
+        color: #333;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .empty-cart-text {
+        color: #666;
+        margin-bottom: 0;
+    }
+
+    /* Mobile Navigation - Horizontal Layout */
+    @media (max-width: 768px) {
+        .modern-nav-icons {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 8px !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            flex-wrap: nowrap !important;
+        }
+
+        .nav-icon {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 10px !important;
+            background: rgba(28, 29, 31, 0.9) !important;
+            color: white !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 16px !important;
+            transition: all 0.3s ease !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-decoration: none !important;
+            flex-shrink: 0;
+        }
+
+        .nav-icon:hover {
+            background: rgba(243, 205, 33, 0.9) !important;
+            color: #1c1d1f !important;
+            transform: scale(1.05);
+            text-decoration: none !important;
+        }
+
+        .cart-badge {
+            top: -5px !important;
+            right: -5px !important;
+            font-size: 10px !important;
+            min-width: 18px !important;
+            height: 18px !important;
+            line-height: 18px !important;
+        }
+
+        /* Hide language icon on very small screens to save space */
+        .nav-icon[title="Language"] {
+            display: none !important;
+        }
+
+        /* Adjust navbar padding for mobile */
+        .container-fluid.px-4 {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+
+        /* Make brand smaller on mobile */
+        .brand-logo {
+            height: 35px !important;
+        }
+    }
+
+    /* Desktop Navigation - Horizontal Layout */
+    @media (min-width: 769px) {
+        .modern-nav-icons {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 15px !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+        }
+
+        .nav-icon {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 8px !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+            position: relative;
+        }
+
+        .nav-icon:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            text-decoration: none !important;
+            transform: translateY(-2px);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            min-width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Hide mobile menu toggle on desktop */
+        .mobile-menu-toggle {
+            display: none !important;
+        }
+    }
+
+    /* Tablet Navigation - Medium screens */
+    @media (min-width: 576px) and (max-width: 768px) {
+        .modern-nav-icons {
+            gap: 12px !important;
+        }
+
+        .nav-icon {
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 15px !important;
+        }
+    }
+
+    /* Cart Modal Header Styles */
+    .cart-modal-header {
+        background: white;
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        border-radius: 0;
+    }
+
+    .cart-modal-header .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .cart-close-btn {
+        background: none;
+        border: none;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .cart-close-btn:hover {
+        background: #f8f9fa;
+        color: var(--text-dark);
+        transform: scale(1.1);
+    }
+
+    .cart-close-btn i {
+        font-size: 16px;
+    }
+
+    /* Override Bootstrap's btn-close styles for cart modal */
+    .cart-close-btn.btn-close {
+        background: none;
+        opacity: 1;
+        filter: none;
+    }
+
+    .cart-close-btn.btn-close:hover {
+        opacity: 1;
+    }
+
+    /* Responsive cart modal header */
+    @media (max-width: 768px) {
+        .cart-modal-header {
+            padding: 12px 15px;
+        }
+
+        .cart-modal-header .modal-title {
+            font-size: 1.1rem;
+        }
+
+        .cart-close-btn {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Enhanced cart buttons for mobile */
+        .cart-item-edit {
+            padding: 6px 10px;
+            font-size: 11px;
+            min-width: 55px;
+            border-radius: 10px;
+        }
+
+        .cart-item-remove {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+        }
+
+        .cart-item-actions {
+            gap: 8px;
+        }
+
+        .cart-item-controls {
+            min-width: 100px;
+            gap: 10px;
+        }
+    }
+
+    /* Enhanced Cart Modal Styles */
+    .new-cart-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .new-cart-item:last-child {
+        border-bottom: none;
+    }
+
+    .cart-item-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-right: 15px;
+    }
+
+    .cart-item-details {
+        flex: 1;
+    }
+
+    .cart-item-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .cart-item-desc {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 8px;
+    }
+
+    .cart-item-price {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #28a745;
+    }
+
+    .cart-item-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .new-quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f8f9fa;
+        border-radius: 20px;
+        padding: 5px;
+    }
+
+    .new-quantity-btn {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        background: white;
+        color: #333;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .new-quantity-btn:hover {
+        background: var(--primary-yellow);
+    }
+
+    .new-quantity-display {
+        min-width: 20px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .cart-item-edit {
+        background: linear-gradient(135deg, #f3cd21, #e6b91e);
+        color: #1c1d1f;
+        border: none;
+        border-radius: 12px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(243, 205, 33, 0.3);
+        position: relative;
+        overflow: hidden;
+        min-width: 60px;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .cart-item-edit::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .cart-item-edit:hover::before {
+        left: 100%;
+    }
+
+    .cart-item-edit:hover {
+        background: linear-gradient(135deg, #e6b91e, #d4a017);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 15px rgba(243, 205, 33, 0.4);
+        color: #000;
+    }
+
+    .cart-item-edit:active {
+        transform: translateY(0) scale(1.02);
+        box-shadow: 0 2px 8px rgba(243, 205, 33, 0.3);
+    }
+
+    .cart-item-edit i {
+        font-size: 11px;
+        transition: transform 0.3s ease;
+    }
+
+    .cart-item-edit:hover i {
+        transform: rotate(15deg) scale(1.1);
+    }
+
+    /* Click animation for edit button */
+    @keyframes editButtonClick {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.95); }
+        100% { transform: scale(1); }
+    }
+
+    .cart-item-edit.clicked {
+        animation: editButtonClick 0.2s ease-in-out;
+    }
+
+    .cart-item-remove {
+        background: linear-gradient(135deg, #fff, #f8f9fa);
+        border: 2px solid #dc3545;
+        color: #dc3545;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cart-item-remove::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .cart-item-remove:hover::before {
+        left: 100%;
+    }
+
+    .cart-item-remove:hover {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        border-color: #c82333;
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+
+    .cart-item-remove:active {
+        transform: translateY(0) scale(1.02);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+
+    .cart-item-remove i {
+        transition: transform 0.3s ease;
+    }
+
+    .cart-item-remove:hover i {
+        transform: scale(1.2);
+    }
+
+    /* Enhanced Success Modal Styles */
+    .success-modal {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .success-close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        color: #666;
+        z-index: 10;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .success-close-btn:hover {
+        background: #f5f5f5;
+        color: #333;
+    }
+
+    .success-modal-body {
+        padding: 60px 40px 40px;
+        text-align: center;
+        position: relative;
+        background: #fff;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* Decorative Elements */
+    .success-decorations {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    .decoration-diamond {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: #333;
+        transform: rotate(45deg);
+    }
+
+    .diamond-1 {
+        top: 30px;
+        left: 50px;
+        width: 15px;
+        height: 15px;
+    }
+
+    .diamond-2 {
+        bottom: 80px;
+        right: 60px;
+        width: 12px;
+        height: 12px;
+    }
+
+    .decoration-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: #ffc107;
+    }
+
+    .circle-1 {
+        top: 80px;
+        right: 40px;
+        width: 25px;
+        height: 25px;
+        opacity: 0.8;
+    }
+
+    .circle-2 {
+        bottom: 120px;
+        left: 40px;
+        width: 18px;
+        height: 18px;
+        background: #ff6b6b;
+    }
+
+    .decoration-tag {
+        position: absolute;
+        top: 40px;
+        left: 30px;
+        width: 30px;
+        height: 20px;
+        background: #ffc107;
+        border-radius: 3px;
+        transform: rotate(-15deg);
+    }
+
+    .decoration-tag::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: -8px;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        border-right: 8px solid #ffc107;
+    }
+
+    .decoration-tag::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 4px;
+        background: #fff;
+        border-radius: 50%;
+    }
+
+    /* Success Content */
+    .success-content {
+        position: relative;
+        z-index: 5;
+    }
+
+    .success-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 30px;
+        line-height: 1.3;
+    }
+
+    /* Success Action Buttons */
+    .success-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .success-btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .success-btn.primary {
+        background: #ffc107;
+        color: #333;
+    }
+
+    .success-btn.primary:hover {
+        background: #e6ac00;
+        transform: translateY(-2px);
+    }
+
+    .success-btn.secondary {
+        background: transparent;
+        color: #666;
+        border: 2px solid #e0e0e0;
+    }
+
+    .success-btn.secondary:hover {
+        background: #f5f5f5;
+        border-color: #ccc;
+    }
+
+    /* Additional Cart Modal Styles */
+    .new-cart-modal {
+        height: 100vh;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        background: #f8f9fa;
+    }
+
+    .new-loyalty-banner {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        padding: 15px 20px;
+        margin: 0;
+    }
+
+    .loyalty-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .loyalty-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .loyalty-points {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .loyalty-desc {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .loyalty-icon {
+        font-size: 1.5rem;
+        color: #f39c12;
+    }
+
+    .new-cart-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: white;
+    }
+
+    .cart-items-container {
+        margin-bottom: 30px;
+    }
+
+    .new-suggested-section {
+        margin-bottom: 30px;
+    }
+
+    .suggested-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .suggested-items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+    }
+
+    .suggested-loading {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+        grid-column: 1 / -1;
+    }
+
+    .suggested-loading i {
+        margin-right: 8px;
+    }
+
+    .new-voucher-section {
+        margin-bottom: 25px;
+    }
+
+    .voucher-section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+    }
+
+    .voucher-input-container {
+        display: flex;
+        gap: 10px;
+    }
+
+    .new-voucher-input {
+        flex: 1;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #f8f9fa;
+    }
+
+    .new-voucher-input:focus {
+        outline: none;
+        border-color: var(--primary-yellow);
+        background: white;
+    }
+
+    .new-voucher-btn {
+        padding: 12px 20px;
+        background: var(--primary-yellow);
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .new-voucher-btn:hover {
+        background: var(--primary-dark);
+        color: white;
+    }
+
+    .new-notes-section {
+        margin-bottom: 25px;
+    }
+
+    .notes-section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+    }
+
+    .new-notes-textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #f8f9fa;
+        resize: vertical;
+        min-height: 80px;
+        font-family: inherit;
+    }
+
+    .new-notes-textarea:focus {
+        outline: none;
+        border-color: var(--primary-yellow);
+        background: white;
+    }
+
+    .new-cart-footer {
+        background: white;
+        padding: 20px;
+        border-top: 1px solid #e0e0e0;
+        margin-top: auto;
+    }
+
+    .cart-footer-actions {
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .clear-cart-btn {
+        background: none;
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .clear-cart-btn:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    .subtotal-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .subtotal-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .subtotal-amount {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .new-checkout-btn {
+        width: 100%;
+        background: var(--primary-yellow);
+        border: none;
+        border-radius: 12px;
+        padding: 16px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .new-checkout-btn:hover {
+        background: var(--primary-dark);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .new-checkout-btn:disabled {
+        background: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+    }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark modern-navbar">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand modern-brand" href="{{ url_for('main.index') }}">
+                <img src="{{ url_for('static', filename='images/image.png') }}" alt="Logo" class="brand-logo">
+            </a>
+
+            <div class="navbar-nav ms-auto modern-nav-icons">
+                <a href="#" class="nav-icon" title="Search">
+                    <i class="fas fa-search"></i>
+                </a>
+                <a href="#" class="nav-icon" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                </a>
+                <a href="#" class="nav-icon" title="Language">
+                    <i class="fas fa-globe"></i>
+                </a>
+                <a href="#" class="nav-icon cart-nav-icon" title="Cart" onclick="openCartModal(); return false;" style="position: relative;">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" id="globalCartCount">0</span>
+                </a>
+                <a href="#" class="nav-icon mobile-menu-toggle" title="Menu">
+                    <i class="fas fa-bars"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Footer Sections - Consistent across all pages -->
+        <div class="footer-sections">
+            <div class="footer-section">
+                <div class="footer-header">
+                    <span>Services</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <div class="footer-section">
+                <div class="footer-header">
+                    <span>Company</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <img src="{{ url_for('static', filename='images/image.png') }}" alt="Logo" class="footer-brand-logo">
+                </div>
+                <p class="footer-tagline">Social Media:</p>
+                <div class="social-icons">
+                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-behance"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-vimeo"></i></a>
+                </div>
+                <p class="footer-copyright">Copyright © 2024. Design by I.G</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Global Cart Modal -->
+    <div class="modal fade" id="globalCartModal" tabindex="-1">
+        <div class="modal-dialog modal-fullscreen-sm-down">
+            <div class="modal-content new-cart-modal">
+                <!-- Modal Header with Close Button -->
+                <div class="modal-header cart-modal-header">
+                    <h5 class="modal-title">Your Cart</h5>
+                    <button type="button" class="btn-close cart-close-btn" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Loyalty Banner -->
+                <div class="new-loyalty-banner">
+                    <div class="loyalty-content">
+                        <div class="loyalty-text">
+                            <span class="loyalty-points">300 Point</span>
+                            <span class="loyalty-desc">In Your First Order</span>
+                        </div>
+                        <div class="loyalty-icon">
+                            <i class="fas fa-gift"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Content -->
+                <div class="new-cart-body">
+                    <!-- Cart Items -->
+                    <div class="cart-items-container" id="globalCartItems">
+                        <p class="text-muted text-center py-4">Your cart is empty</p>
+                    </div>
+
+                    <!-- Suggested Items -->
+                    <div class="new-suggested-section">
+                        <h6 class="suggested-title">You may also like to add</h6>
+                        <div class="suggested-items-grid" id="suggestedItemsGrid">
+                            <!-- Items will be loaded dynamically -->
+                            <div class="suggested-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading suggestions...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voucher Section -->
+                    <div class="new-voucher-section">
+                        <h6 class="voucher-section-title">Apply voucher</h6>
+                        <div class="voucher-input-container">
+                            <input type="text" class="new-voucher-input" placeholder="Apply voucher code">
+                            <button class="new-voucher-btn">Apply</button>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="new-notes-section">
+                        <h6 class="notes-section-title">Add a note:</h6>
+                        <textarea class="new-notes-textarea" placeholder="Special instructions..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Cart Footer -->
+                <div class="new-cart-footer">
+                    <div class="cart-footer-actions" id="cartFooterActions" style="display: none;">
+                        <button class="clear-cart-btn" onclick="clearCart()">
+                            <i class="fas fa-trash"></i> Clear Cart
+                        </button>
+                    </div>
+                    <div class="subtotal-row">
+                        <span class="subtotal-label">Subtotal</span>
+                        <span class="subtotal-amount" id="globalCartTotal">0.00 EGP</span>
+                    </div>
+                    <button class="new-checkout-btn" id="globalCheckoutBtn" onclick="proceedToCheckout()">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Cart Success Modal -->
+    <div class="modal fade" id="cartSuccessModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content success-modal">
+                <!-- Close Button -->
+                <button type="button" class="success-close-btn" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <div class="modal-body success-modal-body">
+                    <!-- Decorative Elements -->
+                    <div class="success-decorations">
+                        <div class="decoration-diamond diamond-1"></div>
+                        <div class="decoration-diamond diamond-2"></div>
+                        <div class="decoration-circle circle-1"></div>
+                        <div class="decoration-circle circle-2"></div>
+                        <div class="decoration-tag"></div>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div class="success-content">
+                        <h4 class="success-title">Your order Successfully<br>added to the cart</h4>
+
+                        <!-- Action Buttons -->
+                        <div class="success-actions">
+                            <button class="success-btn primary" id="continueOrderBtn" data-bs-dismiss="modal">
+                                Continue Order
+                            </button>
+                            <button class="success-btn secondary" id="viewCartBtn">
+                                View cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Unified Cart System -->
+    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+
+    <script>
+    // Add functionality to navigation icons
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const searchIcon = document.querySelector('.nav-icon[title="Search"]');
+        if (searchIcon) {
+            searchIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('Search functionality coming soon!');
+            });
+        }
+
+        // Notifications
+        const notificationIcon = document.querySelector('.nav-icon[title="Notifications"]');
+        if (notificationIcon) {
+            notificationIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('No new notifications');
+            });
+        }
+
+        // Language selector
+        const languageIcon = document.querySelector('.nav-icon[title="Language"]');
+        if (languageIcon) {
+            languageIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('Language selection coming soon!');
+            });
+        }
+
+        // Mobile menu toggle
+        const menuIcon = document.querySelector('.mobile-menu-toggle');
+        if (menuIcon) {
+            menuIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('Mobile menu coming soon!');
+            });
+        }
+    });
+
+    // Cart functionality is now handled by cart.js
+
+    // Ensure cart modal can be closed properly
+    document.addEventListener('DOMContentLoaded', function() {
+        const cartModal = document.getElementById('globalCartModal');
+        if (cartModal) {
+            // Enable backdrop click to close
+            cartModal.addEventListener('click', function(e) {
+                if (e.target === cartModal) {
+                    const modalInstance = bootstrap.Modal.getInstance(cartModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                }
+            });
+
+            // Ensure close button works
+            const closeBtn = cartModal.querySelector('.cart-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    const modalInstance = bootstrap.Modal.getInstance(cartModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                });
+            }
+
+            // Handle escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modalInstance = bootstrap.Modal.getInstance(cartModal);
+                    if (modalInstance && cartModal.classList.contains('show')) {
+                        modalInstance.hide();
+                    }
+                }
+            });
+        }
+
+        // Ensure item detail modal can be closed properly
+        const itemDetailModal = document.getElementById('itemDetailModal');
+        if (itemDetailModal) {
+            // Enable backdrop click to close
+            itemDetailModal.addEventListener('click', function(e) {
+                if (e.target === itemDetailModal) {
+                    const modalInstance = bootstrap.Modal.getInstance(itemDetailModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                }
+            });
+
+            // Ensure close button works
+            const closeBtn = itemDetailModal.querySelector('.enhanced-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Edit modal close button clicked');
+
+                    const modalInstance = bootstrap.Modal.getInstance(itemDetailModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    } else {
+                        // Fallback: create new instance and hide
+                        const newModalInstance = new bootstrap.Modal(itemDetailModal);
+                        newModalInstance.hide();
+                    }
+                });
+            } else {
+                console.warn('Enhanced close button not found in item detail modal');
+            }
+
+            // Handle escape key for item detail modal
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modalInstance = bootstrap.Modal.getInstance(itemDetailModal);
+                    if (modalInstance && itemDetailModal.classList.contains('show')) {
+                        modalInstance.hide();
+                    }
+                }
+            });
+        }
+    });
+
+    // Initialize success modal functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewCartBtn = document.getElementById('viewCartBtn');
+        if (viewCartBtn) {
+            viewCartBtn.addEventListener('click', function() {
+                // Hide success modal
+                const successModal = bootstrap.Modal.getInstance(document.getElementById('cartSuccessModal'));
+                if (successModal) {
+                    successModal.hide();
+                }
+                // Open cart modal
+                setTimeout(() => {
+                    openCartModal();
+                }, 300);
+            });
+        }
+    });
+
+    // Fetch suggested items from API
+    async function loadSuggestedItems() {
+        try {
+            const response = await fetch('/api/menu-items/suggested');
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                displaySuggestedItems(data.data);
+            } else {
+                console.error('Failed to load suggested items:', data.message);
+                showSuggestedItemsError();
+            }
+        } catch (error) {
+            console.error('Error fetching suggested items:', error);
+            showSuggestedItemsError();
+        }
+    }
+
+    // Display suggested items in the grid
+    function displaySuggestedItems(items) {
+        const grid = document.getElementById('suggestedItemsGrid');
+        if (!grid) return;
+
+        let html = '';
+        items.forEach(item => {
+            html += `
+                <div class="suggested-item-card">
+                    <img src="${item.image}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=80&h=80&fit=crop'">
+                    <div class="suggested-item-info">
+                        <div class="suggested-item-name">${item.name}</div>
+                        <div class="suggested-item-actions">
+                            <button class="suggested-add-btn" onclick="addSuggestedToCart(${item.id}, '${item.name}', ${item.price}, '${item.description}', '${item.image}')" title="Add to cart">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <span class="suggested-item-price">${item.price.toFixed(2)} EGP</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        grid.innerHTML = html;
+    }
+
+    // Show error message for suggested items
+    function showSuggestedItemsError() {
+        const grid = document.getElementById('suggestedItemsGrid');
+        if (!grid) return;
+
+        grid.innerHTML = `
+            <div class="suggested-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Unable to load suggestions</span>
+            </div>
+        `;
+    }
+
+    // Add suggested item to cart
+    function addSuggestedToCart(id, name, price, description, image) {
+        const item = {
+            id: id,
+            name: name,
+            price: price,
+            quantity: 1,
+            specialInstructions: description,
+            image: image
+        };
+
+        // Use unified cart system
+        addToCart(item);
+
+        // Show brief success feedback
+        const button = event.target.closest('.suggested-add-btn');
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.style.background = '#28a745';
+        button.style.color = 'white';
+
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.style.background = '';
+            button.style.color = '';
+        }, 1000);
+    }
+
+    // Initialize page functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load suggested items
+        loadSuggestedItems();
+
+        // Cart is initialized by cart.js
+
+        // Initialize global item detail modal functionality
+        initializeItemDetailModal();
+    });
+
+    // Global item detail modal functionality
+    function initializeItemDetailModal() {
+        // Enhanced quantity controls with price update
+        function updateModalPrice() {
+            const qty = parseInt(document.getElementById('itemQuantity').textContent);
+            const modalPriceElement = document.getElementById('modalItemPrice');
+            if (modalPriceElement) {
+                const basePrice = parseFloat(modalPriceElement.textContent);
+                const totalPrice = (basePrice * qty).toFixed(2);
+                document.getElementById('modalTotalPrice').textContent = totalPrice;
+            }
+        }
+
+        // Decrease quantity button
+        const decreaseBtn = document.getElementById('decreaseQty');
+        if (decreaseBtn) {
+            decreaseBtn.addEventListener('click', function() {
+                const qtyElement = document.getElementById('itemQuantity');
+                let qty = parseInt(qtyElement.textContent);
+                if (qty > 1) {
+                    qtyElement.textContent = qty - 1;
+                    updateModalPrice();
+                }
+            });
+        }
+
+        // Increase quantity button
+        const increaseBtn = document.getElementById('increaseQty');
+        if (increaseBtn) {
+            increaseBtn.addEventListener('click', function() {
+                const qtyElement = document.getElementById('itemQuantity');
+                let qty = parseInt(qtyElement.textContent);
+                qtyElement.textContent = qty + 1;
+                updateModalPrice();
+            });
+        }
+
+        // Add to cart from modal button
+        const addToCartBtn = document.getElementById('addToCartModal');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function() {
+                const qty = parseInt(document.getElementById('itemQuantity').textContent);
+                const specialInstructions = document.getElementById('specialInstructions').value;
+
+                // Check if we're editing an existing cart item
+                if (window.editingCartItem) {
+                    const itemId = window.editingCartItem.id;
+                    const itemIndex = unifiedCart.findIndex(item => item.id === itemId);
+
+                    if (itemIndex !== -1) {
+                        // Update the existing item
+                        unifiedCart[itemIndex].quantity = qty;
+                        unifiedCart[itemIndex].specialInstructions = specialInstructions;
+
+                        // Save changes
+                        saveCartToStorage();
+                        updateCartDisplay();
+                        updateCartCount();
+
+                        // Reset modal state
+                        resetItemDetailModal();
+
+                        // Hide detail modal
+                        bootstrap.Modal.getInstance(document.getElementById('itemDetailModal')).hide();
+
+                        // Show cart modal again
+                        setTimeout(() => {
+                            openCartModal();
+                        }, 300);
+
+                        safeShowNotification('Success', 'Item updated successfully', 'success');
+                        return;
+                    }
+                }
+
+                // Regular add to cart functionality would go here
+                // This will be handled by individual pages
+                console.log('Add to cart functionality should be handled by the specific page');
+            });
+        }
+
+        // Reset modal state when closed and handle return to cart
+        const itemDetailModal = document.getElementById('itemDetailModal');
+        if (itemDetailModal) {
+            itemDetailModal.addEventListener('hidden.bs.modal', function() {
+                // Check if we were editing an item from the cart
+                const wasEditingCartItem = window.editingCartItem;
+
+                // Reset modal state
+                if (typeof resetItemDetailModal === 'function') {
+                    resetItemDetailModal();
+                }
+
+                // If we were editing a cart item, return to the cart modal
+                if (wasEditingCartItem) {
+                    console.log('Returning to cart modal after edit');
+                    // Ensure any existing modal backdrops are removed
+                    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                        backdrop.remove();
+                    });
+
+                    setTimeout(() => {
+                        if (typeof openCartModal === 'function') {
+                            openCartModal();
+                        } else {
+                            console.error('openCartModal function not available');
+                        }
+                    }, 400);
+                }
+            });
+        }
+    }
+    </script>
+
+    <!-- Global Item Detail Modal -->
+    <div class="modal fade" id="itemDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content enhanced-modal">
+                <!-- Modal Header -->
+                <div class="enhanced-modal-header">
+                    <button type="button" class="enhanced-close-btn" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="enhanced-modal-body">
+                    <!-- Item Image Section -->
+                    <div class="modal-image-section">
+                        <img id="modalItemImage" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop" class="enhanced-item-image" alt="Item Image">
+                        <div class="image-overlay">
+                            <div class="item-category-badge" id="modalItemCategory">Main Course</div>
+                        </div>
+                    </div>
+
+                    <!-- Item Details Section -->
+                    <div class="modal-details-section">
+                        <div class="item-header">
+                            <h2 id="modalItemName" class="enhanced-item-title"></h2>
+                            <div class="item-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span class="rating-text">4.5 (124 reviews)</span>
+                            </div>
+                        </div>
+
+                        <!-- Price Section -->
+                        <div class="price-section">
+                            <div class="price-container">
+                                <span class="current-price" id="modalItemPrice"></span>
+                                <span class="currency">EGP</span>
+                            </div>
+                            <span class="old-price">16.99 EGP</span>
+                        </div>
+
+                        <!-- Ingredients Section -->
+                        <div class="ingredients-section">
+                            <h6 class="section-title">
+                                <i class="fas fa-list-ul"></i>
+                                Ingredients
+                            </h6>
+                            <p id="modalItemIngredients" class="ingredients-text"></p>
+                        </div>
+
+                        <!-- Quantity Section -->
+                        <div class="quantity-section">
+                            <h6 class="section-title">
+                                <i class="fas fa-calculator"></i>
+                                Quantity
+                            </h6>
+                            <div class="quantity-controls">
+                                <button class="quantity-btn decrease" id="decreaseQty">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="quantity-display" id="itemQuantity">1</span>
+                                <button class="quantity-btn increase" id="increaseQty">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Special Instructions Section -->
+                        <div class="instructions-section">
+                            <h6 class="section-title">
+                                <i class="fas fa-edit"></i>
+                                Special Instructions
+                            </h6>
+                            <textarea class="enhanced-textarea" rows="3" placeholder="Any special requests or modifications..." id="specialInstructions"></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="modal-actions">
+                            <button class="enhanced-btn primary" id="addToCartModal">
+                                <i class="fas fa-shopping-cart"></i>
+                                Add to Cart - <span id="modalTotalPrice">0.00</span> EGP
+                            </button>
+                            <button class="enhanced-btn secondary" id="continueOrder" data-bs-dismiss="modal">
+                                <i class="fas fa-arrow-left"></i>
+                                Continue Shopping
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,242 @@
+{% extends "shared/base.html" %}
+
+{% block title %}Services - Restaurant Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+
+
+/* Hero section styles are now in the shared CSS file */
+
+:root {
+    --primary-yellow: #f3cd21;
+    --primary-dark: #1c1d1f;
+    --text-dark: #333;
+}
+
+/* Remove the services-page-container wrapper to use base template styling */
+
+.services-section {
+    padding: 60px 20px;
+    background: white;
+    text-align: center;
+}
+
+.services-title {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.service-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.service-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-color: #ffc107;
+}
+
+.service-icon {
+    width: 60px;
+    height: 60px;
+    background: #ffc107;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    font-size: 24px;
+    color: #333;
+}
+
+.service-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+/* Footer styles are handled by the base template */
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .service-item {
+        padding: 15px;
+    }
+
+    .service-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .services-grid {
+        grid-template-columns: 1fr;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .services-section {
+        padding: 40px 15px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1>Figma ipsum component variant main layer.</h1>
+        <p>Figma ipsum component variant main layer.</p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('customer.menu') }}" class="hero-btn primary">Menu</a>
+            <a href="{{ url_for('service.index') }}" class="hero-btn secondary">Services</a>
+        </div>
+    </div>
+</div>
+
+<!-- Services Section -->
+<div class="services-section">
+    <h2 class="services-title">Services we provide</h2>
+    <div class="services-grid">
+        <div class="service-item" onclick="submitServiceRequest('waiter')">
+            <div class="service-icon">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <p class="service-name">Waiter</p>
+        </div>
+
+        <div class="service-item" onclick="submitServiceRequest('napkins')">
+            <div class="service-icon">
+                <i class="fas fa-tissue"></i>
+            </div>
+            <p class="service-name">Extra Napkins</p>
+        </div>
+
+        <div class="service-item" onclick="submitServiceRequest('refill')">
+            <div class="service-icon">
+                <i class="fas fa-glass-water"></i>
+            </div>
+            <p class="service-name">Refill Goals</p>
+        </div>
+
+        <div class="service-item" onclick="submitServiceRequest('ice')">
+            <div class="service-icon">
+                <i class="fas fa-snowflake"></i>
+            </div>
+            <p class="service-name">Order Ice</p>
+        </div>
+
+        <div class="service-item" onclick="submitServiceRequest('cleaning')">
+            <div class="service-icon">
+                <i class="fas fa-broom"></i>
+            </div>
+            <p class="service-name">Clean My Table</p>
+        </div>
+
+        <div class="service-item" onclick="submitServiceRequest('bill')">
+            <div class="service-icon">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <p class="service-name">Request the Bill</p>
+        </div>
+
+        <div class="service-item" onclick="submitServiceRequest('ac')">
+            <div class="service-icon">
+                <i class="fas fa-wind"></i>
+            </div>
+            <p class="service-name">Adjust AC</p>
+        </div>
+
+        <div class="service-item" onclick="submitServiceRequest('custom')">
+            <div class="service-icon">
+                <i class="fas fa-comment-dots"></i>
+            </div>
+            <p class="service-name">Custom Request</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Service request functionality
+function submitServiceRequest(type) {
+    // Show confirmation dialog
+    let message = '';
+    let confirmText = '';
+    
+    switch(type) {
+        case 'waiter':
+            confirmText = 'Call a waiter to your table?';
+            break;
+        case 'napkins':
+            confirmText = 'Request extra napkins?';
+            break;
+        case 'refill':
+            confirmText = 'Request drink refills?';
+            break;
+        case 'ice':
+            confirmText = 'Order more ice?';
+            break;
+        case 'cleaning':
+            confirmText = 'Request table cleaning?';
+            break;
+        case 'bill':
+            confirmText = 'Request the bill?';
+            break;
+        case 'ac':
+            message = prompt('Please specify your AC preference (warmer/cooler):');
+            if (!message) return;
+            confirmText = 'Submit AC adjustment request?';
+            break;
+        case 'custom':
+            message = prompt('Please describe your custom request:');
+            if (!message) return;
+            confirmText = 'Submit your custom request?';
+            break;
+        default:
+            confirmText = 'Submit this service request?';
+    }
+    
+    if (confirm(confirmText)) {
+        // Use the global RestaurantApp function if available
+        if (window.RestaurantApp && window.RestaurantApp.submitServiceRequest) {
+            window.RestaurantApp.submitServiceRequest(type, message);
+        } else {
+            // Fallback notification
+            alert('Service request submitted! Our staff will assist you shortly.');
+        }
+    }
+}
+</script>
+{% endblock %}

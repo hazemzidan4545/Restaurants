@@ -279,7 +279,7 @@ Create a comprehensive web-based Restaurant Management System with the following
 ## User Interface Requirements
 
 ### Design System
-- **Color Scheme**: Professional restaurant branding with warm, inviting colors
+- **Color Scheme**: Professional yellow and black gradient ( #f3cd21 to #1c1d1f), inviting colors
 - **Typography**: Clean, readable fonts optimized for menu display
 - **Icons**: Font Awesome integration for intuitive navigation
 - **Animations**: Smooth transitions and engaging micro-interactions

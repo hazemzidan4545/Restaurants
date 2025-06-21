@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Checkout Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Cart Operations</h2>
+        <button onclick="testAddToCart()">Add Test Item to Cart</button>
+        <button onclick="testViewCart()">View Cart Contents</button>
+        <button onclick="testClearCart()">Clear Cart</button>
+        <div id="cartStatus"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Checkout Test</h2>
+        <button onclick="testCheckout()">Test Checkout</button>
+        <button onclick="testCheckoutEmpty()">Test Checkout (Empty Cart)</button>
+        <div id="checkoutStatus"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Navigation Test</h2>
+        <button onclick="testNavigateToCheckout()">Navigate to Checkout Page</button>
+        <button onclick="testNavigateToMenu()">Navigate to Menu Page</button>
+        <div id="navigationStatus"></div>
+    </div>
+
+    <script>
+        // Mock cart system for testing
+        let testCart = [];
+        
+        // Mock notification function
+        function showNotification(title, message, type) {
+            console.log(`${type.toUpperCase()}: ${title} - ${message}`);
+            const statusDiv = document.getElementById('checkoutStatus');
+            statusDiv.innerHTML += `<div class="${type}">${title}: ${message}</div>`;
+        }
+        
+        // Test functions
+        function testAddToCart() {
+            const testItem = {
+                id: 'test-1',
+                name: 'Test Pasta',
+                price: 15.99,
+                quantity: 1,
+                image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=300&h=200&fit=crop'
+            };
+            
+            testCart.push(testItem);
+            updateCartStatus();
+            showNotification('Success', 'Test item added to cart', 'success');
+        }
+        
+        function testViewCart() {
+            const cartDiv = document.getElementById('cartStatus');
+            cartDiv.innerHTML = `<h3>Cart Contents (${testCart.length} items):</h3>`;
+            testCart.forEach(item => {
+                cartDiv.innerHTML += `<p>${item.name} - ${item.price} EGP</p>`;
+            });
+        }
+        
+        function testClearCart() {
+            testCart = [];
+            updateCartStatus();
+            showNotification('Info', 'Cart cleared', 'info');
+        }
+        
+        function testCheckout() {
+            if (testCart.length === 0) {
+                showNotification('Warning', 'Your cart is empty!', 'error');
+                return;
+            }
+            showNotification('Success', 'Checkout would proceed normally', 'success');
+        }
+        
+        function testCheckoutEmpty() {
+            const originalCart = [...testCart];
+            testCart = [];
+            if (testCart.length === 0) {
+                showNotification('Warning', 'Your cart is empty!', 'error');
+            }
+            testCart = originalCart;
+        }
+        
+        function testNavigateToCheckout() {
+            const navDiv = document.getElementById('navigationStatus');
+            navDiv.innerHTML = '<div class="info">Would navigate to: /customer/checkout</div>';
+            // window.location.href = '/customer/checkout'; // Commented out for testing
+        }
+        
+        function testNavigateToMenu() {
+            const navDiv = document.getElementById('navigationStatus');
+            navDiv.innerHTML = '<div class="info">Would navigate to: /customer/menu</div>';
+            // window.location.href = '/customer/menu'; // Commented out for testing
+        }
+        
+        function updateCartStatus() {
+            const cartDiv = document.getElementById('cartStatus');
+            cartDiv.innerHTML = `<p>Cart has ${testCart.length} items</p>`;
+        }
+        
+        // Initialize
+        updateCartStatus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1246 @@
+{% extends "shared/base.html" %}
+
+{% block title %}Menu - Restaurant Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+.menu-container {
+    background: #f8f9fa;
+    min-height: 100vh;
+    padding: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+
+
+
+
+
+
+.category-tabs {
+    background: white;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.category-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tabs-container {
+    display: flex;
+    gap: 10px;
+    min-width: max-content;
+}
+
+.category-tab {
+    background: var(--primary-yellow);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+
+.category-tab.active {
+    background: var(--primary-dark);
+    color: white;
+}
+
+.category-tab:hover {
+    transform: translateY(-1px);
+}
+
+.subcategory-tabs {
+    background: white;
+    padding: 10px 20px;
+    border-bottom: 1px solid #e9ecef;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.subcategory-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.subcategory-tabs .tabs-container {
+    gap: 8px;
+}
+
+.subcategory-tab {
+    background: #f8f9fa;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 15px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+.subcategory-tab.active {
+    background: var(--primary-yellow);
+    color: var(--text-dark);
+}
+
+.menu-items-list {
+    padding: 20px;
+}
+
+.menu-item-card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.menu-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.menu-item-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.menu-item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.menu-item-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-dark);
+}
+
+.menu-item-description {
+    color: #666;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.menu-item-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.menu-item-price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.menu-item-old-price {
+    font-size: 0.85rem;
+    color: #999;
+    text-decoration: line-through;
+    margin-left: 8px;
+}
+
+.add-btn {
+    background: var(--primary-yellow);
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: auto;
+}
+
+.add-btn:hover {
+    background: var(--primary-dark);
+    color: white;
+    transform: scale(1.1);
+}
+
+.search-box {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+.search-box:focus {
+    outline: none;
+    border-color: var(--primary-yellow);
+}
+
+/* Enhanced Modal Styles are now global in base template */
+
+/* Success modal styles are now in base template for system-wide use */
+
+/* Cart modal styles are now in base template for system-wide use */
+
+/* Suggested Items */
+.new-suggested-section {
+    margin-bottom: 30px;
+}
+
+.suggested-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.suggested-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+}
+
+.suggested-item-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.suggested-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.suggested-item-card img {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 8px;
+}
+
+.suggested-item-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.suggested-item-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suggested-add-btn {
+    width: 25px;
+    height: 25px;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary-yellow);
+    color: #333;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.suggested-add-btn:hover {
+    background: var(--primary-dark);
+    color: white;
+    transform: scale(1.1);
+}
+
+.suggested-item-price {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+/* Voucher Section */
+.new-voucher-section {
+    margin-bottom: 25px;
+}
+
+.voucher-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.voucher-input-container {
+    display: flex;
+    gap: 10px;
+}
+
+.new-voucher-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+}
+
+.new-voucher-input:focus {
+    outline: none;
+    border-color: var(--primary-yellow);
+    background: white;
+}
+
+.new-voucher-btn {
+    padding: 12px 20px;
+    background: var(--primary-yellow);
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.new-voucher-btn:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+/* Notes Section */
+.new-notes-section {
+    margin-bottom: 25px;
+}
+
+.notes-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.new-notes-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.new-notes-textarea:focus {
+    outline: none;
+    border-color: var(--primary-yellow);
+    background: white;
+}
+
+/* Cart Footer */
+.new-cart-footer {
+    background: white;
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+    margin-top: auto;
+}
+
+.subtotal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.subtotal-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.subtotal-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.new-checkout-btn {
+    width: 100%;
+    background: var(--primary-yellow);
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.new-checkout-btn:hover {
+    background: var(--primary-dark);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.cart-header {
+    background: #1c1d1f;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-close-cart {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    padding: 0;
+    margin-right: 15px;
+}
+
+.cart-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.cart-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.cart-icon {
+    width: 35px;
+    height: 35px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.cart-icon:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+
+
+.loyalty-banner {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    padding: 15px 20px;
+    margin: 0;
+}
+
+.loyalty-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.loyalty-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.loyalty-points {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.loyalty-desc {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.loyalty-icon {
+    font-size: 2rem;
+    color: #f39c12;
+}
+
+.cart-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.cart-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.cart-item-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.cart-item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.cart-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.cart-item-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.cart-item-desc {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.cart-item-price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.cart-item-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.quantity-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary-yellow);
+    color: #333;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.quantity-btn:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+.quantity-display {
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+}
+
+.edit-btn {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.edit-btn:hover {
+    color: var(--primary-dark);
+}
+
+.suggested-section {
+    margin-top: 30px;
+}
+
+.suggested-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.suggested-items {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.suggested-items::-webkit-scrollbar {
+    height: 4px;
+}
+
+.suggested-items::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.suggested-items::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 2px;
+}
+
+.suggested-item {
+    min-width: 120px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.suggested-item img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 8px;
+}
+
+.suggested-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.suggested-name {
+    font-size: 0.8rem;
+    color: #333;
+    margin-bottom: 8px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.suggested-add-btn {
+    background: var(--primary-yellow);
+    border: none;
+    border-radius: 15px;
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.suggested-add-btn:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+.suggested-price {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.voucher-section {
+    margin-top: 30px;
+}
+
+.voucher-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.voucher-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.voucher-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+}
+
+.voucher-input:focus {
+    outline: none;
+    border-color: var(--primary-yellow);
+    background: white;
+}
+
+.voucher-apply-btn {
+    background: var(--primary-yellow);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.voucher-apply-btn:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+.notes-section {
+    margin-top: 30px;
+}
+
+.notes-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.notes-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.notes-textarea:focus {
+    outline: none;
+    border-color: var(--primary-yellow);
+    background: white;
+}
+
+.cart-footer {
+    background: white;
+    padding: 20px;
+    border-top: 1px solid #e9ecef;
+    margin-top: auto;
+}
+
+.subtotal-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.subtotal-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.subtotal-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.checkout-btn {
+    width: 100%;
+    background: var(--primary-yellow);
+    border: none;
+    border-radius: 8px;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.checkout-btn:hover {
+    background: var(--primary-dark);
+    color: white;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+
+
+
+
+    .category-tabs {
+        padding: 12px 15px;
+    }
+
+    .subcategory-tabs {
+        padding: 8px 15px;
+    }
+
+    .menu-items-list {
+        padding: 15px;
+    }
+
+    .menu-item-card {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .menu-item-image {
+        width: 70px;
+        height: 70px;
+    }
+
+    .menu-item-title {
+        font-size: 1rem;
+    }
+
+    .menu-item-description {
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="menu-container">
+
+
+
+
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+        <div class="tabs-container">
+            <button class="category-tab active" data-meal="breakfast">
+                <i class="fas fa-coffee me-1"></i>
+                Breakfast
+            </button>
+            <button class="category-tab" data-meal="dinner">
+                <i class="fas fa-utensils me-1"></i>
+                Dinner
+            </button>
+            <button class="category-tab" data-meal="drinks">
+                <i class="fas fa-glass-cheers me-1"></i>
+                Drinks
+            </button>
+        </div>
+    </div>
+
+    <!-- Subcategory Tabs -->
+    <div class="subcategory-tabs">
+        <div class="tabs-container">
+            <button class="subcategory-tab active" data-type="pasta">Pasta</button>
+            <button class="subcategory-tab" data-type="grills">Grills</button>
+            <button class="subcategory-tab" data-type="meat">Meat And Chicken</button>
+            <button class="subcategory-tab" data-type="seafood">Seafood</button>
+            <button class="subcategory-tab" data-type="oriental">Oriental</button>
+        </div>
+
+    </div>
+
+    <!-- Menu Items List -->
+    <div class="menu-items-list" id="menuItems">
+        <!-- Pasta Items -->
+        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Spaghetti Carbonara', 'Spaghetti, Pancetta, Egg yolks, Parmesan cheese, Black pepper', '14.99', 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=300&h=200&fit=crop')"
+            <img src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=80&h=80&fit=crop" class="menu-item-image" alt="Spaghetti Carbonara">
+            <div class="menu-item-content">
+                <div class="menu-item-title">Spaghetti Carbonara</div>
+                <div class="menu-item-description">Spaghetti, Pancetta, Egg yolks, Parmesan cheese, Black pepper</div>
+                <div class="menu-item-footer">
+                    <div class="price-section">
+                        <div class="menu-item-price">14.99 EGP <span class="menu-item-old-price">16.00 EGP</span></div>
+                    </div>
+                    <button class="add-btn add-to-cart"
+                            data-item-id="1"
+                            data-item-name="Spaghetti Carbonara"
+                            data-item-price="14.99"
+                            onclick="event.stopPropagation(); addToCartFromButton(this)">
+                        +
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Fettuccine Alfredo', 'Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1563379091339-03246963d96c?w=300&h=200&fit=crop')">
+            <img src="https://images.unsplash.com/photo-1563379091339-03246963d96c?w=80&h=80&fit=crop" class="menu-item-image" alt="Fettuccine Alfredo">
+            <div class="menu-item-content">
+                <div class="menu-item-title">Fettuccine Alfredo</div>
+                <div class="menu-item-description">Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic</div>
+                <div class="menu-item-footer">
+                    <div class="price-section">
+                        <div class="menu-item-price">14.99 EGP <span class="menu-item-old-price">16.00 EGP</span></div>
+                    </div>
+                    <button class="add-btn add-to-cart"
+                            data-item-id="2"
+                            data-item-name="Fettuccine Alfredo"
+                            data-item-price="14.99"
+                            onclick="event.stopPropagation(); addToCartFromButton(this)">
+                        +
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Creamy Parmesan Fettuccine', 'Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=300&h=200&fit=crop')">
+            <img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=80&h=80&fit=crop" class="menu-item-image" alt="Creamy Parmesan Fettuccine">
+            <div class="menu-item-content">
+                <div class="menu-item-title">Creamy Parmesan Fettuccine</div>
+                <div class="menu-item-description">Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic</div>
+                <div class="menu-item-footer">
+                    <div class="price-section">
+                        <div class="menu-item-price">14.99 EGP <span class="menu-item-old-price">16.00 EGP</span></div>
+                    </div>
+                    <button class="add-btn add-to-cart"
+                            data-item-id="3"
+                            data-item-name="Creamy Parmesan Fettuccine"
+                            data-item-price="14.99"
+                            onclick="event.stopPropagation(); addToCartFromButton(this)">
+                        +
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Alfredo Noodles', 'Noodles, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=300&h=200&fit=crop')"
+            <img src="https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=80&h=80&fit=crop" class="menu-item-image" alt="Alfredo Noodles">
+            <div class="menu-item-content">
+                <div class="menu-item-title">Alfredo Noodles</div>
+                <div class="menu-item-description">Noodles, Heavy cream, Butter, Parmesan cheese, Garlic</div>
+                <div class="menu-item-footer">
+                    <div class="price-section">
+                        <div class="menu-item-price">14.99 EGP <span class="menu-item-old-price">16.00 EGP</span></div>
+                    </div>
+                    <button class="add-btn add-to-cart"
+                            data-item-id="4"
+                            data-item-name="Alfredo Noodles"
+                            data-item-price="14.99"
+                            onclick="event.stopPropagation(); addToCartFromButton(this)">
+                        +
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grill Items -->
+        <div class="menu-item-card" data-category="grills" style="display: none;" onclick="showItemDetail('Grilled Chicken', 'Grilled chicken breast with herbs and spices', '18.99', 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=300&h=200&fit=crop')"
+            <img src="https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=80&h=80&fit=crop" class="menu-item-image" alt="Grilled Chicken">
+            <div class="menu-item-content">
+                <div class="menu-item-title">Grilled Chicken</div>
+                <div class="menu-item-description">Grilled chicken breast with herbs and spices</div>
+                <div class="menu-item-footer">
+                    <div class="price-section">
+                        <div class="menu-item-price">18.99 EGP <span class="menu-item-old-price">20.00 EGP</span></div>
+                    </div>
+                    <button class="add-btn add-to-cart"
+                            data-item-id="5"
+                            data-item-name="Grilled Chicken"
+                            data-item-price="18.99"
+                            onclick="event.stopPropagation(); addToCartFromButton(this)">
+                        +
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-item-card" data-category="grills" style="display: none;" onclick="showItemDetail('BBQ Ribs', 'Tender BBQ ribs with smoky sauce', '22.99', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop')">
+            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=80&h=80&fit=crop" class="menu-item-image" alt="BBQ Ribs">
+            <div class="menu-item-content">
+                <div class="menu-item-title">BBQ Ribs</div>
+                <div class="menu-item-description">Tender BBQ ribs with smoky sauce</div>
+                <div class="menu-item-footer">
+                    <div class="price-section">
+                        <div class="menu-item-price">22.99 EGP <span class="menu-item-old-price">25.00 EGP</span></div>
+                    </div>
+                    <button class="add-btn add-to-cart"
+                            data-item-id="6"
+                            data-item-name="BBQ Ribs"
+                            data-item-price="22.99"
+                            onclick="event.stopPropagation(); addToCartFromButton(this)">
+                        +
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services section removed -->
+</div>
+
+<!-- Item Detail Modal is now in base template -->
+
+<!-- Cart Success Modal is now in base template for system-wide use -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Cart is now handled by the unified cart system in cart.js
+let currentItem = {};
+
+// Category tab filtering
+document.querySelectorAll('.category-tab').forEach(button => {
+    button.addEventListener('click', function() {
+        const meal = this.dataset.meal;
+
+        // Update active button
+        document.querySelectorAll('.category-tab').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        this.classList.add('active');
+
+        // Filter logic can be added here based on meal type
+        console.log('Selected meal:', meal);
+    });
+});
+
+// Subcategory tab filtering
+document.querySelectorAll('.subcategory-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        const category = this.dataset.type;
+
+        // Update active tab
+        document.querySelectorAll('.subcategory-tab').forEach(t => {
+            t.classList.remove('active');
+        });
+        this.classList.add('active');
+
+        // Filter menu items
+        document.querySelectorAll('.menu-item-card').forEach(item => {
+            if (category === 'pasta' && item.dataset.category === 'pasta') {
+                item.style.display = 'flex';
+            } else if (category === 'grills' && item.dataset.category === 'grills') {
+                item.style.display = 'flex';
+            } else if (category === 'pasta') {
+                item.style.display = item.dataset.category === 'pasta' ? 'flex' : 'none';
+            } else if (category === 'grills') {
+                item.style.display = item.dataset.category === 'grills' ? 'flex' : 'none';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+});
+
+// Services toggle functions removed
+
+// Show enhanced item detail modal
+function showItemDetail(name, ingredients, price, image) {
+    currentItem = { name, ingredients, price, image };
+
+    // Set basic item information
+    document.getElementById('modalItemName').textContent = name;
+    document.getElementById('modalItemIngredients').textContent = ingredients;
+    document.getElementById('modalItemPrice').textContent = price;
+    document.getElementById('modalTotalPrice').textContent = price;
+    document.getElementById('itemQuantity').textContent = '1';
+
+    // Set image with error handling
+    const modalImage = document.getElementById('modalItemImage');
+    console.log('Setting image URL:', image); // Debug log
+    modalImage.src = image;
+    modalImage.onload = function() {
+        console.log('Image loaded successfully:', image);
+    };
+    modalImage.onerror = function() {
+        console.log('Image failed to load, using fallback:', image);
+        // Fallback image if the original fails to load
+        this.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop';
+    };
+
+    // Set category badge based on item name
+    const categoryBadge = document.getElementById('modalItemCategory');
+    if (name.toLowerCase().includes('pasta') || name.toLowerCase().includes('spaghetti') || name.toLowerCase().includes('alfredo') || name.toLowerCase().includes('fettuccine')) {
+        categoryBadge.textContent = 'Pasta';
+    } else if (name.toLowerCase().includes('chicken') || name.toLowerCase().includes('grilled') || name.toLowerCase().includes('bbq') || name.toLowerCase().includes('ribs')) {
+        categoryBadge.textContent = 'Grills';
+    } else {
+        categoryBadge.textContent = 'Special';
+    }
+
+    // Clear special instructions
+    document.getElementById('specialInstructions').value = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('itemDetailModal'));
+    modal.show();
+}
+
+// Enhanced quantity controls with price update
+function updateModalPrice() {
+    const qty = parseInt(document.getElementById('itemQuantity').textContent);
+    const basePrice = parseFloat(currentItem.price);
+    const totalPrice = (basePrice * qty).toFixed(2);
+    document.getElementById('modalTotalPrice').textContent = totalPrice;
+}
+
+// Override the global add to cart modal functionality for menu page
+document.addEventListener('DOMContentLoaded', function() {
+    const addToCartBtn = document.getElementById('addToCartModal');
+    if (addToCartBtn) {
+        // Remove existing listeners and add menu-specific one
+        addToCartBtn.replaceWith(addToCartBtn.cloneNode(true));
+        const newBtn = document.getElementById('addToCartModal');
+
+        newBtn.addEventListener('click', function() {
+            const qty = parseInt(document.getElementById('itemQuantity').textContent);
+            const specialInstructions = document.getElementById('specialInstructions').value;
+
+            // Check if we're editing an existing cart item
+            if (window.editingCartItem) {
+                const itemId = window.editingCartItem.id;
+                const itemIndex = unifiedCart.findIndex(item => item.id === itemId);
+
+                if (itemIndex !== -1) {
+                    // Update the existing item
+                    unifiedCart[itemIndex].quantity = qty;
+                    unifiedCart[itemIndex].specialInstructions = specialInstructions;
+
+                    // Save changes
+                    saveCartToStorage();
+                    updateCartDisplay();
+                    updateCartCount();
+
+                    // Reset modal state
+                    resetItemDetailModal();
+
+                    // Hide detail modal
+                    bootstrap.Modal.getInstance(document.getElementById('itemDetailModal')).hide();
+
+                    // Show cart modal again
+                    setTimeout(() => {
+                        openCartModal();
+                    }, 300);
+
+                    safeShowNotification('Success', 'Item updated successfully', 'success');
+                    return;
+                }
+            }
+
+            // Regular add to cart functionality
+            const cartItem = {
+                id: currentItem.id || Date.now().toString(), // Generate ID if not available
+                name: currentItem.name,
+                price: parseFloat(currentItem.price),
+                quantity: qty,
+                specialInstructions: specialInstructions,
+                image: currentItem.image,
+                category: currentItem.category || 'Main Course'
+            };
+
+            // Add item using unified cart system
+            if (addToCart(cartItem)) {
+                // Reset modal state
+                resetItemDetailModal();
+
+                // Hide detail modal
+                bootstrap.Modal.getInstance(document.getElementById('itemDetailModal')).hide();
+
+                // Show success modal for new items
+                const successModal = new bootstrap.Modal(document.getElementById('cartSuccessModal'));
+                successModal.show();
+            }
+        });
+    }
+});
+
+// Add to cart directly - using unified cart system
+function addToCartFromButton(button) {
+    const itemId = button.dataset.itemId;
+    const itemName = button.dataset.itemName;
+    const itemPrice = parseFloat(button.dataset.itemPrice);
+    const itemImage = button.dataset.itemImage || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300&h=200&fit=crop';
+
+    const cartItem = {
+        id: itemId,
+        name: itemName,
+        price: itemPrice,
+        quantity: 1,
+        specialInstructions: '',
+        image: itemImage
+    };
+
+    // Use unified cart system
+    if (addToCart(cartItem)) {
+        // Show success modal
+        const successModal = new bootstrap.Modal(document.getElementById('cartSuccessModal'));
+        successModal.show();
+    }
+}
+
+
+
+// Cart display and count functions are now handled by the unified cart system
+
+// Edit cart item function is now handled by the global cart.js
+
+// View cart functionality is now handled in base template
+
+// Search functionality
+document.getElementById('searchBox').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    document.querySelectorAll('.menu-item-card').forEach(item => {
+        const title = item.querySelector('.menu-item-title').textContent.toLowerCase();
+        const description = item.querySelector('.menu-item-description').textContent.toLowerCase();
+
+        if (title.includes(searchTerm) || description.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// Checkout functionality is now handled by the global cart modal in base template
+
+// Initialize menu page
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Menu page loaded');
+    // Modal initialization is now handled by base template
+});
+
+// Menu page now uses global cart modal and suggested items from base template
+</script>
+{% endblock %}
