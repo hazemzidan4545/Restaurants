@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Restaurant Management System{% endblock %}</title>
     
     <!-- Bootstrap 5 CSS -->
@@ -239,6 +240,138 @@
         border-left: 4px solid var(--primary-yellow);
         font-size: 0.95rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Description Section */
+    .description-section {
+        margin-bottom: 20px;
+    }
+
+    .description-text {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 12px;
+        color: #555;
+        line-height: 1.6;
+        margin: 0;
+        font-size: 0.95rem;
+        font-style: italic;
+        border-left: 4px solid var(--primary-yellow);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Nutritional Info Section */
+    .nutrition-section {
+        margin-bottom: 20px;
+    }
+
+    .nutrition-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .nutrition-item {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .nutrition-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-yellow);
+    }
+
+    .nutrition-icon {
+        margin-bottom: 8px;
+    }
+
+    .nutrition-icon i {
+        font-size: 1.5rem;
+        color: var(--primary-yellow);
+    }
+
+    .nutrition-value {
+        display: block;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+    }
+
+    .nutrition-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+
+    /* Special Features Section */
+    .features-section {
+        margin-bottom: 20px;
+    }
+
+    .features-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .feature-badge {
+        background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+        color: var(--text-dark);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .feature-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .feature-badge.spicy {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        color: white;
+    }
+
+    .feature-badge.vegetarian {
+        background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        color: white;
+    }
+
+    .feature-badge.vegan {
+        background: linear-gradient(135deg, #69db7c 0%, #51cf66 100%);
+        color: white;
+    }
+
+    .feature-badge.featured {
+        background: linear-gradient(135deg, #ffd43b 0%, #fab005 100%);
+        color: var(--text-dark);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .feature-badge i {
+        font-size: 0.9rem;
     }
 
     /* Quantity Section */
@@ -602,10 +735,7 @@
             line-height: 18px !important;
         }
 
-        /* Hide language icon on very small screens to save space */
-        .nav-icon[title="Language"] {
-            display: none !important;
-        }
+
 
         /* Adjust navbar padding for mobile */
         .container-fluid.px-4 {
@@ -665,9 +795,9 @@
             font-weight: bold;
         }
 
-        /* Hide mobile menu toggle on desktop */
+        /* Keep mobile menu toggle visible on desktop too */
         .mobile-menu-toggle {
-            display: none !important;
+            display: flex !important;
         }
     }
 
@@ -1406,6 +1536,384 @@
         cursor: not-allowed;
         transform: none;
     }
+
+    /* Mobile Hamburger Menu Styles */
+    .mobile-menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 9998;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .mobile-menu-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .mobile-menu-sidebar {
+        position: fixed;
+        top: 0;
+        right: -350px;
+        width: 350px;
+        height: 100%;
+        background: linear-gradient(180deg, #000000 0%, #1a1a1a 100%);
+        z-index: 9999;
+        transition: right 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+        border-left: 1px solid rgba(243, 205, 33, 0.2);
+        will-change: transform;
+    }
+
+    .mobile-menu-sidebar.active {
+        right: 0;
+    }
+
+    .mobile-menu-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 25px 20px;
+        border-bottom: 2px solid rgba(243, 205, 33, 0.3);
+        background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+        position: relative;
+    }
+
+    .mobile-menu-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #f3cd21 50%, transparent 100%);
+    }
+
+    .mobile-menu-logo .mobile-logo {
+        height: 35px;
+        width: auto;
+    }
+
+    .mobile-menu-close {
+        background: #f3cd21;
+        border: none;
+        color: #000;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        transition: background-color 0.3s ease;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-menu-close:hover {
+        background: #e6b800;
+    }
+
+    .mobile-menu-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 30px 0;
+        background: linear-gradient(180deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+    }
+
+    .mobile-user-info {
+        display: flex;
+        align-items: center;
+        padding: 0 25px 25px;
+        border-bottom: 2px solid rgba(243, 205, 33, 0.2);
+        margin-bottom: 25px;
+        position: relative;
+        background: linear-gradient(135deg, rgba(243, 205, 33, 0.05) 0%, transparent 100%);
+    }
+
+    .mobile-user-info::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 25px;
+        right: 25px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #f3cd21 50%, transparent 100%);
+    }
+
+    .mobile-user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f3cd21 0%, #e6b800 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        overflow: hidden;
+        border: 2px solid rgba(243, 205, 33, 0.3);
+    }
+
+    .mobile-user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .mobile-user-avatar i {
+        color: #000;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .mobile-user-details {
+        flex: 1;
+    }
+
+    .mobile-user-name {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 4px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .mobile-user-role {
+        color: #f3cd21;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        background: linear-gradient(90deg, #f3cd21, #e6b800);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .mobile-nav-links {
+        padding: 0 15px;
+    }
+
+    .mobile-nav-link {
+        display: flex;
+        align-items: center;
+        padding: 16px 20px;
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        border-radius: 12px;
+        margin-bottom: 6px;
+        transition: all 0.3s ease;
+        position: relative;
+        background: transparent;
+        border: 1px solid transparent;
+        will-change: transform;
+    }
+
+    .mobile-nav-link:hover {
+        background: rgba(243, 205, 33, 0.1);
+        color: #f3cd21;
+        text-decoration: none;
+        transform: translateX(8px);
+        border-color: rgba(243, 205, 33, 0.2);
+    }
+
+    .mobile-nav-link i {
+        width: 22px;
+        margin-right: 16px;
+        font-size: 16px;
+        transition: color 0.3s ease;
+    }
+
+    .mobile-nav-link:hover i {
+        color: #f3cd21;
+    }
+
+    .mobile-nav-link span {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-nav-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(243, 205, 33, 0.3) 50%, transparent 100%);
+        margin: 25px 20px;
+        border-radius: 1px;
+        position: relative;
+    }
+
+    .mobile-nav-divider::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 6px;
+        height: 6px;
+        background: #f3cd21;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(243, 205, 33, 0.5);
+    }
+
+    .mobile-menu-footer {
+        padding: 25px 20px;
+        border-top: 2px solid rgba(243, 205, 33, 0.3);
+        background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+        position: relative;
+    }
+
+    .mobile-menu-footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #f3cd21 50%, transparent 100%);
+    }
+
+    .mobile-logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 16px;
+        background: rgba(220, 53, 69, 0.1);
+        color: #ff6b6b;
+        text-decoration: none;
+        border-radius: 12px;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .mobile-logout-btn:hover {
+        background: rgba(220, 53, 69, 0.2);
+        color: #ff4757;
+        text-decoration: none;
+        border-color: rgba(220, 53, 69, 0.5);
+    }
+
+    .mobile-logout-btn i {
+        margin-right: 10px;
+    }
+
+    /* Allow mobile menu on all screen sizes */
+    /* Removed desktop hiding restriction */
+
+    /* Adjust mobile menu for smaller screens */
+    @media (max-width: 480px) {
+        .mobile-menu-sidebar {
+            width: 320px;
+            right: -320px;
+        }
+
+        .mobile-nav-link {
+            padding: 16px 18px;
+        }
+
+        .mobile-user-info {
+            padding: 0 20px 20px;
+        }
+    }
+
+    /* Hamburger menu styling to match other nav icons */
+    .mobile-menu-toggle {
+        /* Inherits nav-icon styling */
+        cursor: pointer !important;
+    }
+
+    .mobile-menu-toggle.active {
+        background: rgba(243, 205, 33, 0.2) !important;
+        color: #f3cd21 !important;
+    }
+
+    /* Hamburger menu styling for all screen sizes */
+    .mobile-menu-toggle {
+        display: flex !important;
+        order: 999;
+        margin-left: 10px;
+        z-index: 1001;
+        position: relative;
+    }
+
+    .navbar-nav {
+        order: 1000;
+    }
+
+    /* Ensure hamburger is visible even on very small screens */
+    @media (max-width: 576px) {
+        .mobile-menu-toggle {
+            font-size: 1.2rem;
+            padding: 8px 12px;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+
+    /* Force hamburger menu to be visible on all screen sizes */
+    .mobile-menu-toggle {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* Ensure it's always on top */
+    .navbar .nav-icons {
+        z-index: 1050;
+    }
+
+    /* Subtle active nav link styling */
+    .mobile-nav-link.active {
+        background: linear-gradient(135deg, rgba(243, 205, 33, 0.08) 0%, rgba(243, 205, 33, 0.03) 100%);
+        color: rgba(255, 255, 255, 0.95);
+        border-color: rgba(243, 205, 33, 0.2);
+        transform: translateX(3px);
+    }
+
+    .mobile-nav-link.active::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 20px;
+        background: #f3cd21;
+        border-radius: 0 2px 2px 0;
+    }
+
+    .mobile-nav-link.active i {
+        color: #f3cd21;
+    }
+
+    /* Mobile navigation badge */
+    .mobile-nav-badge {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #dc3545;
+        color: white;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 10px;
+        min-width: 18px;
+        text-align: center;
+        line-height: 1.2;
+    }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -1425,19 +1933,171 @@
                 <a href="#" class="nav-icon" title="Notifications">
                     <i class="fas fa-bell"></i>
                 </a>
-                <a href="#" class="nav-icon" title="Language">
-                    <i class="fas fa-globe"></i>
-                </a>
                 <a href="#" class="nav-icon cart-nav-icon" title="Cart" onclick="openCartModal(); return false;" style="position: relative;">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-badge" id="globalCartCount">0</span>
                 </a>
-                <a href="#" class="nav-icon mobile-menu-toggle" title="Menu">
+                <a href="javascript:void(0);" class="nav-icon mobile-menu-toggle" title="Menu" id="mobileMenuToggle">
                     <i class="fas fa-bars"></i>
                 </a>
             </div>
         </div>
     </nav>
+
+    <!-- Mobile Hamburger Menu -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+    <div class="mobile-menu-sidebar" id="mobileMenuSidebar">
+        <div class="mobile-menu-header">
+            <div class="mobile-menu-logo">
+                <img src="{{ url_for('static', filename='images/image.png') }}" alt="Logo" class="mobile-logo">
+            </div>
+            <button class="mobile-menu-close" id="mobileMenuClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="mobile-menu-content">
+            {% if current_user.is_authenticated %}
+                <!-- User Info Section -->
+                <div class="mobile-user-info">
+                    <div class="mobile-user-avatar">
+                        {% if current_user.profile_img %}
+                            <img src="{{ url_for('main.uploaded_file', filename='profile_images/' + current_user.profile_img) }}" alt="Profile">
+                        {% else %}
+                            <i class="fas fa-user"></i>
+                        {% endif %}
+                    </div>
+                    <div class="mobile-user-details">
+                        <div class="mobile-user-name">{{ current_user.name }}</div>
+                        <div class="mobile-user-role">{{ current_user.role.title() }}</div>
+                    </div>
+                </div>
+
+                <!-- Navigation Links based on user role -->
+                <nav class="mobile-nav-links">
+                    {% if current_user.is_admin() %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="mobile-nav-link">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="{{ url_for('admin.menu_management') }}" class="mobile-nav-link">
+                            <i class="fas fa-utensils"></i>
+                            <span>Menu Management</span>
+                        </a>
+                        <a href="{{ url_for('admin.category_management') }}" class="mobile-nav-link">
+                            <i class="fas fa-tags"></i>
+                            <span>Categories</span>
+                        </a>
+                        <a href="#" class="mobile-nav-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Orders</span>
+                            <span class="mobile-nav-badge">3</span>
+                        </a>
+                        <a href="#" class="mobile-nav-link">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                        <a href="#" class="mobile-nav-link">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Reports</span>
+                        </a>
+                    {% elif current_user.is_waiter() %}
+                        <a href="{{ url_for('waiter.dashboard') }}" class="mobile-nav-link">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="#" class="mobile-nav-link">
+                            <i class="fas fa-list"></i>
+                            <span>Orders</span>
+                        </a>
+                        <a href="#" class="mobile-nav-link">
+                            <i class="fas fa-bell"></i>
+                            <span>Service Requests</span>
+                        </a>
+                        <a href="#" class="mobile-nav-link">
+                            <i class="fas fa-table"></i>
+                            <span>Tables</span>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('customer.menu') }}" class="mobile-nav-link">
+                            <i class="fas fa-utensils"></i>
+                            <span>Menu</span>
+                        </a>
+                        <a href="#" class="mobile-nav-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>My Orders</span>
+                        </a>
+                        <a href="{{ url_for('customer.profile') }}" class="mobile-nav-link">
+                            <i class="fas fa-user"></i>
+                            <span>Profile</span>
+                        </a>
+                        <a href="#" class="mobile-nav-link">
+                            <i class="fas fa-gift"></i>
+                            <span>Loyalty Points</span>
+                        </a>
+                    {% endif %}
+
+                    <!-- Common Links -->
+                    <div class="mobile-nav-divider"></div>
+                    <a href="#" class="mobile-nav-link" id="mobileLanguageLink">
+                        <i class="fas fa-globe"></i>
+                        <span>Language</span>
+                    </a>
+                    <a href="#" class="mobile-nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="#" class="mobile-nav-link">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Help & Support</span>
+                    </a>
+                </nav>
+            {% else %}
+                <!-- Guest User Navigation -->
+                <nav class="mobile-nav-links">
+                    <a href="{{ url_for('main.index') }}" class="mobile-nav-link">
+                        <i class="fas fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                    <a href="{{ url_for('customer.menu') }}" class="mobile-nav-link">
+                        <i class="fas fa-utensils"></i>
+                        <span>Menu</span>
+                    </a>
+                    <a href="#" class="mobile-nav-link">
+                        <i class="fas fa-info-circle"></i>
+                        <span>About</span>
+                    </a>
+                    <a href="#" class="mobile-nav-link">
+                        <i class="fas fa-phone"></i>
+                        <span>Contact</span>
+                    </a>
+
+                    <div class="mobile-nav-divider"></div>
+                    <a href="#" class="mobile-nav-link" id="mobileLanguageLinkGuest">
+                        <i class="fas fa-globe"></i>
+                        <span>Language</span>
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="mobile-nav-link">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Login</span>
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="mobile-nav-link">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Register</span>
+                    </a>
+                </nav>
+            {% endif %}
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <div class="mobile-menu-footer">
+            <a href="{{ url_for('auth.logout') }}" class="mobile-logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -1640,23 +2300,121 @@
             });
         }
 
-        // Language selector
-        const languageIcon = document.querySelector('.nav-icon[title="Language"]');
-        if (languageIcon) {
-            languageIcon.addEventListener('click', function(e) {
+        // Mobile Language selector
+        const mobileLanguageLink = document.getElementById('mobileLanguageLink');
+        const mobileLanguageLinkGuest = document.getElementById('mobileLanguageLinkGuest');
+
+        if (mobileLanguageLink) {
+            mobileLanguageLink.addEventListener('click', function(e) {
                 e.preventDefault();
                 alert('Language selection coming soon!');
             });
         }
 
-        // Mobile menu toggle
-        const menuIcon = document.querySelector('.mobile-menu-toggle');
-        if (menuIcon) {
-            menuIcon.addEventListener('click', function(e) {
+        if (mobileLanguageLinkGuest) {
+            mobileLanguageLinkGuest.addEventListener('click', function(e) {
                 e.preventDefault();
-                alert('Mobile menu coming soon!');
+                alert('Language selection coming soon!');
             });
         }
+
+        // Mobile hamburger menu functionality
+        const menuIcon = document.querySelector('.mobile-menu-toggle');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+        const mobileMenuSidebar = document.getElementById('mobileMenuSidebar');
+        const mobileMenuClose = document.getElementById('mobileMenuClose');
+
+        function openMobileMenu() {
+            if (mobileMenuOverlay && mobileMenuSidebar) {
+                mobileMenuOverlay.classList.add('active');
+                mobileMenuSidebar.classList.add('active');
+                if (menuIcon) menuIcon.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeMobileMenu() {
+            if (mobileMenuOverlay && mobileMenuSidebar) {
+                mobileMenuOverlay.classList.remove('active');
+                mobileMenuSidebar.classList.remove('active');
+                if (menuIcon) menuIcon.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        if (menuIcon) {
+            // Remove any existing event listeners
+            const newMenuIcon = menuIcon.cloneNode(true);
+            menuIcon.parentNode.replaceChild(newMenuIcon, menuIcon);
+
+            // Add our event listener to the new element
+            newMenuIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                openMobileMenu();
+                return false;
+            });
+        }
+
+        if (mobileMenuClose) {
+            mobileMenuClose.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeMobileMenu();
+            });
+        }
+
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.addEventListener('click', function(e) {
+                if (e.target === mobileMenuOverlay) {
+                    closeMobileMenu();
+                }
+            });
+        }
+
+        // Close mobile menu on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileMenuSidebar.classList.contains('active')) {
+                closeMobileMenu();
+            }
+        });
+
+        // Close mobile menu when clicking on nav links
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                // Small delay to allow navigation to start
+                setTimeout(closeMobileMenu, 100);
+            });
+        });
+
+        // Highlight current page in mobile navigation
+        function highlightCurrentPage() {
+            const currentPath = window.location.pathname;
+            mobileNavLinks.forEach(link => {
+                // Remove active class from all links first
+                link.classList.remove('active');
+
+                // Skip links that point to # (placeholder links)
+                if (link.getAttribute('href') === '#') {
+                    return;
+                }
+
+                // Only add active class for exact matches
+                try {
+                    const linkPath = new URL(link.href).pathname;
+                    if (linkPath === currentPath) {
+                        link.classList.add('active');
+                    }
+                } catch (e) {
+                    // Skip invalid URLs
+                    console.warn('Invalid URL in navigation link:', link.href);
+                }
+            });
+        }
+
+        // Call highlight function on page load
+        highlightCurrentPage();
     });
 
     // Cart functionality is now handled by cart.js
@@ -2017,6 +2775,15 @@
                             <span class="old-price">16.99 EGP</span>
                         </div>
 
+                        <!-- Description Section -->
+                        <div class="description-section">
+                            <h6 class="section-title">
+                                <i class="fas fa-align-left"></i>
+                                Description
+                            </h6>
+                            <p id="modalItemDescription" class="description-text"></p>
+                        </div>
+
                         <!-- Ingredients Section -->
                         <div class="ingredients-section">
                             <h6 class="section-title">
@@ -2024,6 +2791,50 @@
                                 Ingredients
                             </h6>
                             <p id="modalItemIngredients" class="ingredients-text"></p>
+                        </div>
+
+                        <!-- Nutritional Info Section -->
+                        <div class="nutrition-section">
+                            <div class="nutrition-grid">
+                                <div class="nutrition-item">
+                                    <div class="nutrition-icon">
+                                        <i class="fas fa-fire"></i>
+                                    </div>
+                                    <div class="nutrition-info">
+                                        <span class="nutrition-value" id="modalItemCalories">-</span>
+                                        <span class="nutrition-label">Calories</span>
+                                    </div>
+                                </div>
+                                <div class="nutrition-item">
+                                    <div class="nutrition-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="nutrition-info">
+                                        <span class="nutrition-value" id="modalItemPrepTime">-</span>
+                                        <span class="nutrition-label">Prep Time</span>
+                                    </div>
+                                </div>
+                                <div class="nutrition-item">
+                                    <div class="nutrition-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="nutrition-info">
+                                        <span class="nutrition-value" id="modalItemAllergens">None</span>
+                                        <span class="nutrition-label">Allergens</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Special Features Section -->
+                        <div class="features-section" id="modalFeaturesSection" style="display: none;">
+                            <h6 class="section-title">
+                                <i class="fas fa-star"></i>
+                                Special Features
+                            </h6>
+                            <div class="features-badges" id="modalFeaturesBadges">
+                                <!-- Dynamic badges will be added here -->
+                            </div>
                         </div>
 
                         <!-- Quantity Section -->

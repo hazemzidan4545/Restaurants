@@ -43,6 +43,7 @@ class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'sqlite:///restaurant_dev.db'
+    WTF_CSRF_ENABLED = False  # Disable CSRF for development
 
 class TestingConfig(Config):
     """Testing configuration."""

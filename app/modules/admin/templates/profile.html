@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-content">
+    <div class="content-header">
+        <h1 class="page-title">Profile</h1>
+    </div>
+
+    <div class="profile-container">
+        <!-- User Photo Section -->
+        <div class="profile-section">
+            <h2 class="section-title">User Photo</h2>
+            <div class="photo-section">
+                <div class="avatar-container">
+                    <div class="avatar-circle">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <button class="edit-photo-btn">Edit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Name Section -->
+        <div class="profile-section">
+            <h2 class="section-title">User Name</h2>
+            <div class="input-group">
+                <input type="text" class="profile-input" value="{{ profile.name }}" readonly>
+                <button class="edit-btn" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- User Email Section -->
+        <div class="profile-section">
+            <h2 class="section-title">User Email</h2>
+            <div class="input-group">
+                <input type="email" class="profile-input" value="{{ profile.email }}" readonly>
+                <button class="edit-btn" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- User Number Section -->
+        <div class="profile-section">
+            <h2 class="section-title">User Number</h2>
+            <div class="input-group">
+                <input type="tel" class="profile-input" value="{{ profile.phone }}" readonly>
+                <button class="edit-btn" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .profile-section {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .profile-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .photo-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .avatar-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .avatar-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 25px rgba(243, 205, 33, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .avatar-circle:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 35px rgba(243, 205, 33, 0.4);
+    }
+
+    .avatar-circle i {
+        font-size: 48px;
+        color: var(--primary-dark);
+    }
+
+    .edit-photo-btn {
+        background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+        color: var(--primary-dark);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(243, 205, 33, 0.3);
+    }
+
+    .edit-photo-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(243, 205, 33, 0.4);
+    }
+
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        position: relative;
+    }
+
+    .profile-input {
+        flex: 1;
+        padding: 15px 20px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        color: var(--primary-dark);
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        outline: none;
+    }
+
+    .profile-input:focus {
+        border-color: var(--primary-yellow);
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 0 3px rgba(243, 205, 33, 0.1);
+    }
+
+    .profile-input:read-only {
+        cursor: default;
+    }
+
+    .edit-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 16px;
+    }
+
+    .edit-btn:hover {
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(243, 205, 33, 0.3);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .profile-container {
+            padding: 15px;
+        }
+
+        .profile-section {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .avatar-circle {
+            width: 100px;
+            height: 100px;
+        }
+
+        .avatar-circle i {
+            font-size: 40px;
+        }
+
+        .input-group {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .edit-btn {
+            align-self: flex-end;
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    /* Animation for smooth transitions */
+    .profile-section {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .profile-section:nth-child(1) { animation-delay: 0.1s; }
+    .profile-section:nth-child(2) { animation-delay: 0.2s; }
+    .profile-section:nth-child(3) { animation-delay: 0.3s; }
+    .profile-section:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Edit button functionality
+    const editButtons = document.querySelectorAll('.edit-btn');
+    
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const input = this.parentElement.querySelector('.profile-input');
+            
+            if (input.readOnly) {
+                input.readOnly = false;
+                input.focus();
+                input.select();
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                this.style.background = 'var(--primary-yellow)';
+                this.style.color = 'var(--primary-dark)';
+            } else {
+                input.readOnly = true;
+                this.innerHTML = '<i class="fas fa-edit"></i>';
+                this.style.background = '';
+                this.style.color = '';
+                
+                // Here you would typically save the data
+                console.log('Saving:', input.value);
+            }
+        });
+    });
+
+    // Photo edit functionality
+    const editPhotoBtn = document.querySelector('.edit-photo-btn');
+    if (editPhotoBtn) {
+        editPhotoBtn.addEventListener('click', function() {
+            // Create file input
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const avatarCircle = document.querySelector('.avatar-circle');
+                        avatarCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            document.body.removeChild(fileInput);
+        });
+    }
+});
+</script>
+{% endblock %}

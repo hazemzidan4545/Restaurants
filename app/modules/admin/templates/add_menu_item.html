@@ -1,0 +1,1260 @@
+{% extends "base.html" %}
+
+{% block title %}Add Menu Item - Admin Dashboard{% endblock %}
+{% block page_title %}Add Menu Item{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="admin-card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="card-title">
+                <i class="fas fa-plus"></i>
+                Add Menu Item
+            </h2>
+            <a href="{{ url_for('admin.menu_management') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Menu
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Form Section -->
+<div class="row justify-content-center">
+    <div class="col-md-12 col-lg-10">
+        <div class="admin-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-utensils"></i>
+                    Menu Item Information
+                </h3>
+                <div class="form-progress">
+                    <div class="progress-bar" id="formProgress"></div>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="addMenuItemForm" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <!-- Basic Information Section -->
+                    <div class="form-section mb-4">
+                        <h4 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Basic Information
+                        </h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">
+                                        <i class="fas fa-tag me-1"></i>Item Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="name" name="name" required
+                                           placeholder="e.g., Grilled Chicken, Fresh Orange Juice"
+                                           data-validation="required|min:2|max:100">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">Enter a descriptive name for your menu item</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="category_id" class="form-label">
+                                        <i class="fas fa-folder me-1"></i>Category <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <select class="form-select" id="category_id" name="category_id" required
+                                                data-validation="required">
+                                            <option value="">Select a category</option>
+                                            {% for category in categories %}
+                                            <option value="{{ category.category_id }}">{{ category.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-outline-secondary" id="addCategoryBtn"
+                                                title="Add New Category">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">Choose the appropriate category for this item</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">
+                                        <i class="fas fa-dollar-sign me-1"></i>Price (EGP) <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">EGP</span>
+                                        <input type="number" class="form-control" id="price" name="price"
+                                               step="0.01" min="0.01" required placeholder="0.00"
+                                               data-validation="required|min:0.01|max:9999.99">
+                                        <button type="button" class="btn btn-outline-info" id="priceCalculator"
+                                                title="Price Calculator">
+                                            <i class="fas fa-calculator"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">Set the selling price for this item</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="stock" class="form-label">
+                                        <i class="fas fa-boxes me-1"></i>Initial Stock
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="stock" name="stock"
+                                               min="0" value="0" placeholder="0"
+                                               data-validation="min:0|max:99999">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input" type="checkbox" id="unlimitedStock">
+                                            <label class="form-check-label ms-1" for="unlimitedStock">Unlimited</label>
+                                        </div>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">Set initial stock quantity (0 for unlimited)</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">
+                                        <i class="fas fa-toggle-on me-1"></i>Status
+                                    </label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="available" selected>Available</option>
+                                        <option value="out_of_stock">Out of Stock</option>
+                                        <option value="discontinued">Discontinued</option>
+                                    </select>
+                                    <div class="form-text">Set the availability status</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="preparation_time" class="form-label">
+                                        <i class="fas fa-clock me-1"></i>Preparation Time (minutes)
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="preparation_time"
+                                               name="preparation_time" min="1" max="180" placeholder="15"
+                                               data-validation="min:1|max:180">
+                                        <span class="input-group-text">min</span>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">Estimated preparation time</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description & Details Section -->
+                    <div class="form-section mb-4">
+                        <h4 class="section-title">
+                            <i class="fas fa-align-left"></i>
+                            Description & Details
+                        </h4>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">
+                                        <i class="fas fa-file-alt me-1"></i>Description
+                                    </label>
+                                    <textarea class="form-control" id="description" name="description" rows="4"
+                                              placeholder="Describe the item, ingredients, preparation method, allergens, etc."
+                                              data-validation="max:500"></textarea>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">
+                                        <span id="descriptionCount">0</span>/500 characters
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="ingredients" class="form-label">
+                                        <i class="fas fa-list me-1"></i>Ingredients
+                                    </label>
+                                    <textarea class="form-control" id="ingredients" name="ingredients" rows="3"
+                                              placeholder="List main ingredients separated by commas"
+                                              data-validation="max:300"></textarea>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">
+                                        <span id="ingredientsCount">0</span>/300 characters
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="allergens" class="form-label">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>Allergens
+                                            </label>
+                                            <input type="text" class="form-control" id="allergens" name="allergens"
+                                                   placeholder="e.g., Nuts, Dairy, Gluten"
+                                                   data-validation="max:100">
+                                            <div class="invalid-feedback"></div>
+                                            <div class="form-text">Common allergens present</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="calories" class="form-label">
+                                                <i class="fas fa-fire me-1"></i>Calories (per serving)
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="calories" name="calories"
+                                                       min="0" max="9999" placeholder="250"
+                                                       data-validation="min:0|max:9999">
+                                                <span class="input-group-text">kcal</span>
+                                            </div>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="image" class="form-label">
+                                        <i class="fas fa-image me-1"></i>Item Image
+                                    </label>
+                                    <div class="image-upload-area" id="imageUploadArea">
+                                        <input type="file" class="form-control d-none" id="image" name="image"
+                                               accept="image/png,image/jpg,image/jpeg,image/gif,image/webp"
+                                               data-validation="file|max-size:16MB">
+                                        <div class="upload-placeholder" id="uploadPlaceholder">
+                                            <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                            <p class="mb-2">Click to upload image</p>
+                                            <p class="text-muted small">PNG, JPG, JPEG, GIF, WebP</p>
+                                            <p class="text-muted small">Max size: 16MB</p>
+                                        </div>
+                                        <div class="image-preview" id="imagePreview" style="display: none;">
+                                            <img id="previewImg" src="" alt="Preview" class="preview-image">
+                                            <div class="image-overlay">
+                                                <button type="button" class="btn btn-sm btn-outline-light" id="changeImage">
+                                                    <i class="fas fa-edit me-1"></i>Change
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeImage">
+                                                    <i class="fas fa-trash me-1"></i>Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Additional Options -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-star me-1"></i>Special Options
+                                    </label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured">
+                                        <label class="form-check-label" for="is_featured">
+                                            Featured Item
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_spicy" name="is_spicy">
+                                        <label class="form-check-label" for="is_spicy">
+                                            Spicy
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_vegetarian" name="is_vegetarian">
+                                        <label class="form-check-label" for="is_vegetarian">
+                                            Vegetarian
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_vegan" name="is_vegan">
+                                        <label class="form-check-label" for="is_vegan">
+                                            Vegan
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-summary">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>Form Completion
+                                    </h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar" id="completionProgress" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted" id="completionText">Fill required fields to continue</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-outline-secondary" id="previewBtn">
+                                        <i class="fas fa-eye me-2"></i>Preview
+                                    </button>
+                                    <a href="{{ url_for('admin.menu_management') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                        <span class="spinner-border spinner-border-sm d-none me-2" id="submitSpinner"></span>
+                                        <i class="fas fa-save me-2" id="submitIcon"></i>
+                                        <span id="submitText">Add Menu Item</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>Menu Item Preview
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="menu-item-preview">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="preview-image-container">
+                                <img id="previewModalImage" src="" alt="Item Image" class="img-fluid rounded">
+                                <div class="no-image-placeholder" id="previewNoImage">
+                                    <i class="fas fa-image fa-3x"></i>
+                                    <p>No Image</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h4 id="previewName" class="mb-2"></h4>
+                            <p class="text-muted mb-2" id="previewCategory"></p>
+                            <p id="previewDescription" class="mb-3"></p>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Price:</strong> <span id="previewPrice" class="text-primary"></span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Stock:</strong> <span id="previewStock"></span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Prep Time:</strong> <span id="previewPrepTime"></span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Calories:</strong> <span id="previewCalories"></span>
+                                </div>
+                            </div>
+                            <div class="mb-3" id="previewIngredients"></div>
+                            <div class="mb-3" id="previewAllergens"></div>
+                            <div class="mb-3" id="previewOptions"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('addMenuItemForm').submit()">
+                    <i class="fas fa-save me-2"></i>Save Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add New Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCategoryForm">
+                    <div class="mb-3">
+                        <label for="newCategoryName" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="newCategoryName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newCategoryDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="newCategoryDescription" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">
+                    <i class="fas fa-save me-2"></i>Add Category
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Enhanced Add Menu Item Styles */
+.form-section {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: rgba(var(--primary-yellow-rgb), 0.02);
+    position: relative;
+}
+
+.section-title {
+    color: var(--primary-dark);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-yellow);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title i {
+    color: var(--primary-yellow);
+    font-size: 1.2rem;
+}
+
+.form-progress {
+    height: 4px;
+    background: rgba(var(--primary-yellow-rgb), 0.2);
+    border-radius: 2px;
+    margin-top: 1rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-yellow) 0%, #e6b800 100%);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-label i {
+    color: var(--primary-yellow);
+    width: 16px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-yellow);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-yellow-rgb), 0.25);
+}
+
+.form-control.is-valid {
+    border-color: var(--success-green);
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger-red);
+}
+
+.input-group-text {
+    background: var(--primary-yellow);
+    color: var(--text-dark);
+    border-color: var(--primary-yellow);
+    font-weight: 600;
+}
+
+/* Image Upload Styling */
+.image-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.image-upload-area:hover {
+    border-color: var(--primary-yellow);
+    background: rgba(var(--primary-yellow-rgb), 0.05);
+}
+
+.upload-placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.image-preview {
+    position: relative;
+    width: 100%;
+    height: 250px;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 10px;
+}
+
+.image-preview:hover .image-overlay {
+    opacity: 1;
+}
+
+/* Form Actions */
+.form-actions {
+    background: rgba(var(--primary-dark-rgb), 0.02);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.form-summary {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.progress {
+    height: 8px;
+    background: rgba(var(--primary-yellow-rgb), 0.2);
+}
+
+.progress .progress-bar {
+    background: linear-gradient(90deg, var(--primary-yellow) 0%, #e6b800 100%);
+}
+
+/* Character Counters */
+.form-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+#descriptionCount, #ingredientsCount {
+    font-weight: 600;
+    color: var(--primary-yellow);
+}
+
+/* Checkbox Styling */
+.form-check-input:checked {
+    background-color: var(--primary-yellow);
+    border-color: var(--primary-yellow);
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+/* Button Enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+    border-color: var(--primary-yellow);
+    color: var(--text-dark);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #e6b800 0%, #cc9900 100%);
+    border-color: #e6b800;
+    color: var(--text-dark);
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    border-color: #ccc;
+    color: #666;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Preview Modal Styling */
+.menu-item-preview {
+    padding: 1rem;
+}
+
+.preview-image-container {
+    position: relative;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-image-placeholder {
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-section {
+        padding: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+    }
+
+    .form-actions {
+        padding: 1rem;
+    }
+
+    .form-actions .row {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions .col-md-6:last-child {
+        margin-bottom: 1rem;
+    }
+
+    .d-flex.justify-content-end {
+        justify-content: center !important;
+    }
+}
+
+/* Animation for form validation */
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Enhanced Add Menu Item JavaScript
+class AddMenuItemManager {
+    constructor() {
+        this.form = document.getElementById('addMenuItemForm');
+        this.requiredFields = ['name', 'category_id', 'price'];
+        this.validationRules = {};
+        this.init();
+    }
+
+    init() {
+        this.setupValidation();
+        this.setupImageUpload();
+        this.setupCharacterCounters();
+        this.setupFormProgress();
+        this.setupEventListeners();
+        this.setupUnlimitedStock();
+        this.updateFormProgress();
+    }
+
+    setupValidation() {
+        // Setup validation rules
+        this.validationRules = {
+            name: { required: true, min: 2, max: 100 },
+            category_id: { required: true },
+            price: { required: true, min: 0.01, max: 9999.99 },
+            stock: { min: 0, max: 99999 },
+            preparation_time: { min: 1, max: 180 },
+            description: { max: 500 },
+            ingredients: { max: 300 },
+            allergens: { max: 100 },
+            calories: { min: 0, max: 9999 }
+        };
+
+        // Add real-time validation
+        Object.keys(this.validationRules).forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (field) {
+                field.addEventListener('blur', () => this.validateField(fieldName));
+                field.addEventListener('input', () => this.clearFieldError(fieldName));
+            }
+        });
+    }
+
+    validateField(fieldName) {
+        const field = document.getElementById(fieldName);
+        const rules = this.validationRules[fieldName];
+        const value = field.value.trim();
+
+        // Clear previous validation
+        field.classList.remove('is-valid', 'is-invalid');
+        const feedback = field.parentNode.querySelector('.invalid-feedback');
+        if (feedback) feedback.textContent = '';
+
+        // Required validation
+        if (rules.required && !value) {
+            this.setFieldError(field, 'This field is required');
+            return false;
+        }
+
+        // Skip other validations if field is empty and not required
+        if (!value && !rules.required) {
+            field.classList.add('is-valid');
+            return true;
+        }
+
+        // Length validations
+        if (rules.min && value.length < rules.min) {
+            this.setFieldError(field, `Minimum ${rules.min} characters required`);
+            return false;
+        }
+
+        if (rules.max && value.length > rules.max) {
+            this.setFieldError(field, `Maximum ${rules.max} characters allowed`);
+            return false;
+        }
+
+        // Number validations
+        if (field.type === 'number') {
+            const numValue = parseFloat(value);
+            if (rules.min !== undefined && numValue < rules.min) {
+                this.setFieldError(field, `Minimum value is ${rules.min}`);
+                return false;
+            }
+            if (rules.max !== undefined && numValue > rules.max) {
+                this.setFieldError(field, `Maximum value is ${rules.max}`);
+                return false;
+            }
+        }
+
+        field.classList.add('is-valid');
+        return true;
+    }
+
+    setFieldError(field, message) {
+        field.classList.add('is-invalid');
+        const feedback = field.parentNode.querySelector('.invalid-feedback');
+        if (feedback) feedback.textContent = message;
+
+        // Add shake animation
+        field.classList.add('shake');
+        setTimeout(() => field.classList.remove('shake'), 500);
+    }
+
+    clearFieldError(fieldName) {
+        const field = document.getElementById(fieldName);
+        field.classList.remove('is-invalid', 'shake');
+        const feedback = field.parentNode.querySelector('.invalid-feedback');
+        if (feedback) feedback.textContent = '';
+
+        // Update progress when user starts typing
+        setTimeout(() => this.updateFormProgress(), 100);
+    }
+
+    setupImageUpload() {
+        const imageInput = document.getElementById('image');
+        const uploadArea = document.getElementById('imageUploadArea');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const removeBtn = document.getElementById('removeImage');
+        const changeBtn = document.getElementById('changeImage');
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            if (!imagePreview.style.display || imagePreview.style.display === 'none') {
+                imageInput.click();
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.handleImageFile(files[0]);
+            }
+        });
+
+        // File input change
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.handleImageFile(e.target.files[0]);
+            }
+        });
+
+        // Remove image
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.removeImage();
+        });
+
+        // Change image
+        changeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            imageInput.click();
+        });
+    }
+
+    handleImageFile(file) {
+        // Validate file
+        const maxSize = 16 * 1024 * 1024; // 16MB
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+
+        if (!allowedTypes.includes(file.type)) {
+            RestaurantApp.showNotification('Error', 'Please select a valid image file (PNG, JPG, JPEG, GIF, WebP)', 'error');
+            return;
+        }
+
+        if (file.size > maxSize) {
+            RestaurantApp.showNotification('Error', 'Image size must be less than 16MB', 'error');
+            return;
+        }
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('uploadPlaceholder').style.display = 'none';
+            document.getElementById('imagePreview').style.display = 'block';
+            this.updateFormProgress();
+        };
+        reader.readAsDataURL(file);
+
+        // Update file input
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('image').files = dt.files;
+    }
+
+    removeImage() {
+        document.getElementById('image').value = '';
+        document.getElementById('uploadPlaceholder').style.display = 'block';
+        document.getElementById('imagePreview').style.display = 'none';
+        this.updateFormProgress();
+    }
+
+    setupCharacterCounters() {
+        const fields = ['description', 'ingredients'];
+        fields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            const counter = document.getElementById(fieldName + 'Count');
+            if (field && counter) {
+                field.addEventListener('input', () => {
+                    counter.textContent = field.value.length;
+                    const maxLength = this.validationRules[fieldName]?.max || 0;
+                    if (field.value.length > maxLength * 0.9) {
+                        counter.style.color = 'var(--danger-red)';
+                    } else {
+                        counter.style.color = 'var(--primary-yellow)';
+                    }
+                });
+            }
+        });
+    }
+
+    setupFormProgress() {
+        // Update progress when any field changes
+        this.form.addEventListener('input', () => {
+            setTimeout(() => this.updateFormProgress(), 100);
+        });
+        this.form.addEventListener('change', () => {
+            setTimeout(() => this.updateFormProgress(), 100);
+        });
+    }
+
+    updateFormProgress() {
+        const totalFields = this.requiredFields.length + 3; // +3 for optional but important fields
+        let completedFields = 0;
+
+        // Check required fields
+        this.requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (field && field.value.trim()) {
+                completedFields++;
+            }
+        });
+
+        // Check optional important fields
+        if (document.getElementById('description').value.trim()) completedFields++;
+        if (document.getElementById('image').files.length > 0) completedFields++;
+        if (document.getElementById('preparation_time').value.trim()) completedFields++;
+
+        const percentage = (completedFields / totalFields) * 100;
+
+        // Update progress bars
+        document.getElementById('formProgress').style.width = percentage + '%';
+        document.getElementById('completionProgress').style.width = percentage + '%';
+
+        // Update completion text
+        const completionText = document.getElementById('completionText');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (percentage >= 60) { // At least required fields + some optional
+            completionText.textContent = 'Ready to submit!';
+            completionText.className = 'text-success';
+            submitBtn.disabled = false;
+        } else if (percentage >= 40) {
+            completionText.textContent = 'Almost ready...';
+            completionText.className = 'text-warning';
+            submitBtn.disabled = true;
+        } else {
+            completionText.textContent = 'Fill required fields to continue';
+            completionText.className = 'text-muted';
+            submitBtn.disabled = true;
+        }
+    }
+
+    setupEventListeners() {
+        // Preview button
+        document.getElementById('previewBtn').addEventListener('click', () => {
+            this.showPreview();
+        });
+
+        // Add category button
+        document.getElementById('addCategoryBtn').addEventListener('click', () => {
+            this.showAddCategoryModal();
+        });
+
+        // Price calculator
+        document.getElementById('priceCalculator').addEventListener('click', () => {
+            this.showPriceCalculator();
+        });
+
+        // Form submission
+        this.form.addEventListener('submit', (e) => {
+            this.handleFormSubmit(e);
+        });
+
+        // Auto-focus on name field
+        document.getElementById('name').focus();
+    }
+
+    setupUnlimitedStock() {
+        const stockInput = document.getElementById('stock');
+        const unlimitedCheckbox = document.getElementById('unlimitedStock');
+
+        unlimitedCheckbox.addEventListener('change', () => {
+            if (unlimitedCheckbox.checked) {
+                stockInput.value = 0;
+                stockInput.disabled = true;
+            } else {
+                stockInput.disabled = false;
+                stockInput.focus();
+            }
+        });
+    }
+
+    showPreview() {
+        // Populate preview modal
+        const name = document.getElementById('name').value || 'Untitled Item';
+        const category = document.getElementById('category_id').selectedOptions[0]?.text || 'No Category';
+        const description = document.getElementById('description').value || 'No description provided';
+        const price = document.getElementById('price').value || '0.00';
+        const stock = document.getElementById('stock').value || '0';
+        const prepTime = document.getElementById('preparation_time').value || 'Not specified';
+        const calories = document.getElementById('calories').value || 'Not specified';
+        const ingredients = document.getElementById('ingredients').value || 'Not specified';
+        const allergens = document.getElementById('allergens').value || 'None specified';
+
+        document.getElementById('previewName').textContent = name;
+        document.getElementById('previewCategory').textContent = category;
+        document.getElementById('previewDescription').textContent = description;
+        document.getElementById('previewPrice').textContent = `EGP ${price}`;
+        document.getElementById('previewStock').textContent = stock === '0' ? 'Unlimited' : stock;
+        document.getElementById('previewPrepTime').textContent = prepTime === 'Not specified' ? prepTime : `${prepTime} minutes`;
+        document.getElementById('previewCalories').textContent = calories === 'Not specified' ? calories : `${calories} kcal`;
+
+        // Ingredients
+        const ingredientsDiv = document.getElementById('previewIngredients');
+        if (ingredients !== 'Not specified') {
+            ingredientsDiv.innerHTML = `<strong>Ingredients:</strong> ${ingredients}`;
+        } else {
+            ingredientsDiv.innerHTML = '';
+        }
+
+        // Allergens
+        const allergensDiv = document.getElementById('previewAllergens');
+        if (allergens !== 'None specified') {
+            allergensDiv.innerHTML = `<strong>Allergens:</strong> <span class="text-warning">${allergens}</span>`;
+        } else {
+            allergensDiv.innerHTML = '';
+        }
+
+        // Options
+        const options = [];
+        if (document.getElementById('is_featured').checked) options.push('Featured');
+        if (document.getElementById('is_spicy').checked) options.push('Spicy');
+        if (document.getElementById('is_vegetarian').checked) options.push('Vegetarian');
+        if (document.getElementById('is_vegan').checked) options.push('Vegan');
+
+        const optionsDiv = document.getElementById('previewOptions');
+        if (options.length > 0) {
+            optionsDiv.innerHTML = `<strong>Special:</strong> ${options.join(', ')}`;
+        } else {
+            optionsDiv.innerHTML = '';
+        }
+
+        // Image
+        const imageInput = document.getElementById('image');
+        const previewImage = document.getElementById('previewModalImage');
+        const noImagePlaceholder = document.getElementById('previewNoImage');
+
+        if (imageInput.files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                noImagePlaceholder.style.display = 'none';
+            };
+            reader.readAsDataURL(imageInput.files[0]);
+        } else {
+            previewImage.style.display = 'none';
+            noImagePlaceholder.style.display = 'block';
+        }
+
+        // Show modal
+        new bootstrap.Modal(document.getElementById('previewModal')).show();
+    }
+
+    showAddCategoryModal() {
+        new bootstrap.Modal(document.getElementById('addCategoryModal')).show();
+
+        // Setup save category handler
+        document.getElementById('saveCategoryBtn').onclick = () => {
+            this.saveNewCategory();
+        };
+    }
+
+    saveNewCategory() {
+        const name = document.getElementById('newCategoryName').value.trim();
+        const description = document.getElementById('newCategoryDescription').value.trim();
+
+        if (!name) {
+            RestaurantApp.showNotification('Error', 'Category name is required', 'error');
+            return;
+        }
+
+        // Here you would typically make an AJAX call to save the category
+        // For now, we'll just add it to the select dropdown
+        const categorySelect = document.getElementById('category_id');
+        const newOption = document.createElement('option');
+        newOption.value = 'new_' + Date.now(); // Temporary ID
+        newOption.textContent = name;
+        newOption.selected = true;
+        categorySelect.appendChild(newOption);
+
+        // Close modal and clear form
+        bootstrap.Modal.getInstance(document.getElementById('addCategoryModal')).hide();
+        document.getElementById('newCategoryName').value = '';
+        document.getElementById('newCategoryDescription').value = '';
+
+        RestaurantApp.showNotification('Success', 'Category added successfully', 'success');
+        this.updateFormProgress();
+    }
+
+    showPriceCalculator() {
+        // Simple price calculator prompt
+        const cost = prompt('Enter the cost price (EGP):');
+        if (cost && !isNaN(cost)) {
+            const costPrice = parseFloat(cost);
+            const markup = prompt('Enter markup percentage (e.g., 50 for 50%):');
+            if (markup && !isNaN(markup)) {
+                const markupPercent = parseFloat(markup);
+                const sellingPrice = costPrice * (1 + markupPercent / 100);
+                document.getElementById('price').value = sellingPrice.toFixed(2);
+                this.validateField('price');
+                this.updateFormProgress();
+                RestaurantApp.showNotification('Success', `Calculated price: EGP ${sellingPrice.toFixed(2)}`, 'success');
+            }
+        }
+    }
+
+    handleFormSubmit(e) {
+        e.preventDefault();
+
+        // Validate all fields
+        let isValid = true;
+        this.requiredFields.forEach(fieldName => {
+            if (!this.validateField(fieldName)) {
+                isValid = false;
+            }
+        });
+
+        // Validate optional fields that have values
+        Object.keys(this.validationRules).forEach(fieldName => {
+            if (!this.requiredFields.includes(fieldName)) {
+                const field = document.getElementById(fieldName);
+                if (field && field.value.trim()) {
+                    if (!this.validateField(fieldName)) {
+                        isValid = false;
+                    }
+                }
+            }
+        });
+
+        if (!isValid) {
+            RestaurantApp.showNotification('Error', 'Please fix the errors in the form', 'error');
+            return;
+        }
+
+        // Show loading state
+        this.setSubmitLoading(true);
+
+        // Submit form
+        setTimeout(() => {
+            this.form.submit();
+        }, 500);
+    }
+
+    setSubmitLoading(loading) {
+        const submitBtn = document.getElementById('submitBtn');
+        const submitSpinner = document.getElementById('submitSpinner');
+        const submitIcon = document.getElementById('submitIcon');
+        const submitText = document.getElementById('submitText');
+
+        if (loading) {
+            submitBtn.disabled = true;
+            submitSpinner.classList.remove('d-none');
+            submitIcon.classList.add('d-none');
+            submitText.textContent = 'Adding Item...';
+            this.form.classList.add('loading');
+        } else {
+            submitBtn.disabled = false;
+            submitSpinner.classList.add('d-none');
+            submitIcon.classList.remove('d-none');
+            submitText.textContent = 'Add Menu Item';
+            this.form.classList.remove('loading');
+        }
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.addMenuItemManager = new AddMenuItemManager();
+});
+
+// Additional utility functions
+function formatPrice(price) {
+    return parseFloat(price).toFixed(2);
+}
+
+function validateImageFile(file) {
+    const maxSize = 16 * 1024 * 1024; // 16MB
+    const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+
+    if (!allowedTypes.includes(file.type)) {
+        return { valid: false, message: 'Invalid file type. Please select PNG, JPG, JPEG, GIF, or WebP.' };
+    }
+
+    if (file.size > maxSize) {
+        return { valid: false, message: 'File size too large. Maximum size is 16MB.' };
+    }
+
+    return { valid: true };
+}
+
+// Auto-save draft functionality (optional)
+function saveDraft() {
+    const formData = new FormData(document.getElementById('addMenuItemForm'));
+    const draftData = {};
+
+    for (let [key, value] of formData.entries()) {
+        if (key !== 'image' && key !== 'csrf_token') {
+            draftData[key] = value;
+        }
+    }
+
+    localStorage.setItem('menuItemDraft', JSON.stringify(draftData));
+}
+
+function loadDraft() {
+    const draft = localStorage.getItem('menuItemDraft');
+    if (draft) {
+        const draftData = JSON.parse(draft);
+        Object.keys(draftData).forEach(key => {
+            const field = document.getElementById(key);
+            if (field) {
+                field.value = draftData[key];
+                if (field.type === 'checkbox') {
+                    field.checked = draftData[key] === 'on';
+                }
+            }
+        });
+    }
+}
+
+function clearDraft() {
+    localStorage.removeItem('menuItemDraft');
+}
+</script>
+{% endblock %}

@@ -30,32 +30,76 @@
     display: none;
 }
 
+.category-tabs {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
 .tabs-container {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     min-width: max-content;
+    scroll-behavior: smooth;
+    justify-content: center;
 }
 
 .category-tab {
-    background: var(--primary-yellow);
+    background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
     border: none;
-    padding: 8px 20px;
+    padding: 8px 16px;
     border-radius: 20px;
     font-weight: 600;
     color: var(--text-dark);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(243, 205, 33, 0.3);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.category-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.category-tab:hover::before {
+    left: 100%;
 }
 
 .category-tab.active {
-    background: var(--primary-dark);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #333 100%);
     color: white;
+    box-shadow: 0 6px 20px rgba(28, 29, 31, 0.4);
+    transform: translateY(-2px);
 }
 
 .category-tab:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(243, 205, 33, 0.4);
+}
+
+.category-tab:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s ease;
+}
+
+.category-tab i {
+    font-size: 0.9rem;
 }
 
 .subcategory-tabs {
@@ -70,8 +114,54 @@
     display: none;
 }
 
+.subcategory-tabs {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
 .subcategory-tabs .tabs-container {
     gap: 8px;
+    scroll-behavior: smooth;
+    padding-right: 20px;
+    align-items: center;
+}
+
+/* Text Display Control */
+.subcategory-tab .short-text,
+.subcategory-tab .ultra-short-text {
+    display: none;
+}
+
+.subcategory-tab .full-text {
+    display: inline;
+}
+
+/* Mobile Touch Enhancements */
+.category-tab, .subcategory-tab {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+}
+
+/* Scroll Indicators for Mobile */
+.category-tabs::after,
+.subcategory-tabs::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.category-tabs.scrollable::after,
+.subcategory-tabs.scrollable::after {
+    opacity: 1;
 }
 
 .subcategory-tab {
@@ -85,6 +175,18 @@
     transition: all 0.3s ease;
     white-space: nowrap;
     font-size: 0.85rem;
+    flex-shrink: 0;
+    min-width: auto;
+    max-width: none;
+}
+
+.subcategory-tab:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+}
+
+.subcategory-tab:active {
+    transform: scale(0.95);
 }
 
 .subcategory-tab.active {
@@ -93,101 +195,179 @@
 }
 
 .menu-items-list {
-    padding: 20px;
+    padding: 15px;
+    background: #f8f9fa;
 }
 
 .menu-item-card {
     background: white;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 15px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    padding: 20px;
     display: flex;
-    gap: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     transition: all 0.3s ease;
     cursor: pointer;
+    border: none;
 }
 
 .menu-item-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border-color: rgba(243, 205, 33, 0.3);
+}
+
+.menu-item-card:active {
+    transform: translateY(-1px);
+    transition: all 0.1s ease;
 }
 
 .menu-item-image {
-    width: 80px;
-    height: 80px;
-    border-radius: 8px;
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
     object-fit: cover;
+    object-position: center center;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.menu-item-card:hover .menu-item-image {
+    transform: scale(1.02);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
 .menu-item-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    min-height: 120px;
 }
 
 .menu-item-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 5px;
-    color: var(--text-dark);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #1a1a1a;
+    line-height: 1.3;
 }
 
 .menu-item-description {
     color: #666;
-    font-size: 0.85rem;
-    margin-bottom: 10px;
-    line-height: 1.3;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .menu-item-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: auto;
 }
 
 .price-section {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    gap: 8px;
 }
 
 .menu-item-price {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #28a745;
+    letter-spacing: -0.02em;
 }
 
 .menu-item-old-price {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: #999;
     text-decoration: line-through;
-    margin-left: 8px;
+    font-weight: 500;
 }
 
 .add-btn {
-    background: var(--primary-yellow);
+    background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+    color: var(--text-dark);
     border: none;
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 3px 12px rgba(243, 205, 33, 0.4);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+    margin-left: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--text-dark);
-    cursor: pointer;
+    min-width: 60px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.add-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.6s;
+}
+
+.add-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
     transition: all 0.3s ease;
-    margin-left: auto;
+}
+
+.add-btn:hover::before {
+    left: 100%;
+}
+
+.add-btn:hover::after {
+    width: 100%;
+    height: 100%;
 }
 
 .add-btn:hover {
-    background: var(--primary-dark);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #333 100%);
     color: white;
-    transform: scale(1.1);
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 8px 25px rgba(28, 29, 31, 0.5);
+    border-color: rgba(255,255,255,0.2);
+}
+
+.add-btn:active {
+    transform: translateY(-1px) scale(1.02);
+    transition: all 0.1s ease;
+    box-shadow: 0 4px 15px rgba(28, 29, 31, 0.3);
+}
+
+.add-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(243, 205, 33, 0.3);
 }
 
 .search-box {
@@ -202,6 +382,49 @@
 .search-box:focus {
     outline: none;
     border-color: var(--primary-yellow);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .menu-items-list {
+        padding: 10px;
+    }
+
+    .menu-item-card {
+        padding: 15px;
+        gap: 15px;
+    }
+
+    .menu-item-image {
+        width: 100px;
+        height: 100px;
+    }
+
+    .menu-item-content {
+        min-height: 100px;
+    }
+
+    .menu-item-title {
+        font-size: 1rem;
+    }
+
+    .menu-item-description {
+        font-size: 0.8rem;
+        -webkit-line-clamp: 2;
+    }
+
+    .menu-item-price {
+        font-size: 1rem;
+    }
+
+    .menu-item-old-price {
+        font-size: 0.8rem;
+    }
+
+    .add-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
 }
 
 /* Enhanced Modal Styles are now global in base template */
@@ -809,39 +1032,329 @@
     transform: translateY(-1px);
 }
 
+/* Mobile Touch Enhancements for Menu Items */
+.menu-item-card {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Force center alignment for mobile images */
+@media (max-width: 991px) {
+    .menu-item-image {
+        object-position: center center !important;
+    }
+}
+
+/* Mobile Optimization for Category Navigation */
 @media (max-width: 768px) {
-
-
-
-
     .category-tabs {
-        padding: 12px 15px;
+        padding: 10px 15px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .tabs-container {
+        gap: 8px;
+    }
+
+    .category-tab {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .category-tab i {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 1rem;
+        margin-right: 0;
     }
 
     .subcategory-tabs {
-        padding: 8px 15px;
+        padding: 8px 10px;
+        background: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+        position: sticky;
+        top: 60px;
+        z-index: 99;
+    }
+
+    .subcategory-tab {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        min-width: auto;
+        max-width: none;
+        text-align: center;
+        border-radius: 18px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .tabs-container {
+        gap: 8px;
+        padding-bottom: 5px;
+    }
+
+    /* Show shorter text on mobile */
+    .subcategory-tab .full-text {
+        display: none;
+    }
+
+    .subcategory-tab .short-text {
+        display: inline;
     }
 
     .menu-items-list {
         padding: 15px;
+        margin-top: 10px;
     }
 
     .menu-item-card {
-        padding: 12px;
-        gap: 12px;
+        padding: 15px 15px 0px 15px;
+        gap: 15px;
+        margin-bottom: 12px;
+        border-radius: 16px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.08);
     }
 
     .menu-item-image {
-        width: 70px;
-        height: 70px;
+        width: 90px;
+        height: 90px;
+        border-radius: 12px;
+        object-position: center center;
+    }
+
+    .menu-item-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        line-height: 1.3;
+        margin-bottom: 6px;
+    }
+
+    .menu-item-description {
+        font-size: 0.82rem;
+        line-height: 1.4;
+        margin-bottom: 0px;
+        color: #555;
+    }
+
+    .menu-item-price {
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .menu-item-old-price {
+        font-size: 0.9rem;
+        margin-left: 6px;
+    }
+
+    .add-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1.3rem;
+    }
+}
+
+/* Medium Mobile Devices */
+@media (max-width: 600px) {
+    .menu-item-card {
+        padding: 14px 14px 0px 14px;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .menu-item-image {
+        width: 90px;
+        height: 90px;
+        border-radius: 12px;
+        object-position: center center;
     }
 
     .menu-item-title {
         font-size: 1rem;
+        margin-bottom: 5px;
     }
 
     .menu-item-description {
         font-size: 0.8rem;
+        margin-bottom: 0px;
+    }
+
+    .add-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1.25rem;
+    }
+}
+
+/* Extra Small Mobile Devices */
+@media (max-width: 480px) {
+    .category-tabs {
+        padding: 8px 10px;
+    }
+
+    .tabs-container {
+        gap: 6px;
+    }
+
+    .category-tab {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        min-width: 85px;
+    }
+
+    .category-tab i {
+        font-size: 0.9rem;
+        margin-bottom: 3px;
+        margin-right: 0;
+    }
+
+    .subcategory-tabs {
+        padding: 6px 10px;
+    }
+
+    .subcategory-tab {
+        padding: 6px 8px;
+        font-size: 0.7rem;
+        min-width: auto;
+        max-width: none;
+        border-radius: 15px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .tabs-container {
+        gap: 6px;
+    }
+
+    /* Ensure shorter text on extra small mobile */
+    .subcategory-tab .full-text {
+        display: none;
+    }
+
+    .subcategory-tab .short-text {
+        display: inline;
+    }
+
+    .menu-items-list {
+        padding: 10px;
+    }
+
+    .menu-item-card {
+        padding: 12px 12px 0px 12px;
+        gap: 12px;
+        margin-bottom: 10px;
+        border-radius: 14px;
+    }
+
+    .menu-item-image {
+        width: 90px;
+        height: 90px;
+        border-radius: 12px;
+        object-position: center center;
+    }
+
+    .menu-item-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .menu-item-description {
+        font-size: 0.78rem;
+        line-height: 1.3;
+        margin-bottom: 0px;
+    }
+
+    .menu-item-price {
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .menu-item-old-price {
+        font-size: 0.85rem;
+        margin-left: 5px;
+    }
+
+    .add-btn {
+        padding: 5px 8px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Ultra Small Mobile Devices (320px and below) */
+@media (max-width: 360px) {
+    .subcategory-tabs {
+        padding: 6px 8px;
+    }
+
+    .subcategory-tab {
+        padding: 5px 6px;
+        font-size: 0.65rem;
+    }
+
+    .tabs-container {
+        gap: 4px;
+    }
+
+    /* Use ultra-short text for very small screens */
+    .subcategory-tab .full-text,
+    .subcategory-tab .short-text {
+        display: none;
+    }
+
+    .subcategory-tab .ultra-short-text {
+        display: inline;
+    }
+
+    /* Ultra-small menu item optimizations */
+    .menu-items-list {
+        padding: 8px;
+    }
+
+    .menu-item-card {
+        padding: 10px 10px 0px 10px;
+        gap: 10px;
+        margin-bottom: 8px;
+        border-radius: 12px;
+    }
+
+    .menu-item-image {
+        width: 90px;
+        height: 90px;
+        border-radius: 12px;
+        object-position: center center;
+    }
+
+    .menu-item-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+
+    .menu-item-description {
+        font-size: 0.75rem;
+        line-height: 1.3;
+        margin-bottom: 0px;
+    }
+
+    .menu-item-price {
+        font-size: 0.95rem;
+        font-weight: 800;
+    }
+
+    .menu-item-old-price {
+        font-size: 0.8rem;
+        margin-left: 4px;
+    }
+
+    .add-btn {
+        padding: 4px 6px;
+        font-size: 0.65rem;
     }
 }
 </style>
@@ -874,11 +1387,31 @@
     <!-- Subcategory Tabs -->
     <div class="subcategory-tabs">
         <div class="tabs-container">
-            <button class="subcategory-tab active" data-type="pasta">Pasta</button>
-            <button class="subcategory-tab" data-type="grills">Grills</button>
-            <button class="subcategory-tab" data-type="meat">Meat And Chicken</button>
-            <button class="subcategory-tab" data-type="seafood">Seafood</button>
-            <button class="subcategory-tab" data-type="oriental">Oriental</button>
+            <button class="subcategory-tab active" data-type="pasta">
+                <span class="full-text">Pasta</span>
+                <span class="short-text">Pasta</span>
+                <span class="ultra-short-text">Pasta</span>
+            </button>
+            <button class="subcategory-tab" data-type="grills">
+                <span class="full-text">Grills</span>
+                <span class="short-text">Grills</span>
+                <span class="ultra-short-text">Grills</span>
+            </button>
+            <button class="subcategory-tab" data-type="meat">
+                <span class="full-text">Meat And Chicken</span>
+                <span class="short-text">Meat & Chicken</span>
+                <span class="ultra-short-text">Meat</span>
+            </button>
+            <button class="subcategory-tab" data-type="seafood">
+                <span class="full-text">Seafood</span>
+                <span class="short-text">Seafood</span>
+                <span class="ultra-short-text">Sea</span>
+            </button>
+            <button class="subcategory-tab" data-type="oriental">
+                <span class="full-text">Oriental</span>
+                <span class="short-text">Oriental</span>
+                <span class="ultra-short-text">Asian</span>
+            </button>
         </div>
 
     </div>
@@ -886,8 +1419,8 @@
     <!-- Menu Items List -->
     <div class="menu-items-list" id="menuItems">
         <!-- Pasta Items -->
-        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Spaghetti Carbonara', 'Spaghetti, Pancetta, Egg yolks, Parmesan cheese, Black pepper', '14.99', 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=300&h=200&fit=crop')"
-            <img src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=80&h=80&fit=crop" class="menu-item-image" alt="Spaghetti Carbonara">
+        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Spaghetti Carbonara', 'Spaghetti, Pancetta, Egg yolks, Parmesan cheese, Black pepper', '14.99', 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=300&h=200&fit=crop', {description: 'Classic Italian pasta dish with creamy egg-based sauce, crispy pancetta, and freshly ground black pepper', calories: 520, prepTime: 15, allergens: 'Eggs, Dairy', category: 'Pasta', features: {featured: true, spicy: false, vegetarian: false, vegan: false}})"
+            <img src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Spaghetti Carbonara">
             <div class="menu-item-content">
                 <div class="menu-item-title">Spaghetti Carbonara</div>
                 <div class="menu-item-description">Spaghetti, Pancetta, Egg yolks, Parmesan cheese, Black pepper</div>
@@ -900,14 +1433,14 @@
                             data-item-name="Spaghetti Carbonara"
                             data-item-price="14.99"
                             onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        +
+                        order
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Fettuccine Alfredo', 'Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1563379091339-03246963d96c?w=300&h=200&fit=crop')">
-            <img src="https://images.unsplash.com/photo-1563379091339-03246963d96c?w=80&h=80&fit=crop" class="menu-item-image" alt="Fettuccine Alfredo">
+        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Fettuccine Alfredo', 'Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1563379091339-03246963d96c?w=300&h=200&fit=crop', {description: 'Rich and creamy fettuccine pasta tossed in a classic Alfredo sauce made with butter, heavy cream, and Parmesan cheese', calories: 680, prepTime: 12, allergens: 'Dairy, Gluten', category: 'Pasta', features: {featured: false, spicy: false, vegetarian: true, vegan: false}})">
+            <img src="https://images.unsplash.com/photo-1563379091339-03246963d96c?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Fettuccine Alfredo">
             <div class="menu-item-content">
                 <div class="menu-item-title">Fettuccine Alfredo</div>
                 <div class="menu-item-description">Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic</div>
@@ -920,14 +1453,14 @@
                             data-item-name="Fettuccine Alfredo"
                             data-item-price="14.99"
                             onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        +
+                        order
                     </button>
                 </div>
             </div>
         </div>
 
         <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Creamy Parmesan Fettuccine', 'Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=300&h=200&fit=crop')">
-            <img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=80&h=80&fit=crop" class="menu-item-image" alt="Creamy Parmesan Fettuccine">
+            <img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Creamy Parmesan Fettuccine">
             <div class="menu-item-content">
                 <div class="menu-item-title">Creamy Parmesan Fettuccine</div>
                 <div class="menu-item-description">Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic</div>
@@ -940,14 +1473,14 @@
                             data-item-name="Creamy Parmesan Fettuccine"
                             data-item-price="14.99"
                             onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        +
+                        order
                     </button>
                 </div>
             </div>
         </div>
 
         <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Alfredo Noodles', 'Noodles, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=300&h=200&fit=crop')"
-            <img src="https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=80&h=80&fit=crop" class="menu-item-image" alt="Alfredo Noodles">
+            <img src="https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Alfredo Noodles">
             <div class="menu-item-content">
                 <div class="menu-item-title">Alfredo Noodles</div>
                 <div class="menu-item-description">Noodles, Heavy cream, Butter, Parmesan cheese, Garlic</div>
@@ -960,15 +1493,15 @@
                             data-item-name="Alfredo Noodles"
                             data-item-price="14.99"
                             onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        +
+                        order
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Grill Items -->
-        <div class="menu-item-card" data-category="grills" style="display: none;" onclick="showItemDetail('Grilled Chicken', 'Grilled chicken breast with herbs and spices', '18.99', 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=300&h=200&fit=crop')"
-            <img src="https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=80&h=80&fit=crop" class="menu-item-image" alt="Grilled Chicken">
+        <div class="menu-item-card" data-category="grills" style="display: none;" onclick="showItemDetail('Grilled Chicken', 'Grilled chicken breast with herbs and spices', '18.99', 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=300&h=200&fit=crop', {description: 'Tender grilled chicken breast marinated in Mediterranean herbs and spices, served with your choice of sides', calories: 320, prepTime: 25, allergens: 'None', category: 'Grills', features: {featured: false, spicy: false, vegetarian: false, vegan: false}})"
+            <img src="https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Grilled Chicken">
             <div class="menu-item-content">
                 <div class="menu-item-title">Grilled Chicken</div>
                 <div class="menu-item-description">Grilled chicken breast with herbs and spices</div>
@@ -981,14 +1514,14 @@
                             data-item-name="Grilled Chicken"
                             data-item-price="18.99"
                             onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        +
+                        order
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="menu-item-card" data-category="grills" style="display: none;" onclick="showItemDetail('BBQ Ribs', 'Tender BBQ ribs with smoky sauce', '22.99', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop')">
-            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=80&h=80&fit=crop" class="menu-item-image" alt="BBQ Ribs">
+        <div class="menu-item-card" data-category="grills" style="display: none;" onclick="showItemDetail('BBQ Ribs', 'Tender BBQ ribs with smoky sauce', '22.99', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop', {description: 'Fall-off-the-bone tender pork ribs slow-cooked and glazed with our signature smoky BBQ sauce', calories: 750, prepTime: 45, allergens: 'Soy', category: 'Grills', features: {featured: true, spicy: true, vegetarian: false, vegan: false}})">
+            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="BBQ Ribs">
             <div class="menu-item-content">
                 <div class="menu-item-title">BBQ Ribs</div>
                 <div class="menu-item-description">Tender BBQ ribs with smoky sauce</div>
@@ -1001,7 +1534,7 @@
                             data-item-name="BBQ Ribs"
                             data-item-price="22.99"
                             onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        +
+                        order
                     </button>
                 </div>
             </div>
@@ -1067,9 +1600,21 @@ document.querySelectorAll('.subcategory-tab').forEach(tab => {
 
 // Services toggle functions removed
 
-// Show enhanced item detail modal
-function showItemDetail(name, ingredients, price, image) {
-    currentItem = { name, ingredients, price, image };
+// Enhanced item detail modal with all features
+function showItemDetail(name, ingredients, price, image, options = {}) {
+    // Enhanced currentItem object with all features
+    currentItem = {
+        name,
+        ingredients,
+        price,
+        image,
+        description: options.description || '',
+        calories: options.calories || null,
+        prepTime: options.prepTime || null,
+        allergens: options.allergens || '',
+        category: options.category || '',
+        features: options.features || {}
+    };
 
     // Set basic item information
     document.getElementById('modalItemName').textContent = name;
@@ -1078,9 +1623,56 @@ function showItemDetail(name, ingredients, price, image) {
     document.getElementById('modalTotalPrice').textContent = price;
     document.getElementById('itemQuantity').textContent = '1';
 
+    // Set description
+    const descriptionElement = document.getElementById('modalItemDescription');
+    if (currentItem.description) {
+        descriptionElement.textContent = currentItem.description;
+        descriptionElement.parentElement.style.display = 'block';
+    } else {
+        descriptionElement.parentElement.style.display = 'none';
+    }
+
+    // Set nutritional information
+    const caloriesElement = document.getElementById('modalItemCalories');
+    const prepTimeElement = document.getElementById('modalItemPrepTime');
+    const allergensElement = document.getElementById('modalItemAllergens');
+
+    caloriesElement.textContent = currentItem.calories ? `${currentItem.calories} kcal` : '-';
+    prepTimeElement.textContent = currentItem.prepTime ? `${currentItem.prepTime} min` : '-';
+    allergensElement.textContent = currentItem.allergens || 'None';
+
+    // Set special features
+    const featuresSection = document.getElementById('modalFeaturesSection');
+    const featuresBadges = document.getElementById('modalFeaturesBadges');
+
+    // Clear existing badges
+    featuresBadges.innerHTML = '';
+
+    const features = currentItem.features;
+    let hasFeatures = false;
+
+    if (features.featured) {
+        featuresBadges.innerHTML += '<span class="feature-badge featured"><i class="fas fa-star"></i> Featured</span>';
+        hasFeatures = true;
+    }
+    if (features.spicy) {
+        featuresBadges.innerHTML += '<span class="feature-badge spicy"><i class="fas fa-fire"></i> Spicy</span>';
+        hasFeatures = true;
+    }
+    if (features.vegetarian) {
+        featuresBadges.innerHTML += '<span class="feature-badge vegetarian"><i class="fas fa-leaf"></i> Vegetarian</span>';
+        hasFeatures = true;
+    }
+    if (features.vegan) {
+        featuresBadges.innerHTML += '<span class="feature-badge vegan"><i class="fas fa-seedling"></i> Vegan</span>';
+        hasFeatures = true;
+    }
+
+    // Show/hide features section based on whether there are features
+    featuresSection.style.display = hasFeatures ? 'block' : 'none';
+
     // Set image with error handling
     const modalImage = document.getElementById('modalItemImage');
-    console.log('Setting image URL:', image); // Debug log
     modalImage.src = image;
     modalImage.onload = function() {
         console.log('Image loaded successfully:', image);
@@ -1091,14 +1683,19 @@ function showItemDetail(name, ingredients, price, image) {
         this.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop';
     };
 
-    // Set category badge based on item name
+    // Set category badge
     const categoryBadge = document.getElementById('modalItemCategory');
-    if (name.toLowerCase().includes('pasta') || name.toLowerCase().includes('spaghetti') || name.toLowerCase().includes('alfredo') || name.toLowerCase().includes('fettuccine')) {
-        categoryBadge.textContent = 'Pasta';
-    } else if (name.toLowerCase().includes('chicken') || name.toLowerCase().includes('grilled') || name.toLowerCase().includes('bbq') || name.toLowerCase().includes('ribs')) {
-        categoryBadge.textContent = 'Grills';
+    if (currentItem.category) {
+        categoryBadge.textContent = currentItem.category;
     } else {
-        categoryBadge.textContent = 'Special';
+        // Fallback category detection based on item name
+        if (name.toLowerCase().includes('pasta') || name.toLowerCase().includes('spaghetti') || name.toLowerCase().includes('alfredo') || name.toLowerCase().includes('fettuccine')) {
+            categoryBadge.textContent = 'Pasta';
+        } else if (name.toLowerCase().includes('chicken') || name.toLowerCase().includes('grilled') || name.toLowerCase().includes('bbq') || name.toLowerCase().includes('ribs')) {
+            categoryBadge.textContent = 'Grills';
+        } else {
+            categoryBadge.textContent = 'Special';
+        }
     }
 
     // Clear special instructions
@@ -1106,6 +1703,34 @@ function showItemDetail(name, ingredients, price, image) {
 
     const modal = new bootstrap.Modal(document.getElementById('itemDetailModal'));
     modal.show();
+}
+
+// Backward compatibility function for existing calls
+function showItemDetailSimple(name, ingredients, price, image) {
+    showItemDetail(name, ingredients, price, image);
+}
+
+// Enhanced function for menu items with full data
+function showEnhancedItemDetail(itemData) {
+    showItemDetail(
+        itemData.name,
+        itemData.ingredients,
+        itemData.price,
+        itemData.image,
+        {
+            description: itemData.description,
+            calories: itemData.calories,
+            prepTime: itemData.preparation_time,
+            allergens: itemData.allergens,
+            category: itemData.category,
+            features: {
+                featured: itemData.is_featured,
+                spicy: itemData.is_spicy,
+                vegetarian: itemData.is_vegetarian,
+                vegan: itemData.is_vegan
+            }
+        }
+    );
 }
 
 // Enhanced quantity controls with price update
@@ -1235,9 +1860,68 @@ document.getElementById('searchBox').addEventListener('input', function() {
 
 // Checkout functionality is now handled by the global cart modal in base template
 
+// Mobile Navigation Enhancements
+function initializeMobileNavigation() {
+    const categoryTabs = document.querySelector('.category-tabs');
+    const subcategoryTabs = document.querySelector('.subcategory-tabs');
+
+    // Check if tabs are scrollable and add indicators
+    function checkScrollable(container) {
+        if (container) {
+            const isScrollable = container.scrollWidth > container.clientWidth;
+            container.classList.toggle('scrollable', isScrollable);
+        }
+    }
+
+    // Auto-scroll to active tab
+    function scrollToActiveTab(container) {
+        const activeTab = container.querySelector('.category-tab.active, .subcategory-tab.active');
+        if (activeTab && container.scrollTo) {
+            const containerRect = container.getBoundingClientRect();
+            const tabRect = activeTab.getBoundingClientRect();
+            const scrollLeft = tabRect.left - containerRect.left + container.scrollLeft - (containerRect.width / 2) + (tabRect.width / 2);
+
+            container.scrollTo({
+                left: scrollLeft,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    // Initialize scroll indicators
+    checkScrollable(categoryTabs);
+    checkScrollable(subcategoryTabs);
+
+    // Update scroll indicators on resize
+    window.addEventListener('resize', () => {
+        checkScrollable(categoryTabs);
+        checkScrollable(subcategoryTabs);
+    });
+
+    // Scroll to active tabs on load
+    setTimeout(() => {
+        scrollToActiveTab(categoryTabs);
+        scrollToActiveTab(subcategoryTabs);
+    }, 100);
+
+    // Enhanced tab click handlers with auto-scroll
+    document.querySelectorAll('.category-tab').forEach(button => {
+        button.addEventListener('click', function() {
+            setTimeout(() => scrollToActiveTab(categoryTabs), 100);
+        });
+    });
+
+    document.querySelectorAll('.subcategory-tab').forEach(button => {
+        button.addEventListener('click', function() {
+            setTimeout(() => scrollToActiveTab(subcategoryTabs), 100);
+        });
+    });
+}
+
 // Initialize menu page
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Menu page loaded');
+    initializeMobileNavigation();
     // Modal initialization is now handled by base template
 });
 

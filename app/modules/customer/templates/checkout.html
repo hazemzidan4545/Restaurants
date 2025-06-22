@@ -493,6 +493,7 @@ function processCheckout() {
         items: unifiedCart,
         paymentMethod: selectedPaymentMethod,
         total: getCartTotal() + 2.00, // Including service charge
+        notes: '', // Can be extended later for order notes
         timestamp: new Date().toISOString()
     };
 
@@ -501,20 +502,46 @@ function processCheckout() {
     checkoutBtn.textContent = 'Processing...';
     checkoutBtn.disabled = true;
 
-    // Simulate API call
-    setTimeout(() => {
-        // Clear cart
-        unifiedCart.length = 0;
-        saveCartToStorage();
-        updateCartDisplay();
-        updateCartCount();
+    // Make API call to create order
+    fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Store order data for confirmation page
+            const orderForConfirmation = {
+                ...data.data,
+                items: unifiedCart,
+                paymentMethod: selectedPaymentMethod
+            };
+            localStorage.setItem('lastOrder', JSON.stringify(orderForConfirmation));
 
-        // Show success message
-        alert('Order placed successfully! Thank you for your order.');
-        
-        // Redirect to menu or order tracking
-        window.location.href = '/customer/menu';
-    }, 2000);
+            // Clear cart
+            unifiedCart.length = 0;
+            saveCartToStorage();
+            updateCartDisplay();
+            updateCartCount();
+
+            // Redirect to confirmation page
+            window.location.href = `/customer/order-confirmation/${data.data.order_id}`;
+        } else {
+            // Handle error
+            alert(`Order failed: ${data.message}`);
+            checkoutBtn.textContent = 'Checkout';
+            checkoutBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Checkout error:', error);
+        alert('Failed to process order. Please try again.');
+        checkoutBtn.textContent = 'Checkout';
+        checkoutBtn.disabled = false;
+    });
 }
 
 // Mobile menu toggle

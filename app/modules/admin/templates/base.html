@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard - Shoumon{% endblock %}</title>
+
+    <!-- Performance: Preload critical resources -->
+    <link rel="preload" href="{{ url_for('static', filename='css/admin.css') }}" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+
+    <!-- Performance: DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+
+    <!-- Bootstrap 5 CSS - Optimized loading -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></noscript>
+
+    <!-- Font Awesome - Optimized loading -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+
+    <!-- Admin CSS - Critical styles -->
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+
+    <!-- Performance: Critical CSS inlined for faster rendering -->
+    <style>
+        /* Critical styles for immediate rendering */
+        body {
+            margin: 0;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            overflow-x: hidden;
+        }
+
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+            z-index: 1000;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+
+        /* Loading state */
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="admin-sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin.dashboard') }}" class="sidebar-logo">
+                <img src="{{ url_for('static', filename='images/image.png') }}" alt="Logo" style="width: 60px; height: 60px; object-fit: contain;">
+            </a>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.orders') }}" class="nav-link {% if request.endpoint == 'admin.orders' %}active{% endif %}">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="nav-text">Orders</span>
+                        <span class="nav-badge">3</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Menu Management</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.menu_management') }}" class="nav-link {% if request.endpoint == 'admin.menu_management' %}active{% endif %}">
+                        <i class="fas fa-utensils"></i>
+                        <span class="nav-text">Menu Items</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.category_management') }}" class="nav-link {% if request.endpoint == 'admin.category_management' %}active{% endif %}">
+                        <i class="fas fa-tags"></i>
+                        <span class="nav-text">Categories</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.meals') }}" class="nav-link {% if request.endpoint == 'admin.meals' %}active{% endif %}">
+                        <i class="fas fa-hamburger"></i>
+                        <span class="nav-text">Meals</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Services</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.services') }}" class="nav-link {% if request.endpoint == 'admin.services' %}active{% endif %}">
+                        <i class="fas fa-concierge-bell"></i>
+                        <span class="nav-text">Services</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.qr_codes') }}" class="nav-link {% if request.endpoint == 'admin.qr_codes' %}active{% endif %}">
+                        <i class="fas fa-qrcode"></i>
+                        <span class="nav-text">QR Codes</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Account</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.profile') }}" class="nav-link {% if request.endpoint == 'admin.profile' %}active{% endif %}">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="nav-text">Profile</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('auth.logout') }}" class="nav-link">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="nav-text">Logout</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+
+            <div class="top-nav-actions">
+                <div class="search-box">
+                    <input type="text" class="search-input" placeholder="Search">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <div class="nav-icons">
+                    <a href="{{ url_for('admin.profile') }}" class="nav-icon" title="Profile">
+                        <i class="fas fa-user"></i>
+                    </a>
+                    <a href="#" class="nav-icon" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </a>
+                    <a href="#" class="nav-icon" title="Language">
+                        <i class="fas fa-globe"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="admin-content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages mb-4">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Performance: Load JavaScript asynchronously -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="{{ url_for('static', filename='js/admin-performance.js') }}" defer></script>
+
+    <!-- Performance: Admin JavaScript optimizations -->
+    <script>
+        // Performance: Optimize page loading
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lazy load images
+            const images = document.querySelectorAll('img[data-src]');
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('loading-skeleton');
+                        observer.unobserve(img);
+                    }
+                });
+            });
+
+            images.forEach(img => imageObserver.observe(img));
+
+            // Performance: Debounce search input
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function(e) {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        // Implement search functionality here
+                        console.log('Search:', e.target.value);
+                    }, 300);
+                });
+            }
+
+            // Performance: Optimize sidebar navigation
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Add loading state
+                    if (!this.classList.contains('active')) {
+                        this.classList.add('loading');
+                    }
+                });
+            });
+
+            // Performance: Mobile sidebar optimization
+            const sidebar = document.querySelector('.admin-sidebar');
+            const mobileToggle = document.querySelector('.mobile-toggle');
+            if (mobileToggle && sidebar) {
+                mobileToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('mobile-open');
+                });
+            }
+        });
+
+        // Performance: Preload critical pages
+        const criticalPages = [
+            '{{ url_for("admin.dashboard") }}',
+            '{{ url_for("admin.orders") }}',
+            '{{ url_for("admin.meals") }}'
+        ];
+
+        criticalPages.forEach(url => {
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = url;
+            document.head.appendChild(link);
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

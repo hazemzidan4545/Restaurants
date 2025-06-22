@@ -1,261 +1,470 @@
-{% extends "shared/base.html" %}
+{% extends "base.html" %}
 
-{% block title %}Admin Dashboard - Restaurant Management System{% endblock %}
+{% block title %}Admin Dashboard - Shoumon{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard Specific Styles */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--glass-border);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--hover-shadow);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-yellow) 0%, #e6b800 100%);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+    }
+
+    .stat-icon.primary {
+        background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+    }
+
+    .stat-icon.success {
+        background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+    }
+
+    .stat-icon.warning {
+        background: linear-gradient(135deg, var(--warning-yellow) 0%, #d97706 100%);
+    }
+
+    .stat-icon.info {
+        background: linear-gradient(135deg, var(--info-blue) 0%, #2563eb 100%);
+    }
+
+    .stat-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--primary-dark);
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-change {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 8px;
+        margin-top: 10px;
+        display: inline-block;
+    }
+
+    .stat-change.positive {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-green);
+    }
+
+    .stat-change.negative {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-red);
+    }
+
+    /* Orders Section */
+    .orders-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        border: 1px solid var(--glass-border);
+        transition: all 0.3s ease;
+    }
+
+    .orders-section:hover {
+        box-shadow: var(--hover-shadow);
+        transform: translateY(-2px);
+    }
+
+    .section-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+        position: relative;
+    }
+
+    .section-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 30px;
+        right: 30px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, var(--primary-yellow) 50%, transparent 100%);
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 20px;
+        background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+        border-radius: 2px;
+    }
+
+    .orders-table {
+        width: 100%;
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .orders-table th {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 18px 30px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6b7280;
+        border: none;
+        border-bottom: 2px solid rgba(243, 205, 33, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .orders-table td {
+        padding: 20px 30px;
+        border: none;
+        border-bottom: 1px solid rgba(243, 244, 246, 0.5);
+        vertical-align: middle;
+        transition: all 0.3s ease;
+    }
+
+    .orders-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .orders-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(243, 244, 246, 0.4) 100%);
+        transform: scale(1.01);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .order-id {
+        font-weight: 700;
+        color: var(--primary-dark);
+        font-size: 15px;
+    }
+
+    .order-name {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 15px;
+    }
+
+    .qr-number {
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .order-date {
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .order-type {
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid transparent;
+        display: inline-block;
+    }
+
+    .status-completed {
+        background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+        color: white;
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .status-processing {
+        background: linear-gradient(135deg, var(--warning-yellow) 0%, #d97706 100%);
+        color: white;
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .status-rejected {
+        background: linear-gradient(135deg, var(--danger-red) 0%, #dc2626 100%);
+        color: white;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .status-on-hold {
+        background: linear-gradient(135deg, var(--info-blue) 0%, #2563eb 100%);
+        color: white;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .status-in-transit {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            padding: 20px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+        }
+
+        .orders-table th,
+        .orders-table td {
+            padding: 12px 15px;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="text-gradient mb-4">
-                <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
-            </h1>
-        </div>
-    </div>
-    
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="dashboard-card">
-                <div class="icon">
-                    <i class="fas fa-shopping-cart"></i>
-                </div>
-                <div class="number">24</div>
-                <div class="label">Total Orders Today</div>
+<!-- Dashboard Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <div>
+                <div class="stat-value">{{ stats.total_menu_items }}</div>
+                <div class="stat-label">Total Menu Items</div>
+                <div class="stat-change positive">+12% from last month</div>
             </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="dashboard-card">
-                <div class="icon">
-                    <i class="fas fa-utensils"></i>
-                </div>
-                <div class="number">18</div>
-                <div class="label">Meals Prepared</div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="dashboard-card">
-                <div class="icon">
-                    <i class="fas fa-money-bill-wave"></i>
-                </div>
-                <div class="number">2,450</div>
-                <div class="label">Revenue (EGP)</div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="dashboard-card">
-                <div class="icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="number">156</div>
-                <div class="label">Active Customers</div>
+            <div class="stat-icon primary">
+                <i class="fas fa-utensils"></i>
             </div>
         </div>
     </div>
-    
-    <!-- Quick Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h3>Quick Actions</h3>
-            <div class="row">
-                <div class="col-md-2 col-sm-4 col-6 mb-3">
-                    <a href="#" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-plus-circle d-block mb-2"></i>
-                        Add Menu Item
-                    </a>
-                </div>
-                <div class="col-md-2 col-sm-4 col-6 mb-3">
-                    <a href="#" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-user-plus d-block mb-2"></i>
-                        Add User
-                    </a>
-                </div>
-                <div class="col-md-2 col-sm-4 col-6 mb-3">
-                    <a href="#" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-chart-bar d-block mb-2"></i>
-                        View Reports
-                    </a>
-                </div>
-                <div class="col-md-2 col-sm-4 col-6 mb-3">
-                    <a href="#" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-cog d-block mb-2"></i>
-                        Settings
-                    </a>
-                </div>
-                <div class="col-md-2 col-sm-4 col-6 mb-3">
-                    <a href="#" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-gift d-block mb-2"></i>
-                        Loyalty Program
-                    </a>
-                </div>
-                <div class="col-md-2 col-sm-4 col-6 mb-3">
-                    <a href="#" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-qrcode d-block mb-2"></i>
-                        QR Codes
-                    </a>
-                </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <div>
+                <div class="stat-value">{{ stats.active_menu_items }}</div>
+                <div class="stat-label">Active Items</div>
+                <div class="stat-change positive">+5% from last month</div>
+            </div>
+            <div class="stat-icon success">
+                <i class="fas fa-check-circle"></i>
             </div>
         </div>
     </div>
-    
-    <!-- Recent Orders -->
-    <div class="row">
-        <div class="col-lg-8 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list me-2"></i>Recent Orders
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>Customer</th>
-                                    <th>Table</th>
-                                    <th>Items</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>#001</td>
-                                    <td>John Doe</td>
-                                    <td>T001</td>
-                                    <td>2</td>
-                                    <td>175.00 EGP</td>
-                                    <td><span class="status-badge status-processing">Processing</span></td>
-                                    <td>10:30 AM</td>
-                                </tr>
-                                <tr>
-                                    <td>#002</td>
-                                    <td>Jane Smith</td>
-                                    <td>T003</td>
-                                    <td>3</td>
-                                    <td>245.00 EGP</td>
-                                    <td><span class="status-badge status-completed">Completed</span></td>
-                                    <td>10:15 AM</td>
-                                </tr>
-                                <tr>
-                                    <td>#003</td>
-                                    <td>Ahmed Ali</td>
-                                    <td>T002</td>
-                                    <td>1</td>
-                                    <td>150.00 EGP</td>
-                                    <td><span class="status-badge status-new">New</span></td>
-                                    <td>10:45 AM</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <div>
+                <div class="stat-value">{{ stats.out_of_stock_items }}</div>
+                <div class="stat-label">Out of Stock</div>
+                <div class="stat-change negative">+2 from yesterday</div>
             </div>
-        </div>
-        
-        <!-- Service Requests -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bell me-2"></i>Service Requests
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Table T001</strong><br>
-                                <small class="text-muted">Clean table</small>
-                            </div>
-                            <span class="badge bg-warning">Pending</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Table T003</strong><br>
-                                <small class="text-muted">Refill coals</small>
-                            </div>
-                            <span class="badge bg-info">Acknowledged</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Table T002</strong><br>
-                                <small class="text-muted">Adjust AC</small>
-                            </div>
-                            <span class="badge bg-warning">Pending</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
             </div>
         </div>
     </div>
-    
-    <!-- System Status -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-server me-2"></i>System Status
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-database fa-2x text-success mb-2"></i>
-                                <h6>Database</h6>
-                                <span class="badge bg-success">Online</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-wifi fa-2x text-success mb-2"></i>
-                                <h6>Network</h6>
-                                <span class="badge bg-success">Connected</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-credit-card fa-2x text-success mb-2"></i>
-                                <h6>Payment Gateway</h6>
-                                <span class="badge bg-success">Active</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-bell fa-2x text-success mb-2"></i>
-                                <h6>Notifications</h6>
-                                <span class="badge bg-success">Working</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <div>
+                <div class="stat-value">{{ stats.recent_orders }}</div>
+                <div class="stat-label">Recent Orders</div>
+                <div class="stat-change positive">+8% from last week</div>
+            </div>
+            <div class="stat-icon info">
+                <i class="fas fa-shopping-cart"></i>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Recent Orders Section -->
+<div class="orders-section">
+    <div class="section-header">
+        <h2 class="section-title">Recent Orders</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>ORDER ID</th>
+                    <th>NAME</th>
+                    <th>QR NUMBER</th>
+                    <th>DATE</th>
+                    <th>TYPE</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="order-id">00001</td>
+                    <td class="order-name">Christine Brooks</td>
+                    <td><span class="qr-number">#34</span></td>
+                    <td class="order-date">04 Sep 2024</td>
+                    <td class="order-type">Brunch</td>
+                    <td><span class="status-badge status-completed">Completed</span></td>
+                </tr>
+                <tr>
+                    <td class="order-id">00002</td>
+                    <td class="order-name">Rosie Pearson</td>
+                    <td><span class="qr-number">#7</span></td>
+                    <td class="order-date">28 May 2024</td>
+                    <td class="order-type">Drinks</td>
+                    <td><span class="status-badge status-processing">Processing</span></td>
+                </tr>
+                <tr>
+                    <td class="order-id">00003</td>
+                    <td class="order-name">Darrell Caldwell</td>
+                    <td><span class="qr-number">#19</span></td>
+                    <td class="order-date">23 Nov 2024</td>
+                    <td class="order-type">Brunch</td>
+                    <td><span class="status-badge status-rejected">Rejected</span></td>
+                </tr>
+                <tr>
+                    <td class="order-id">00004</td>
+                    <td class="order-name">Gilbert Johnston</td>
+                    <td><span class="qr-number">#10</span></td>
+                    <td class="order-date">05 Feb 2024</td>
+                    <td class="order-type">Drinks</td>
+                    <td><span class="status-badge status-completed">Completed</span></td>
+                </tr>
+                <tr>
+                    <td class="order-id">00005</td>
+                    <td class="order-name">Alan Cain</td>
+                    <td><span class="qr-number">#7</span></td>
+                    <td class="order-date">29 Jul 2024</td>
+                    <td class="order-type">Drinks</td>
+                    <td><span class="status-badge status-processing">Processing</span></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Auto-refresh dashboard data every 30 seconds
-setInterval(function() {
-    // This would make AJAX calls to update the dashboard data
-    console.log('Refreshing dashboard data...');
-}, 30000);
-
-// Real-time updates via WebSocket
-if (typeof socket !== 'undefined') {
-    socket.on('dashboard_update', function(data) {
-        // Update dashboard statistics
-        console.log('Dashboard update received:', data);
+document.addEventListener('DOMContentLoaded', function() {
+    // Performance: Animate stats on load
+    const statValues = document.querySelectorAll('.stat-value');
+    
+    statValues.forEach(stat => {
+        const finalValue = parseInt(stat.textContent);
+        let currentValue = 0;
+        const increment = finalValue / 50;
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                currentValue = finalValue;
+                clearInterval(timer);
+            }
+            stat.textContent = Math.floor(currentValue);
+        }, 20);
     });
-}
+
+    // Performance: Intersection Observer for table rows
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0) translateZ(0)';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    // Observe table rows for smooth loading
+    const tableRows = document.querySelectorAll('.orders-table tbody tr');
+    tableRows.forEach(row => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(20px) translateZ(0)';
+        row.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+        observer.observe(row);
+    });
+});
 </script>
 {% endblock %}

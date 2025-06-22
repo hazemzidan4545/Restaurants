@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+
+{% block title %}QR Codes - Admin Dashboard{% endblock %}
+{% block page_title %}QR Codes{% endblock %}
+
+{% block extra_css %}
+<style>
+
+        /* QR Codes Grid Styles */
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .qr-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            transform: translateZ(0);
+            will-change: transform, box-shadow;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .qr-card:hover {
+            transform: translateY(-8px) translateZ(0);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .qr-card.empty {
+            border: 2px dashed rgba(243, 205, 33, 0.3);
+            background: rgba(243, 205, 33, 0.05);
+            cursor: pointer;
+        }
+
+        .qr-card.empty:hover {
+            border-color: var(--primary-yellow);
+            background: rgba(243, 205, 33, 0.1);
+        }
+
+        .qr-code-image {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            transform: translateZ(0);
+            will-change: transform, box-shadow;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #f1f5f9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .qr-card:hover .qr-code-image {
+            transform: scale(1.05) translateZ(0);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary-yellow);
+        }
+
+        .qr-code-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .qr-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            box-shadow: 0 4px 15px rgba(243, 205, 33, 0.3);
+            transition: all 0.3s ease;
+            transform: translateZ(0);
+            will-change: transform, box-shadow;
+        }
+
+        .qr-card:hover .qr-icon {
+            transform: scale(1.1) translateZ(0);
+            box-shadow: 0 6px 25px rgba(243, 205, 33, 0.4);
+        }
+
+        .qr-icon i {
+            font-size: 24px;
+            color: var(--primary-dark);
+            transition: transform 0.3s ease;
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
+        .qr-card:hover .qr-icon i {
+            transform: scale(1.1) translateZ(0);
+        }
+
+        .qr-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-yellow);
+            margin: 0;
+            line-height: 1.4;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .qr-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(-10px) translateZ(0);
+            transition: all 0.3s ease;
+            will-change: opacity, transform;
+            z-index: 10;
+        }
+
+        .qr-card:hover .qr-actions {
+            opacity: 1;
+            transform: translateY(0) translateZ(0);
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            font-size: 12px;
+            position: relative;
+            z-index: 15;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-yellow);
+            color: var(--primary-dark);
+            transform: scale(1.1) translateZ(0);
+        }
+
+        .action-btn.download {
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+        }
+
+        .action-btn.download:hover {
+            background: var(--success-green);
+            transform: scale(1.1) translateZ(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .admin-sidebar {
+                width: 240px;
+            }
+
+            .main-content {
+                margin-left: 240px;
+            }
+
+            .qr-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%) translateZ(0);
+                width: 280px;
+                will-change: transform;
+            }
+
+            .admin-sidebar.mobile-open {
+                transform: translateX(0) translateZ(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .search-input {
+                width: 220px;
+            }
+
+            .top-nav {
+                padding: 18px 25px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .content-area {
+                padding: 25px 20px;
+            }
+
+            .qr-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 15px;
+            }
+
+            .qr-card {
+                padding: 25px 15px;
+                min-height: 160px;
+            }
+
+            .qr-icon {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 12px;
+            }
+
+            .qr-icon i {
+                font-size: 20px;
+            }
+
+            .qr-title {
+                font-size: 13px;
+            }
+
+            .nav-icons {
+                gap: 8px;
+            }
+
+            .nav-icon {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .search-input {
+                width: 180px;
+                font-size: 13px;
+            }
+
+            .top-nav {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .qr-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 12px;
+            }
+
+            .qr-card {
+                padding: 20px 12px;
+                min-height: 140px;
+            }
+
+            .qr-icon {
+                width: 45px;
+                height: 45px;
+                margin-bottom: 10px;
+            }
+
+            .qr-icon i {
+                font-size: 18px;
+            }
+
+            .qr-title {
+                font-size: 12px;
+            }
+        }
+
+        /* Smooth animations */
+        * {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-yellow);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #e6b800;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- QR Codes Grid -->
+<div class="qr-grid">
+    {% for qr_code in qr_codes %}
+    <div class="qr-card" data-qr-id="{{ qr_code.id }}">
+        <div class="qr-actions">
+            <button class="action-btn download" title="Download QR">
+                <i class="fas fa-download"></i>
+            </button>
+            <button class="action-btn" title="Edit">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn" title="Delete">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="qr-code-image">
+            <svg class="qr-code-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- QR Code Pattern -->
+                <rect width="100" height="100" fill="white"/>
+                <!-- Corner squares -->
+                <rect x="5" y="5" width="20" height="20" fill="black"/>
+                <rect x="75" y="5" width="20" height="20" fill="black"/>
+                <rect x="5" y="75" width="20" height="20" fill="black"/>
+                <rect x="8" y="8" width="14" height="14" fill="white"/>
+                <rect x="78" y="8" width="14" height="14" fill="white"/>
+                <rect x="8" y="78" width="14" height="14" fill="white"/>
+                <rect x="11" y="11" width="8" height="8" fill="black"/>
+                <rect x="81" y="11" width="8" height="8" fill="black"/>
+                <rect x="11" y="81" width="8" height="8" fill="black"/>
+
+                <!-- Data pattern (simplified) -->
+                <rect x="30" y="10" width="3" height="3" fill="black"/>
+                <rect x="35" y="10" width="3" height="3" fill="black"/>
+                <rect x="40" y="10" width="3" height="3" fill="black"/>
+                <rect x="50" y="10" width="3" height="3" fill="black"/>
+                <rect x="55" y="10" width="3" height="3" fill="black"/>
+                <rect x="65" y="10" width="3" height="3" fill="black"/>
+
+                <rect x="30" y="15" width="3" height="3" fill="black"/>
+                <rect x="40" y="15" width="3" height="3" fill="black"/>
+                <rect x="45" y="15" width="3" height="3" fill="black"/>
+                <rect x="55" y="15" width="3" height="3" fill="black"/>
+                <rect x="60" y="15" width="3" height="3" fill="black"/>
+
+                <rect x="35" y="20" width="3" height="3" fill="black"/>
+                <rect x="40" y="20" width="3" height="3" fill="black"/>
+                <rect x="50" y="20" width="3" height="3" fill="black"/>
+                <rect x="60" y="20" width="3" height="3" fill="black"/>
+                <rect x="65" y="20" width="3" height="3" fill="black"/>
+
+                <!-- More data pattern -->
+                <rect x="10" y="30" width="3" height="3" fill="black"/>
+                <rect x="15" y="30" width="3" height="3" fill="black"/>
+                <rect x="25" y="30" width="3" height="3" fill="black"/>
+                <rect x="30" y="30" width="3" height="3" fill="black"/>
+                <rect x="40" y="30" width="3" height="3" fill="black"/>
+                <rect x="50" y="30" width="3" height="3" fill="black"/>
+                <rect x="60" y="30" width="3" height="3" fill="black"/>
+                <rect x="70" y="30" width="3" height="3" fill="black"/>
+                <rect x="80" y="30" width="3" height="3" fill="black"/>
+                <rect x="85" y="30" width="3" height="3" fill="black"/>
+
+                <rect x="10" y="35" width="3" height="3" fill="black"/>
+                <rect x="20" y="35" width="3" height="3" fill="black"/>
+                <rect x="35" y="35" width="3" height="3" fill="black"/>
+                <rect x="45" y="35" width="3" height="3" fill="black"/>
+                <rect x="55" y="35" width="3" height="3" fill="black"/>
+                <rect x="65" y="35" width="3" height="3" fill="black"/>
+                <rect x="75" y="35" width="3" height="3" fill="black"/>
+                <rect x="90" y="35" width="3" height="3" fill="black"/>
+
+                <!-- Center alignment pattern -->
+                <rect x="45" y="45" width="10" height="10" fill="black"/>
+                <rect x="47" y="47" width="6" height="6" fill="white"/>
+                <rect x="49" y="49" width="2" height="2" fill="black"/>
+
+                <!-- More data patterns -->
+                <rect x="15" y="60" width="3" height="3" fill="black"/>
+                <rect x="25" y="60" width="3" height="3" fill="black"/>
+                <rect x="35" y="60" width="3" height="3" fill="black"/>
+                <rect x="45" y="60" width="3" height="3" fill="black"/>
+                <rect x="55" y="60" width="3" height="3" fill="black"/>
+                <rect x="65" y="60" width="3" height="3" fill="black"/>
+                <rect x="75" y="60" width="3" height="3" fill="black"/>
+                <rect x="85" y="60" width="3" height="3" fill="black"/>
+
+                <rect x="30" y="85" width="3" height="3" fill="black"/>
+                <rect x="35" y="85" width="3" height="3" fill="black"/>
+                <rect x="40" y="85" width="3" height="3" fill="black"/>
+                <rect x="50" y="85" width="3" height="3" fill="black"/>
+                <rect x="55" y="85" width="3" height="3" fill="black"/>
+                <rect x="65" y="85" width="3" height="3" fill="black"/>
+                <rect x="70" y="85" width="3" height="3" fill="black"/>
+                <rect x="80" y="85" width="3" height="3" fill="black"/>
+                <rect x="90" y="85" width="3" height="3" fill="black"/>
+            </svg>
+        </div>
+        <h3 class="qr-title">{{ qr_code.name }}</h3>
+    </div>
+    {% endfor %}
+
+    <!-- Empty slots to match the grid layout -->
+    <div class="qr-card empty">
+        <div class="qr-icon">
+            <i class="fas fa-plus"></i>
+        </div>
+        <h3 class="qr-title">Add QR Code</h3>
+    </div>
+
+    <div class="qr-card empty">
+        <div class="qr-icon">
+            <i class="fas fa-plus"></i>
+        </div>
+        <h3 class="qr-title">Add QR Code</h3>
+    </div>
+
+    <div class="qr-card empty">
+        <div class="qr-icon">
+            <i class="fas fa-plus"></i>
+        </div>
+        <h3 class="qr-title">Add QR Code</h3>
+    </div>
+
+    <div class="qr-card empty">
+        <div class="qr-icon">
+            <i class="fas fa-plus"></i>
+        </div>
+        <h3 class="qr-title">Add QR Code</h3>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Performance optimizations
+    const searchInput = document.querySelector('.search-input');
+    const qrCards = document.querySelectorAll('.qr-card:not(.empty)');
+
+    // Debounced search for better performance
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Search functionality
+    function searchQRCodes() {
+        const searchTerm = searchInput.value.toLowerCase();
+
+        qrCards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            const shouldShow = text.includes(searchTerm);
+
+            requestAnimationFrame(() => {
+                card.style.display = shouldShow ? '' : 'none';
+                card.style.opacity = shouldShow ? '1' : '0.3';
+            });
+        });
+    }
+
+    // Optimized search functionality with requestAnimationFrame
+    const performSearch = debounce(searchQRCodes, 150);
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search input listener
+        if (searchInput) {
+            searchInput.addEventListener('input', performSearch, { passive: true });
+        }
+
+        // Action button listeners
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const action = this.title;
+                const card = this.closest('.qr-card');
+                const qrId = card.dataset.qrId;
+
+                if (action === 'Download QR') {
+                    // Handle download QR action
+                    console.log('Download QR code:', qrId);
+                    // Here you would implement QR code generation and download
+                } else if (action === 'Edit') {
+                    // Handle edit action
+                    console.log('Edit QR code:', qrId);
+                } else if (action === 'Delete') {
+                    // Handle delete action
+                    console.log('Delete QR code:', qrId);
+                }
+            });
+        });
+
+        // Empty card click listeners
+        document.querySelectorAll('.qr-card.empty').forEach(card => {
+            card.addEventListener('click', function() {
+                // Handle add new QR code
+                console.log('Add new QR code');
+            });
+        });
+
+        // Intersection Observer for lazy loading animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0) translateZ(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe QR cards for smooth loading
+        document.querySelectorAll('.qr-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px) translateZ(0)';
+            card.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+            observer.observe(card);
+        });
+    });
+</script>
+{% endblock %}

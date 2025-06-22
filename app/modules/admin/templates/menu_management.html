@@ -1,0 +1,1173 @@
+{% extends "base.html" %}
+
+{% block title %}Menu Management - Admin Dashboard{% endblock %}
+{% block page_title %}Menu Management{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="admin-card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="card-title">
+                <i class="fas fa-utensils"></i>
+                Menu Management
+            </h2>
+            <div class="header-actions">
+                <a href="{{ url_for('admin.add_menu_item') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-plus me-2"></i>Add Menu Item
+                </a>
+                <a href="{{ url_for('admin.category_management') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-tags me-2"></i>Manage Categories
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Filters & Search Section -->
+<div class="admin-card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title">
+                <i class="fas fa-filter"></i>
+                Filters & Search
+            </h3>
+            <div class="filter-actions">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAllFilters">
+                    <i class="fas fa-times me-1"></i>Clear All
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="toggleAdvancedFilters">
+                    <i class="fas fa-cog me-1"></i>Advanced
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Basic Filters Row -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label for="searchInput" class="form-label">
+                    <i class="fas fa-search me-1"></i>Search Menu Items
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchInput"
+                           placeholder="Search by name, description, ingredients...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="form-text">
+                    <small id="searchResults" class="text-muted"></small>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="categoryFilter" class="form-label">
+                    <i class="fas fa-tags me-1"></i>Category
+                </label>
+                <select class="form-select" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.category_id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="statusFilter" class="form-label">
+                    <i class="fas fa-toggle-on me-1"></i>Status
+                </label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="available">Available</option>
+                    <option value="out_of_stock">Out of Stock</option>
+                    <option value="discontinued">Discontinued</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="sortBy" class="form-label">
+                    <i class="fas fa-sort me-1"></i>Sort By
+                </label>
+                <select class="form-select" id="sortBy">
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                    <option value="price_asc">Price (Low-High)</option>
+                    <option value="price_desc">Price (High-Low)</option>
+                    <option value="created_desc">Newest First</option>
+                    <option value="created_asc">Oldest First</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="itemsPerPage" class="form-label">
+                    <i class="fas fa-list me-1"></i>Show
+                </label>
+                <select class="form-select" id="itemsPerPage">
+                    <option value="10">10 items</option>
+                    <option value="25" selected>25 items</option>
+                    <option value="50">50 items</option>
+                    <option value="100">100 items</option>
+                    <option value="all">All items</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Advanced Filters Row (Initially Hidden) -->
+        <div class="row g-3 advanced-filters" id="advancedFilters" style="display: none;">
+            <div class="col-md-3">
+                <label for="priceRangeMin" class="form-label">
+                    <i class="fas fa-dollar-sign me-1"></i>Price Range
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">EGP</span>
+                    <input type="number" class="form-control" id="priceRangeMin"
+                           placeholder="Min" min="0" step="0.01">
+                    <span class="input-group-text">-</span>
+                    <input type="number" class="form-control" id="priceRangeMax"
+                           placeholder="Max" min="0" step="0.01">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="stockFilter" class="form-label">
+                    <i class="fas fa-boxes me-1"></i>Stock Level
+                </label>
+                <select class="form-select" id="stockFilter">
+                    <option value="">All Stock Levels</option>
+                    <option value="in_stock">In Stock (>0)</option>
+                    <option value="low_stock">Low Stock (1-10)</option>
+                    <option value="out_of_stock">Out of Stock (0)</option>
+                    <option value="unlimited">Unlimited Stock</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="dateFilter" class="form-label">
+                    <i class="fas fa-calendar me-1"></i>Date Added
+                </label>
+                <select class="form-select" id="dateFilter">
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="quarter">This Quarter</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="popularityFilter" class="form-label">
+                    <i class="fas fa-star me-1"></i>Popularity
+                </label>
+                <select class="form-select" id="popularityFilter">
+                    <option value="">All Items</option>
+                    <option value="popular">Popular Items</option>
+                    <option value="trending">Trending</option>
+                    <option value="new">New Items</option>
+                    <option value="featured">Featured</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Active Filters Display -->
+        <div class="active-filters mt-3" id="activeFilters" style="display: none;">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="text-muted me-2">
+                    <i class="fas fa-filter me-1"></i>Active Filters:
+                </span>
+                <div id="filterTags" class="d-flex flex-wrap gap-1"></div>
+            </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="results-summary mt-3 pt-3 border-top" id="resultsSummary">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <span class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Showing <strong id="itemCount">0</strong> of <strong id="totalItems">0</strong> menu items
+                    </span>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary" id="exportFiltered">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="bulkActions">
+                            <i class="fas fa-tasks me-1"></i>Bulk Actions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Menu Items Table -->
+<div class="admin-card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-list"></i>
+            Menu Items
+        </h3>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="admin-table" id="menuItemsTable">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price (EGP)</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                            <tbody>
+                                {% for item in menu_items %}
+                                <tr data-category="{{ item.category_id }}" data-status="{{ item.status }}">
+                                    <td>
+                                        {% if item.image_url %}
+                                        <img src="{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}"
+                                             alt="{{ item.name }}" class="menu-item-thumbnail">
+                                        {% else %}
+                                        <div class="no-image-placeholder">
+                                            <i class="fas fa-image"></i>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ item.name }}</strong>
+                                        {% if item.description %}
+                                        <br><small class="text-muted">{{ item.description[:50] }}{% if item.description|length > 50 %}...{% endif %}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.category.name }}</td>
+                                    <td>{{ "%.2f"|format(item.price) }}</td>
+                                    <td>
+                                        <div class="input-group input-group-sm" style="width: 100px;">
+                                            <input type="number" class="form-control stock-input" 
+                                                   value="{{ item.stock }}" 
+                                                   data-item-id="{{ item.item_id }}"
+                                                   min="0">
+                                            <button class="btn btn-outline-secondary update-stock-btn" 
+                                                    data-item-id="{{ item.item_id }}" type="button">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if item.status == 'available' %}
+                                        <span class="status-badge status-completed">Available</span>
+                                        {% elif item.status == 'out_of_stock' %}
+                                        <span class="status-badge status-pending">Out of Stock</span>
+                                        {% elif item.status == 'discontinued' %}
+                                        <span class="status-badge status-rejected">Discontinued</span>
+                                        {% else %}
+                                        <span class="status-badge status-processing">{{ item.status|title }}</span>
+                                        {% endif %}
+                                        <select class="form-select form-select-sm status-select mt-1"
+                                                data-item-id="{{ item.item_id }}" style="font-size: 0.75rem;">
+                                            <option value="available" {% if item.status == 'available' %}selected{% endif %}>Available</option>
+                                            <option value="out_of_stock" {% if item.status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                                            <option value="discontinued" {% if item.status == 'discontinued' %}selected{% endif %}>Discontinued</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('admin.edit_menu_item', item_id=item.item_id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-item-btn" 
+                                                    data-item-id="{{ item.item_id }}" 
+                                                    data-item-name="{{ item.name }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="deleteItemName"></strong>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Menu Management Specific Styles */
+.menu-item-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.menu-item-thumbnail:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.no-image-placeholder {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+}
+
+.stock-input {
+    text-align: center;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.status-select {
+    min-width: 120px;
+    border-radius: 8px;
+}
+
+.update-stock-btn {
+    border-radius: 0 8px 8px 0;
+}
+
+/* Enhanced table styling */
+.admin-table td {
+    vertical-align: middle;
+    padding: 15px 12px;
+}
+
+.admin-table td strong {
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.admin-table .text-muted {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Action buttons */
+.btn-group .btn {
+    border-radius: 8px;
+    margin-right: 4px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+/* Header actions */
+.header-actions .btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+
+.header-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced Filters Styling */
+.filter-actions .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.filter-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.advanced-filters {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 1rem;
+    background: rgba(var(--primary-yellow-rgb), 0.02);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.form-label i {
+    color: var(--primary-yellow);
+    width: 16px;
+}
+
+.input-group .btn {
+    border-radius: 0 8px 8px 0;
+}
+
+.input-group .form-control:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+/* Active Filters */
+.active-filters {
+    background: rgba(var(--primary-yellow-rgb), 0.05);
+    border: 1px solid rgba(var(--primary-yellow-rgb), 0.2);
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.filter-tag {
+    background: var(--primary-yellow);
+    color: var(--text-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.filter-tag:hover {
+    background: var(--primary-dark);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.filter-tag .remove-filter {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.filter-tag .remove-filter:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Results Summary */
+.results-summary {
+    background: rgba(var(--primary-dark-rgb), 0.02);
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.results-summary .btn-group .btn {
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* Search Enhancement */
+#searchInput {
+    border-radius: 8px 0 0 8px;
+}
+
+#clearSearch {
+    border-radius: 0 8px 8px 0;
+    border-left: none;
+}
+
+#searchResults {
+    font-style: italic;
+    color: var(--primary-yellow) !important;
+}
+
+/* Form Controls Enhancement */
+.form-select, .form-control {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: var(--primary-yellow);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-yellow-rgb), 0.25);
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .filter-actions {
+        margin-top: 0.5rem;
+    }
+
+    .advanced-filters .col-md-3 {
+        margin-bottom: 1rem;
+    }
+
+    .results-summary .col-md-6:last-child {
+        text-align: left !important;
+        margin-top: 0.5rem;
+    }
+
+    .filter-tag {
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Animation for advanced filters toggle */
+.advanced-filters {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.advanced-filters.show {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Enhanced Menu Management JavaScript
+class MenuManagement {
+    constructor() {
+        this.allRows = [];
+        this.filteredRows = [];
+        this.currentPage = 1;
+        this.itemsPerPage = 25;
+        this.activeFilters = {};
+        this.sortOrder = 'name_asc';
+
+        this.init();
+    }
+
+    init() {
+        this.cacheElements();
+        this.bindEvents();
+        this.initializeTable();
+        this.updateResultsSummary();
+    }
+
+    cacheElements() {
+        this.searchInput = document.getElementById('searchInput');
+        this.categoryFilter = document.getElementById('categoryFilter');
+        this.statusFilter = document.getElementById('statusFilter');
+        this.sortBy = document.getElementById('sortBy');
+        this.itemsPerPageSelect = document.getElementById('itemsPerPage');
+        this.priceRangeMin = document.getElementById('priceRangeMin');
+        this.priceRangeMax = document.getElementById('priceRangeMax');
+        this.stockFilter = document.getElementById('stockFilter');
+        this.dateFilter = document.getElementById('dateFilter');
+        this.popularityFilter = document.getElementById('popularityFilter');
+        this.table = document.getElementById('menuItemsTable');
+        this.tbody = this.table.getElementsByTagName('tbody')[0];
+        this.advancedFilters = document.getElementById('advancedFilters');
+        this.activeFiltersDiv = document.getElementById('activeFilters');
+        this.filterTags = document.getElementById('filterTags');
+        this.searchResults = document.getElementById('searchResults');
+        this.itemCount = document.getElementById('itemCount');
+        this.totalItems = document.getElementById('totalItems');
+    }
+
+    bindEvents() {
+        // Basic filters
+        this.searchInput.addEventListener('input', () => this.debounce(this.applyFilters.bind(this), 300)());
+        this.categoryFilter.addEventListener('change', () => this.applyFilters());
+        this.statusFilter.addEventListener('change', () => this.applyFilters());
+        this.sortBy.addEventListener('change', () => this.applyFilters());
+        this.itemsPerPageSelect.addEventListener('change', () => this.applyFilters());
+
+        // Advanced filters
+        if (this.priceRangeMin) this.priceRangeMin.addEventListener('input', () => this.debounce(this.applyFilters.bind(this), 500)());
+        if (this.priceRangeMax) this.priceRangeMax.addEventListener('input', () => this.debounce(this.applyFilters.bind(this), 500)());
+        if (this.stockFilter) this.stockFilter.addEventListener('change', () => this.applyFilters());
+        if (this.dateFilter) this.dateFilter.addEventListener('change', () => this.applyFilters());
+        if (this.popularityFilter) this.popularityFilter.addEventListener('change', () => this.applyFilters());
+
+        // Control buttons
+        const clearAllBtn = document.getElementById('clearAllFilters');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const toggleAdvancedBtn = document.getElementById('toggleAdvancedFilters');
+        const exportBtn = document.getElementById('exportFiltered');
+        const bulkBtn = document.getElementById('bulkActions');
+
+        if (clearAllBtn) clearAllBtn.addEventListener('click', () => this.clearAllFilters());
+        if (clearSearchBtn) clearSearchBtn.addEventListener('click', () => this.clearSearch());
+        if (toggleAdvancedBtn) toggleAdvancedBtn.addEventListener('click', () => this.toggleAdvancedFilters());
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportFiltered());
+        if (bulkBtn) bulkBtn.addEventListener('click', () => this.showBulkActions());
+    }
+
+    initializeTable() {
+        this.allRows = Array.from(this.tbody.getElementsByTagName('tr'));
+        this.filteredRows = [...this.allRows];
+
+        // Add data attributes for filtering
+        this.allRows.forEach(row => {
+            const cells = row.cells;
+            if (cells.length > 0) {
+                // Extract data for filtering
+                const name = cells[1].querySelector('strong')?.textContent || '';
+                const description = cells[1].querySelector('.text-muted')?.textContent || '';
+                const category = cells[2].textContent.trim();
+                const price = parseFloat(cells[3].textContent.replace('EGP', '').trim()) || 0;
+                const stock = parseInt(cells[4].textContent.trim()) || 0;
+                const status = cells[5].querySelector('.status-badge')?.textContent.trim().toLowerCase() || '';
+
+                // Set data attributes
+                row.setAttribute('data-name', name.toLowerCase());
+                row.setAttribute('data-description', description.toLowerCase());
+                row.setAttribute('data-category', category);
+                row.setAttribute('data-price', price);
+                row.setAttribute('data-stock', stock);
+                row.setAttribute('data-status', status);
+                row.setAttribute('data-search-text', (name + ' ' + description + ' ' + category).toLowerCase());
+            }
+        });
+    }
+
+    applyFilters() {
+        this.activeFilters = this.getActiveFilters();
+        this.filteredRows = this.allRows.filter(row => this.matchesFilters(row));
+        this.sortRows();
+        this.displayRows();
+        this.updateActiveFiltersDisplay();
+        this.updateResultsSummary();
+        this.updateSearchResults();
+    }
+
+    getActiveFilters() {
+        const filters = {};
+
+        if (this.searchInput.value.trim()) filters.search = this.searchInput.value.trim();
+        if (this.categoryFilter.value) filters.category = this.categoryFilter.value;
+        if (this.statusFilter.value) filters.status = this.statusFilter.value;
+        if (this.priceRangeMin.value) filters.priceMin = parseFloat(this.priceRangeMin.value);
+        if (this.priceRangeMax.value) filters.priceMax = parseFloat(this.priceRangeMax.value);
+        if (this.stockFilter.value) filters.stock = this.stockFilter.value;
+        if (this.dateFilter.value) filters.date = this.dateFilter.value;
+        if (this.popularityFilter.value) filters.popularity = this.popularityFilter.value;
+
+        return filters;
+    }
+
+    matchesFilters(row) {
+        const filters = this.activeFilters;
+
+        // Search filter
+        if (filters.search) {
+            const searchText = row.getAttribute('data-search-text');
+            if (!searchText.includes(filters.search.toLowerCase())) return false;
+        }
+
+        // Category filter
+        if (filters.category) {
+            const category = row.getAttribute('data-category');
+            const categoryOption = this.categoryFilter.querySelector(`option[value="${filters.category}"]`);
+            if (category !== categoryOption?.textContent.trim()) return false;
+        }
+
+        // Status filter
+        if (filters.status) {
+            const status = row.getAttribute('data-status');
+            if (!status.includes(filters.status.replace('_', ' '))) return false;
+        }
+
+        // Price range filter
+        const price = parseFloat(row.getAttribute('data-price'));
+        if (filters.priceMin && price < filters.priceMin) return false;
+        if (filters.priceMax && price > filters.priceMax) return false;
+
+        // Stock filter
+        if (filters.stock) {
+            const stock = parseInt(row.getAttribute('data-stock'));
+            switch (filters.stock) {
+                case 'in_stock':
+                    if (stock <= 0) return false;
+                    break;
+                case 'low_stock':
+                    if (stock < 1 || stock > 10) return false;
+                    break;
+                case 'out_of_stock':
+                    if (stock !== 0) return false;
+                    break;
+                case 'unlimited':
+                    if (stock < 999) return false;
+                    break;
+            }
+        }
+
+        return true;
+    }
+
+    sortRows() {
+        this.filteredRows.sort((a, b) => {
+            const [field, direction] = this.sortOrder.split('_');
+            let aVal, bVal;
+
+            switch (field) {
+                case 'name':
+                    aVal = a.getAttribute('data-name');
+                    bVal = b.getAttribute('data-name');
+                    break;
+                case 'price':
+                    aVal = parseFloat(a.getAttribute('data-price'));
+                    bVal = parseFloat(b.getAttribute('data-price'));
+                    break;
+                case 'created':
+                    aVal = new Date(a.getAttribute('data-created') || '2024-01-01');
+                    bVal = new Date(b.getAttribute('data-created') || '2024-01-01');
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (typeof aVal === 'string') {
+                return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            } else {
+                return direction === 'asc' ? aVal - bVal : bVal - aVal;
+            }
+        });
+    }
+
+    displayRows() {
+        // Hide all rows first
+        this.allRows.forEach(row => row.style.display = 'none');
+
+        // Calculate pagination
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = this.itemsPerPageSelect.value === 'all' ?
+            this.filteredRows.length :
+            startIndex + this.itemsPerPage;
+
+        // Show filtered rows for current page
+        this.filteredRows.slice(startIndex, endIndex).forEach(row => {
+            row.style.display = '';
+        });
+    }
+
+    updateActiveFiltersDisplay() {
+        const filters = this.activeFilters;
+        const hasFilters = Object.keys(filters).length > 0;
+
+        if (this.activeFiltersDiv) {
+            this.activeFiltersDiv.style.display = hasFilters ? 'block' : 'none';
+        }
+
+        if (this.filterTags) {
+            this.filterTags.innerHTML = '';
+            Object.entries(filters).forEach(([key, value]) => {
+                const tag = this.createFilterTag(key, value);
+                this.filterTags.appendChild(tag);
+            });
+        }
+    }
+
+    createFilterTag(key, value) {
+        const tag = document.createElement('span');
+        tag.className = 'filter-tag';
+
+        let displayText = '';
+        switch (key) {
+            case 'search':
+                displayText = `Search: "${value}"`;
+                break;
+            case 'category':
+                const categoryOption = this.categoryFilter.querySelector(`option[value="${value}"]`);
+                displayText = `Category: ${categoryOption?.textContent || value}`;
+                break;
+            case 'status':
+                displayText = `Status: ${value.replace('_', ' ')}`;
+                break;
+            case 'priceMin':
+                displayText = `Min Price: EGP ${value}`;
+                break;
+            case 'priceMax':
+                displayText = `Max Price: EGP ${value}`;
+                break;
+            case 'stock':
+                displayText = `Stock: ${value.replace('_', ' ')}`;
+                break;
+            default:
+                displayText = `${key}: ${value}`;
+        }
+
+        tag.innerHTML = `
+            ${displayText}
+            <button type="button" class="remove-filter" data-filter="${key}">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        tag.querySelector('.remove-filter').addEventListener('click', () => {
+            this.removeFilter(key);
+        });
+
+        return tag;
+    }
+
+    removeFilter(filterKey) {
+        switch (filterKey) {
+            case 'search':
+                this.searchInput.value = '';
+                break;
+            case 'category':
+                this.categoryFilter.value = '';
+                break;
+            case 'status':
+                this.statusFilter.value = '';
+                break;
+            case 'priceMin':
+                if (this.priceRangeMin) this.priceRangeMin.value = '';
+                break;
+            case 'priceMax':
+                if (this.priceRangeMax) this.priceRangeMax.value = '';
+                break;
+            case 'stock':
+                if (this.stockFilter) this.stockFilter.value = '';
+                break;
+            case 'date':
+                if (this.dateFilter) this.dateFilter.value = '';
+                break;
+            case 'popularity':
+                if (this.popularityFilter) this.popularityFilter.value = '';
+                break;
+        }
+        this.applyFilters();
+    }
+
+    updateResultsSummary() {
+        const total = this.allRows.length;
+        const filtered = this.filteredRows.length;
+
+        if (this.totalItems) this.totalItems.textContent = total;
+        if (this.itemCount) this.itemCount.textContent = filtered;
+    }
+
+    updateSearchResults() {
+        if (this.searchResults) {
+            if (this.searchInput.value.trim()) {
+                const count = this.filteredRows.length;
+                this.searchResults.textContent = `${count} result${count !== 1 ? 's' : ''} found`;
+            } else {
+                this.searchResults.textContent = '';
+            }
+        }
+    }
+
+    clearAllFilters() {
+        this.searchInput.value = '';
+        this.categoryFilter.value = '';
+        this.statusFilter.value = '';
+        if (this.priceRangeMin) this.priceRangeMin.value = '';
+        if (this.priceRangeMax) this.priceRangeMax.value = '';
+        if (this.stockFilter) this.stockFilter.value = '';
+        if (this.dateFilter) this.dateFilter.value = '';
+        if (this.popularityFilter) this.popularityFilter.value = '';
+        this.sortBy.value = 'name_asc';
+        this.applyFilters();
+    }
+
+    clearSearch() {
+        this.searchInput.value = '';
+        this.applyFilters();
+        this.searchInput.focus();
+    }
+
+    toggleAdvancedFilters() {
+        if (this.advancedFilters) {
+            const isVisible = this.advancedFilters.style.display !== 'none';
+            this.advancedFilters.style.display = isVisible ? 'none' : 'block';
+
+            if (!isVisible) {
+                this.advancedFilters.classList.add('show');
+            }
+
+            const btn = document.getElementById('toggleAdvancedFilters');
+            if (btn) {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = isVisible ? 'fas fa-cog me-1' : 'fas fa-times me-1';
+                }
+                btn.innerHTML = isVisible ? '<i class="fas fa-cog me-1"></i>Advanced' : '<i class="fas fa-times me-1"></i>Hide';
+            }
+        }
+    }
+
+    exportFiltered() {
+        RestaurantApp.showNotification('Info', 'Export functionality coming soon!', 'info');
+    }
+
+    showBulkActions() {
+        RestaurantApp.showNotification('Info', 'Bulk actions functionality coming soon!', 'info');
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        window.menuManagement = new MenuManagement();
+
+        // Update sort order when changed
+        const sortBySelect = document.getElementById('sortBy');
+        if (sortBySelect) {
+            sortBySelect.addEventListener('change', function() {
+                window.menuManagement.sortOrder = this.value;
+                window.menuManagement.applyFilters();
+            });
+        }
+
+        // Update items per page when changed
+        const itemsPerPageSelect = document.getElementById('itemsPerPage');
+        if (itemsPerPageSelect) {
+            itemsPerPageSelect.addEventListener('change', function() {
+                window.menuManagement.itemsPerPage = this.value === 'all' ?
+                    window.menuManagement.allRows.length :
+                    parseInt(this.value);
+                window.menuManagement.currentPage = 1;
+                window.menuManagement.applyFilters();
+            });
+        }
+    } catch (error) {
+        console.error('Error initializing MenuManagement:', error);
+        // Fallback to simple search
+        initSimpleSearch();
+    }
+});
+
+// Fallback simple search function
+function initSimpleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const clearAllBtn = document.getElementById('clearAllFilters');
+    const itemCount = document.getElementById('itemCount');
+    const totalItems = document.getElementById('totalItems');
+    const searchResults = document.getElementById('searchResults');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategory = categoryFilter.value;
+        const selectedStatus = statusFilter.value;
+        const rows = document.querySelectorAll('#menuItemsTable tbody tr');
+
+        let visibleCount = 0;
+        const totalCount = rows.length;
+
+        rows.forEach(row => {
+            const nameCell = row.querySelector('td:nth-child(2)');
+            const categoryCell = row.querySelector('td:nth-child(3)');
+            const statusCell = row.querySelector('td:nth-child(6)');
+
+            if (!nameCell || !categoryCell || !statusCell) return;
+
+            const name = nameCell.textContent.toLowerCase();
+            const description = nameCell.querySelector('.text-muted')?.textContent.toLowerCase() || '';
+            const category = categoryCell.textContent.trim();
+            const statusBadge = statusCell.querySelector('.status-badge');
+            const status = statusBadge ? statusBadge.textContent.trim().toLowerCase() : '';
+
+            const matchesSearch = !searchTerm || name.includes(searchTerm) || description.includes(searchTerm);
+            const matchesCategory = !selectedCategory || category === categoryFilter.options[categoryFilter.selectedIndex].text;
+            const matchesStatus = !selectedStatus || status.includes(selectedStatus.replace('_', ' '));
+
+            if (matchesSearch && matchesCategory && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Update counters
+        if (itemCount) itemCount.textContent = visibleCount;
+        if (totalItems) totalItems.textContent = totalCount;
+
+        // Update search results
+        if (searchResults) {
+            if (searchTerm) {
+                searchResults.textContent = `${visibleCount} result${visibleCount !== 1 ? 's' : ''} found`;
+            } else {
+                searchResults.textContent = '';
+            }
+        }
+    }
+
+    // Bind events
+    if (searchInput) {
+        searchInput.addEventListener('input', filterTable);
+    }
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', filterTable);
+    }
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterTable);
+    }
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            filterTable();
+            searchInput.focus();
+        });
+    }
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            categoryFilter.value = '';
+            statusFilter.value = '';
+            filterTable();
+        });
+    }
+
+    // Initial filter
+    filterTable();
+}
+
+// Stock update functionality
+document.querySelectorAll('.update-stock-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+        const stockInput = document.querySelector(`input[data-item-id="${itemId}"]`);
+        const newStock = parseInt(stockInput.value);
+
+        updateStock(itemId, newStock);
+    });
+});
+
+// Status update functionality
+document.querySelectorAll('.status-select').forEach(select => {
+    select.addEventListener('change', function() {
+        const itemId = this.dataset.itemId;
+        const newStatus = this.value;
+
+        updateStatus(itemId, newStatus);
+    });
+});
+
+function updateStock(itemId, stock) {
+    fetch(`/admin/api/menu/items/${itemId}/stock`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ stock: stock })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            RestaurantApp.showNotification('Success', 'Stock updated successfully', 'success');
+            // Update status if it changed
+            const statusSelect = document.querySelector(`select[data-item-id="${itemId}"]`);
+            if (statusSelect && data.status !== statusSelect.value) {
+                statusSelect.value = data.status;
+                // Update row data attribute
+                const row = statusSelect.closest('tr');
+                row.dataset.status = data.status;
+            }
+        } else {
+            RestaurantApp.showNotification('Error', data.error || 'Failed to update stock', 'error');
+        }
+    })
+    .catch(error => {
+        RestaurantApp.showNotification('Error', 'Failed to update stock', 'error');
+    });
+}
+
+function updateStatus(itemId, status) {
+    fetch(`/admin/api/menu/items/${itemId}/status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            RestaurantApp.showNotification('Success', 'Status updated successfully', 'success');
+            // Update row data attribute
+            const statusSelect = document.querySelector(`select[data-item-id="${itemId}"]`);
+            const row = statusSelect.closest('tr');
+            row.dataset.status = data.status;
+        } else {
+            RestaurantApp.showNotification('Error', data.error || 'Failed to update status', 'error');
+        }
+    })
+    .catch(error => {
+        RestaurantApp.showNotification('Error', 'Failed to update status', 'error');
+    });
+}
+
+// Delete functionality
+document.querySelectorAll('.delete-item-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+        const itemName = this.dataset.itemName;
+        
+        document.getElementById('deleteItemName').textContent = itemName;
+        document.getElementById('deleteForm').action = `/admin/menu/items/${itemId}/delete`;
+        
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    });
+});
+</script>
+{% endblock %}

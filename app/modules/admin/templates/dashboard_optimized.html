@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Shoumon{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="page-title">Dashboard Overview</h1>
+        <div class="dashboard-actions">
+            <button class="btn btn-outline-primary" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="admin-content">
+    <!-- Performance: Stats Cards with lazy loading -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="admin-card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-primary">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-counter="{{ stats.total_menu_items }}">0</div>
+                            <div class="stats-label">Total Menu Items</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="admin-card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-counter="{{ stats.active_menu_items }}">0</div>
+                            <div class="stats-label">Active Items</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="admin-card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-counter="{{ stats.out_of_stock_items }}">0</div>
+                            <div class="stats-label">Out of Stock</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="admin-card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-info">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-counter="{{ stats.recent_orders }}">0</div>
+                            <div class="stats-label">Recent Orders</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance: Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="admin-card">
+                <div class="card-header">
+                    <h5 class="card-title">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('admin.add_menu_item') }}" class="btn btn-primary btn-block quick-action-btn">
+                                <i class="fas fa-plus"></i>
+                                Add Menu Item
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('admin.orders') }}" class="btn btn-success btn-block quick-action-btn">
+                                <i class="fas fa-list"></i>
+                                View Orders
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('admin.category_management') }}" class="btn btn-warning btn-block quick-action-btn">
+                                <i class="fas fa-tags"></i>
+                                Manage Categories
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('admin.qr_codes') }}" class="btn btn-info btn-block quick-action-btn">
+                                <i class="fas fa-qrcode"></i>
+                                QR Codes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance: Recent Activity (lazy loaded) -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="admin-card">
+                <div class="card-header">
+                    <h5 class="card-title">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recent-activity" class="loading-skeleton" style="height: 300px;">
+                        <!-- Content will be loaded via AJAX -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="admin-card">
+                <div class="card-header">
+                    <h5 class="card-title">System Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="status-item">
+                        <div class="status-indicator bg-success"></div>
+                        <span>Database Connection</span>
+                        <span class="status-value">Online</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-indicator bg-success"></div>
+                        <span>Server Status</span>
+                        <span class="status-value">Running</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-indicator bg-warning"></div>
+                        <span>Cache Status</span>
+                        <span class="status-value">Warming</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        transition: all 0.3s ease;
+        border: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        color: white;
+        font-size: 24px;
+    }
+
+    .stats-content {
+        flex: 1;
+    }
+
+    .stats-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--primary-dark);
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+
+    .stats-label {
+        font-size: 14px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .quick-action-btn {
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .quick-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .status-item:last-child {
+        border-bottom: none;
+    }
+
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 12px;
+    }
+
+    .status-value {
+        margin-left: auto;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .dashboard-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* Performance: Reduce animations on slow devices */
+    @media (prefers-reduced-motion: reduce) {
+        .stats-card,
+        .quick-action-btn {
+            transition: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Performance: Animate counters
+    animateCounters();
+    
+    // Performance: Load recent activity asynchronously
+    loadRecentActivity();
+    
+    // Performance: Setup auto-refresh
+    setupAutoRefresh();
+});
+
+function animateCounters() {
+    const counters = document.querySelectorAll('[data-counter]');
+    
+    counters.forEach(counter => {
+        const target = parseInt(counter.dataset.counter);
+        const duration = 1000; // 1 second
+        const step = target / (duration / 16); // 60fps
+        let current = 0;
+        
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            counter.textContent = Math.floor(current);
+        }, 16);
+    });
+}
+
+async function loadRecentActivity() {
+    const container = document.getElementById('recent-activity');
+    
+    try {
+        const response = await fetch('/admin/api/recent-activity');
+        const data = await response.json();
+        
+        container.innerHTML = `
+            <div class="activity-list">
+                ${data.activities.map(activity => `
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="${activity.icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.title}</div>
+                            <div class="activity-time">${activity.time}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        container.classList.remove('loading-skeleton');
+    } catch (error) {
+        console.error('Failed to load recent activity:', error);
+        container.innerHTML = '<p class="text-muted">Failed to load recent activity</p>';
+        container.classList.remove('loading-skeleton');
+    }
+}
+
+function refreshDashboard() {
+    // Show loading state
+    document.body.classList.add('loading');
+    
+    // Reload page data
+    location.reload();
+}
+
+function setupAutoRefresh() {
+    // Auto-refresh every 5 minutes
+    setInterval(() => {
+        loadRecentActivity();
+    }, 5 * 60 * 1000);
+}
+</script>
+{% endblock %}
