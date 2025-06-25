@@ -189,11 +189,33 @@
     gap: 15px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .popular-order-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.popularity-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+    z-index: 2;
+}
+
+.popularity-badge i {
+    font-size: 0.6rem;
 }
 
 .order-image {
@@ -496,55 +518,38 @@
 
     <!-- Popular Orders Section -->
     <div class="popular-orders-section">
-        <h2 class="section-title">Popular Orders</h2>
+        <h2 class="section-title">
+            <i class="fas fa-fire text-warning me-2"></i>
+            Most Popular Items
+        </h2>
         <div class="popular-orders-grid">
+            {% for item in popular_items %}
             <div class="popular-order-card">
-                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=120&h=80&q=80&crop=left" alt="Office Lunch" class="order-image">
+                <div class="popularity-badge">
+                    <i class="fas fa-star"></i>
+                    Popular
+                </div>
+                {% if item.image_url %}
+                <img src="{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}" alt="{{ item.name }}" class="order-image">
+                {% else %}
+                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=120&h=80&fit=crop" alt="{{ item.name }}" class="order-image">
+                {% endif %}
                 <div class="order-details">
-                    <h6 class="order-name">Office</h6>
-                    <p class="order-description">Office lunch you would like</p>
+                    <h6 class="order-name">{{ item.name }}</h6>
+                    <p class="order-description">{{ item.description[:50] }}{% if item.description|length > 50 %}...{% endif %}</p>
                     <div class="order-footer">
-                        <span class="order-price">500.00 EGP</span>
-                        <button class="order-btn" onclick="addLandingItemToCart('office-lunch-1', 'Office Lunch', 500.00, 'Office lunch you would like', 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80')">Order</button>
+                        <span class="order-price">{{ item.price }} EGP</span>
+                        <button class="order-btn"
+                                data-item-id="{{ item.item_id }}"
+                                data-item-name="{{ item.name }}"
+                                data-item-price="{{ item.price }}"
+                                data-item-description="{{ item.description }}"
+                                data-item-image="{% if item.image_url %}{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}{% else %}https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop{% endif %}"
+                                onclick="addLandingItemToCartFromData(this)">Order</button>
                     </div>
                 </div>
             </div>
-
-            <div class="popular-order-card">
-                <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=120&h=80&q=80&crop=left" alt="Breakfast Special" class="order-image">
-                <div class="order-details">
-                    <h6 class="order-name">Office</h6>
-                    <p class="order-description">Office lunch you would like</p>
-                    <div class="order-footer">
-                        <span class="order-price">500.00 EGP</span>
-                        <button class="order-btn" onclick="addLandingItemToCart('breakfast-special-1', 'Breakfast Special', 500.00, 'Office lunch you would like', 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80')">Order</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="popular-order-card">
-                <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=120&h=80&q=80&crop=left" alt="Gourmet Salad" class="order-image">
-                <div class="order-details">
-                    <h6 class="order-name">Office</h6>
-                    <p class="order-description">Office lunch you would like</p>
-                    <div class="order-footer">
-                        <span class="order-price">500.00 EGP</span>
-                        <button class="order-btn" onclick="addLandingItemToCart('gourmet-salad-1', 'Gourmet Salad', 500.00, 'Office lunch you would like', 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80')">Order</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="popular-order-card">
-                <img src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&auto=format&fit=crop&w=120&h=80&q=80&crop=left" alt="Pasta Delight" class="order-image">
-                <div class="order-details">
-                    <h6 class="order-name">Office</h6>
-                    <p class="order-description">Office lunch you would like</p>
-                    <div class="order-footer">
-                        <span class="order-price">500.00 EGP</span>
-                        <button class="order-btn" onclick="addLandingItemToCart('pasta-delight-1', 'Pasta Delight', 500.00, 'Office lunch you would like', 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80')">Order</button>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 
@@ -654,7 +659,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Add item to cart from landing page
+// Add item to cart from landing page using data attributes
+function addLandingItemToCartFromData(button) {
+    const id = button.dataset.itemId;
+    const name = button.dataset.itemName;
+    const price = parseFloat(button.dataset.itemPrice);
+    const description = button.dataset.itemDescription;
+    const image = button.dataset.itemImage;
+
+    const cartItem = {
+        id: id,
+        name: name,
+        price: price,
+        quantity: 1,
+        specialInstructions: description,
+        image: image
+    };
+
+    // Use unified cart system
+    if (addToCart(cartItem)) {
+        // Show brief success feedback
+        const originalText = button.textContent;
+        button.textContent = 'Added!';
+        button.style.background = '#28a745';
+        button.style.color = 'white';
+
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.style.background = '';
+            button.style.color = '';
+        }, 1500);
+    }
+}
+
+// Keep the old function for backward compatibility (if needed)
 function addLandingItemToCart(id, name, price, description, image) {
     const cartItem = {
         id: id,

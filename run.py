@@ -21,11 +21,21 @@ def deploy():
         upgrade()
 
 if __name__ == '__main__':
-    app = create_app(os.getenv('FLASK_CONFIG') or 'development')
-    
-    with app.app_context():
-        # Create tables if they don't exist
-        db.create_all()
-    
-    # Run the application with SocketIO support
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    try:
+        print("Starting Restaurant Management System...")
+        print("Initializing application...")
+        app = create_app(os.getenv('FLASK_CONFIG') or 'development')
+        
+        print("Creating database tables...")
+        with app.app_context():
+            # Create tables if they don't exist
+            db.create_all()
+        
+        print("Starting server...")
+        # Run the application with SocketIO support
+        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    except Exception as e:
+        print(f"ERROR: Failed to start the application: {e}")
+        import traceback
+        traceback.print_exc()
+        print("\nPlease fix the above error and try again.")

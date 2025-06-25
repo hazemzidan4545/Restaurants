@@ -16,13 +16,63 @@
                 <a href="{{ url_for('admin.add_menu_item') }}" class="btn btn-primary me-2">
                     <i class="fas fa-plus me-2"></i>Add Menu Item
                 </a>
-                <a href="{{ url_for('admin.category_management') }}" class="btn btn-outline-primary">
+                <a href="{{ url_for('admin.category_management') }}" class="btn btn-outline-primary me-2">
                     <i class="fas fa-tags me-2"></i>Manage Categories
+                </a>
+                <a href="{{ url_for('admin.popular_items_analytics') }}" class="analytics-button">
+                    <i class="fas fa-chart-line"></i> Analytics
                 </a>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Style for analytics button -->
+<style>
+.analytics-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: white;
+    color: #212529;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+    position: relative;
+    border: none;
+    overflow: hidden;
+}
+
+.analytics-button:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 6px;
+    background-color: var(--primary-yellow, #f3cd21);
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.analytics-button i {
+    margin-right: 10px;
+    font-size: 1.1em;
+}
+
+.analytics-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    color: #212529;
+}
+
+.analytics-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+</style>
 
 <!-- Enhanced Filters & Search Section -->
 <div class="admin-card mb-4">
@@ -208,7 +258,7 @@
         </h3>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive text-center">
             <table class="admin-table" id="menuItemsTable">
                 <thead>
                     <tr>
@@ -365,9 +415,20 @@
 }
 
 /* Enhanced table styling */
+.admin-table {
+    margin: 0 auto;
+    width: 100%;
+}
+
 .admin-table td {
     vertical-align: middle;
     padding: 15px 12px;
+    text-align: center;
+}
+
+.admin-table th {
+    text-align: center;
+    vertical-align: middle;
 }
 
 .admin-table td strong {
@@ -378,6 +439,48 @@
 .admin-table .text-muted {
     font-size: 0.85rem;
     line-height: 1.4;
+}
+
+/* Center align specific table elements */
+.admin-table .menu-item-thumbnail,
+.admin-table .no-image-placeholder {
+    margin: 0 auto;
+    display: block;
+}
+
+.admin-table .btn-group {
+    justify-content: center;
+    display: flex;
+}
+
+.admin-table .input-group {
+    margin: 0 auto;
+    justify-content: center;
+}
+
+.admin-table .status-select {
+    margin: 0 auto;
+    display: block;
+}
+
+/* Center align table content */
+.table-responsive {
+    display: flex;
+    justify-content: center;
+}
+
+.admin-table tbody tr td:first-child {
+    text-align: center;
+}
+
+.admin-table tbody tr td:nth-child(2) {
+    text-align: center;
+}
+
+/* Status badges center alignment */
+.admin-table .status-badge {
+    display: inline-block;
+    margin: 0 auto 5px auto;
 }
 
 /* Action buttons */

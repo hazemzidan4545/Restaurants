@@ -200,14 +200,6 @@
         line-height: 1;
     }
 
-    .old-price {
-        font-size: 1rem;
-        color: #999;
-        text-decoration: line-through;
-        white-space: nowrap;
-        font-weight: 500;
-    }
-
     /* Section Styling */
     .section-title {
         display: flex;
@@ -2396,6 +2388,7 @@
                 link.classList.remove('active');
 
                 // Skip links that point to # (placeholder links)
+
                 if (link.getAttribute('href') === '#') {
                     return;
                 }
@@ -2772,7 +2765,6 @@
                                 <span class="current-price" id="modalItemPrice"></span>
                                 <span class="currency">EGP</span>
                             </div>
-                            <span class="old-price">16.99 EGP</span>
                         </div>
 
                         <!-- Description Section -->

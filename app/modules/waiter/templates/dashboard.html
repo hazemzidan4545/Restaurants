@@ -242,6 +242,9 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ super() }}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/order-realtime.js') }}"></script>
 <script>
 // Order status filtering
 document.querySelectorAll('[data-status]').forEach(button => {

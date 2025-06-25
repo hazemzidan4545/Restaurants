@@ -187,6 +187,5 @@ window.RestaurantApp = {
     showLoading,
     hideLoading,
     makeRequest,
-    addToCart,
     submitServiceRequest
 };

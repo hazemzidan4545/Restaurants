@@ -3,6 +3,11 @@
 {% block title %}Orders - Admin Dashboard{% endblock %}
 {% block page_title %}Orders{% endblock %}
 
+{% block head %}
+{{ super() }}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
 {% block extra_css %}
 <style>
     /* Orders Page Specific Styles */
@@ -121,11 +126,12 @@
     /* Orders Table */
     .orders-table-container {
         overflow-x: auto;
+        text-align: center;
     }
 
     .orders-table {
         width: 100%;
-        margin: 0;
+        margin: 0 auto;
         border-collapse: separate;
         border-spacing: 0;
     }
@@ -143,6 +149,7 @@
         position: sticky;
         top: 0;
         z-index: 10;
+        text-align: center;
     }
 
     .orders-table td {
@@ -151,6 +158,7 @@
         border-bottom: 1px solid rgba(243, 244, 246, 0.5);
         vertical-align: middle;
         transition: all 0.3s ease;
+        text-align: center;
     }
 
     .orders-table tbody tr {
@@ -221,24 +229,16 @@
         background: linear-gradient(135deg, var(--warning-yellow) 0%, #d97706 100%);
         color: white;
         border-color: rgba(245, 158, 11, 0.3);
-    }
-
-    .status-rejected {
+    }    .status-rejected {
         background: linear-gradient(135deg, var(--danger-red) 0%, #dc2626 100%);
         color: white;
         border-color: rgba(239, 68, 68, 0.3);
     }
 
-    .status-on-hold {
+    .status-new {
         background: linear-gradient(135deg, var(--info-blue) 0%, #2563eb 100%);
         color: white;
         border-color: rgba(59, 130, 246, 0.3);
-    }
-
-    .status-in-transit {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        color: white;
-        border-color: rgba(139, 92, 246, 0.3);
     }
 
     /* Responsive Design */
@@ -287,15 +287,13 @@
                 </select>
                 <i class="fas fa-chevron-down filter-arrow"></i>
             </div>
-            
-            <div class="filter-item">
+              <div class="filter-item">
                 <select class="filter-select" data-filter="status">
                     <option value="">Filter by Status</option>
-                    <option value="completed">Completed</option>
+                    <option value="new">New</option>
                     <option value="processing">Processing</option>
+                    <option value="completed">Completed</option>
                     <option value="rejected">Rejected</option>
-                    <option value="on-hold">On Hold</option>
-                    <option value="in-transit">In Transit</option>
                 </select>
                 <i class="fas fa-chevron-down filter-arrow"></i>
             </div>
@@ -310,20 +308,20 @@
     <!-- Orders Table -->
     <div class="orders-table-container">
         <table class="orders-table">
-            <thead>
-                <tr>
+            <thead>                <tr>
                     <th>ORDER ID</th>
                     <th>NAME</th>
                     <th>QR NUMBER</th>
                     <th>DATE</th>
                     <th>TYPE</th>
                     <th>STATUS</th>
+                    <th>TOTAL</th>
+                    <th>ACTIONS</th>
                 </tr>
             </thead>
             <tbody>
-                {% for order in orders %}
-                <tr class="order-row" data-type="{{ order.type.lower() }}" data-status="{{ order.status.lower().replace(' ', '-') }}">
-                    <td class="order-id">{{ order.id }}</td>
+                {% for order in orders %}                <tr class="order-row" data-type="{{ order.type.lower() }}" data-status="{{ order.status.lower().replace(' ', '-') }}" data-order-id="{{ order.id|int }}">
+                    <td class="order-id">{{ order.id|int }}</td>
                     <td class="order-name">{{ order.name }}</td>
                     <td><span class="qr-number">{{ order.qr_number }}</span></td>
                     <td class="order-date">{{ order.date }}</td>
@@ -333,104 +331,28 @@
                             {{ order.status }}
                         </span>
                     </td>
+                    <td class="order-total">{{ order.total }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-order-btn" data-order-id="{{ order.id|int }}">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+{% include 'shared/edit_order_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Performance optimizations
-    const tableRows = document.querySelectorAll('.order-row');
-    const filterSelects = document.querySelectorAll('.filter-select');
-    const resetFilterBtn = document.querySelector('.reset-filter-btn');
-    const filterBtns = document.querySelectorAll('.filter-btn');
-
-    // Optimized filtering with debounce
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    // Filter functionality
-    function filterOrders() {
-        const typeFilter = document.querySelector('[data-filter="type"]').value.toLowerCase();
-        const statusFilter = document.querySelector('[data-filter="status"]').value.toLowerCase();
-
-        tableRows.forEach(row => {
-            const rowType = row.dataset.type;
-            const rowStatus = row.dataset.status;
-            
-            const typeMatch = !typeFilter || rowType === typeFilter;
-            const statusMatch = !statusFilter || rowStatus === statusFilter;
-            
-            if (typeMatch && statusMatch) {
-                row.style.display = '';
-                row.style.opacity = '1';
-                row.style.transform = 'translateY(0)';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    // Add event listeners
-    filterSelects.forEach(select => {
-        select.addEventListener('change', debounce(filterOrders, 150));
-    });
-
-    resetFilterBtn.addEventListener('click', function() {
-        filterSelects.forEach(select => select.value = '');
-        filterOrders();
-    });
-
-    // Filter button functionality
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            if (this.dataset.filter === 'all') {
-                filterSelects.forEach(select => select.value = '');
-                filterOrders();
-            }
-        });
-    });
-
-    // Performance: Intersection Observer for smooth loading
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0) translateZ(0)';
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
-
-    // Observe table rows for smooth loading
-    tableRows.forEach(row => {
-        row.style.opacity = '0';
-        row.style.transform = 'translateY(20px) translateZ(0)';
-        row.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
-        observer.observe(row);
-    });
-});
-</script>
+{{ super() }}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/order-realtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/edit-order.js') }}"></script>
+<script src="{{ url_for('static', filename='js/order-filters.js') }}"></script>
 {% endblock %}

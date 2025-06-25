@@ -6,20 +6,20 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///restaurant.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    UPLOAD_FOLDER = 'uploads'
+    UPLOAD_FOLDER = 'static/uploads'
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-    
+
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    
+
     # File upload settings
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    MENU_IMAGE_FOLDER = 'uploads/menu_images'
-    PROFILE_IMAGE_FOLDER = 'uploads/profile_images'
-    RECEIPT_FOLDER = 'uploads/receipts'
+    MENU_IMAGE_FOLDER = 'static/uploads/menu_images'
+    PROFILE_IMAGE_FOLDER = 'static/uploads/profile_images'
+    RECEIPT_FOLDER = 'static/uploads/receipts'
     
     # Loyalty program settings
     POINTS_PER_50_EGP = 100

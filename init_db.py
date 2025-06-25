@@ -97,36 +97,154 @@ def add_seed_data():
     
     db.session.commit()
     
-    # Create menu items
+    # Create menu items with detailed nutritional information
     menu_items_data = [
         # Hookah
-        {'name': 'Apple Mint Hookah', 'description': 'Fresh apple and mint flavor', 'price': 150.00, 'category_id': 1, 'stock': 10},
-        {'name': 'Double Apple Hookah', 'description': 'Classic double apple flavor', 'price': 140.00, 'category_id': 1, 'stock': 15},
-        {'name': 'Grape Hookah', 'description': 'Sweet grape flavor', 'price': 145.00, 'category_id': 1, 'stock': 12},
-        
+        {
+            'name': 'Apple Mint Hookah',
+            'description': 'Fresh apple and mint flavor hookah with premium tobacco blend',
+            'price': 150.00, 'category_id': 1, 'stock': 10, 'image_url': 'apple_mint_hookah.jpg',
+            'ingredients': 'Premium tobacco, Apple flavoring, Fresh mint leaves, Molasses, Glycerin',
+            'calories': 0, 'preparation_time': 10, 'allergens': 'None',
+            'serving_size': '1 session (45-60 minutes)', 'dietary_info': 'Contains nicotine'
+        },
+        {
+            'name': 'Double Apple Hookah',
+            'description': 'Classic double apple flavor with authentic Middle Eastern taste',
+            'price': 140.00, 'category_id': 1, 'stock': 15, 'image_url': 'double_apple_hookah.jpg',
+            'ingredients': 'Premium tobacco, Red apple flavoring, Green apple flavoring, Molasses, Glycerin',
+            'calories': 0, 'preparation_time': 10, 'allergens': 'None',
+            'serving_size': '1 session (45-60 minutes)', 'dietary_info': 'Contains nicotine'
+        },
+        {
+            'name': 'Grape Hookah',
+            'description': 'Sweet grape flavor with smooth, aromatic smoke',
+            'price': 145.00, 'category_id': 1, 'stock': 12, 'image_url': 'grape_hookah.jpg',
+            'ingredients': 'Premium tobacco, Grape flavoring, Molasses, Glycerin, Natural grape essence',
+            'calories': 0, 'preparation_time': 10, 'allergens': 'None',
+            'serving_size': '1 session (45-60 minutes)', 'dietary_info': 'Contains nicotine'
+        },
+
         # Drinks
-        {'name': 'Turkish Coffee', 'description': 'Traditional Turkish coffee', 'price': 25.00, 'category_id': 2, 'stock': 50},
-        {'name': 'Fresh Orange Juice', 'description': 'Freshly squeezed orange juice', 'price': 35.00, 'category_id': 2, 'stock': 30},
-        {'name': 'Mint Tea', 'description': 'Refreshing mint tea', 'price': 20.00, 'category_id': 2, 'stock': 40},
-        
+        {
+            'name': 'Turkish Coffee',
+            'description': 'Traditional Turkish coffee brewed to perfection with authentic spices',
+            'price': 25.00, 'category_id': 2, 'stock': 50, 'image_url': 'turkish_coffee.jpg',
+            'ingredients': 'Finely ground Turkish coffee beans, Sugar (optional), Cardamom, Water',
+            'calories': 5, 'preparation_time': 8, 'allergens': 'Caffeine',
+            'serving_size': '1 cup (60ml)', 'dietary_info': 'Vegan, Gluten-free'
+        },
+        {
+            'name': 'Fresh Orange Juice',
+            'description': 'Freshly squeezed orange juice packed with vitamin C',
+            'price': 35.00, 'category_id': 2, 'stock': 30, 'image_url': 'fresh_orange_juice.jpg',
+            'ingredients': 'Fresh oranges, Natural orange pulp',
+            'calories': 112, 'preparation_time': 5, 'allergens': 'None',
+            'serving_size': '1 glass (250ml)', 'dietary_info': 'Vegan, Gluten-free, Natural'
+        },
+        {
+            'name': 'Mint Tea',
+            'description': 'Refreshing mint tea with fresh mint leaves and honey',
+            'price': 20.00, 'category_id': 2, 'stock': 40, 'image_url': 'mint_tea.jpg',
+            'ingredients': 'Fresh mint leaves, Green tea, Honey, Hot water',
+            'calories': 25, 'preparation_time': 5, 'allergens': 'None',
+            'serving_size': '1 cup (200ml)', 'dietary_info': 'Vegetarian, Gluten-free'
+        },
+
         # Brunch
-        {'name': 'Egyptian Breakfast', 'description': 'Traditional Egyptian breakfast platter', 'price': 85.00, 'category_id': 3, 'stock': 20},
-        {'name': 'Cheese Omelette', 'description': 'Fluffy omelette with cheese', 'price': 45.00, 'category_id': 3, 'stock': 25},
-        {'name': 'Pancakes', 'description': 'Stack of fluffy pancakes with syrup', 'price': 55.00, 'category_id': 3, 'stock': 15},
-        
+        {
+            'name': 'Egyptian Breakfast',
+            'description': 'Traditional Egyptian breakfast platter with ful medames, eggs, and fresh bread',
+            'price': 85.00, 'category_id': 3, 'stock': 20, 'image_url': 'egyptian_breakfast.jpg',
+            'ingredients': 'Ful medames (fava beans), Eggs, Tahini, Tomatoes, Cucumbers, Fresh bread, Olive oil, Lemon juice, Parsley',
+            'calories': 520, 'preparation_time': 15, 'allergens': 'Gluten, Eggs',
+            'serving_size': '1 platter', 'dietary_info': 'Vegetarian'
+        },
+        {
+            'name': 'Cheese Omelette',
+            'description': 'Fluffy omelette filled with melted cheese and fresh herbs',
+            'price': 45.00, 'category_id': 3, 'stock': 25, 'image_url': 'cheese_omelette.jpg',
+            'ingredients': 'Fresh eggs, Cheddar cheese, Mozzarella cheese, Butter, Fresh chives, Salt, Black pepper',
+            'calories': 380, 'preparation_time': 8, 'allergens': 'Eggs, Dairy',
+            'serving_size': '1 omelette (3 eggs)', 'dietary_info': 'Vegetarian, Gluten-free'
+        },
+        {
+            'name': 'Pancakes',
+            'description': 'Stack of fluffy pancakes served with maple syrup and fresh berries',
+            'price': 55.00, 'category_id': 3, 'stock': 15, 'image_url': 'pancakes.jpg',
+            'ingredients': 'Flour, Eggs, Milk, Sugar, Baking powder, Vanilla extract, Butter, Maple syrup, Fresh berries',
+            'calories': 450, 'preparation_time': 12, 'allergens': 'Gluten, Eggs, Dairy',
+            'serving_size': '3 pancakes', 'dietary_info': 'Vegetarian'
+        },
+
         # Main Courses
-        {'name': 'Grilled Chicken', 'description': 'Marinated grilled chicken breast', 'price': 120.00, 'category_id': 4, 'stock': 18},
-        {'name': 'Beef Burger', 'description': 'Juicy beef burger with fries', 'price': 95.00, 'category_id': 4, 'stock': 22},
-        {'name': 'Fish & Chips', 'description': 'Crispy fish with golden fries', 'price': 110.00, 'category_id': 4, 'stock': 16},
-        
+        {
+            'name': 'Grilled Chicken',
+            'description': 'Marinated grilled chicken breast with Mediterranean herbs and spices',
+            'price': 120.00, 'category_id': 4, 'stock': 18, 'image_url': 'grilled_chicken.jpg',
+            'ingredients': 'Chicken breast, Olive oil, Garlic, Lemon juice, Oregano, Thyme, Rosemary, Salt, Black pepper, Side vegetables',
+            'calories': 320, 'preparation_time': 25, 'allergens': 'None',
+            'serving_size': '200g chicken + sides', 'dietary_info': 'Gluten-free, High protein'
+        },
+        {
+            'name': 'Beef Burger',
+            'description': 'Juicy beef burger with cheese, lettuce, tomato, and crispy fries',
+            'price': 95.00, 'category_id': 4, 'stock': 22, 'image_url': 'beef_burger.jpg',
+            'ingredients': 'Ground beef, Burger bun, Cheddar cheese, Lettuce, Tomato, Onion, Pickles, Special sauce, French fries',
+            'calories': 680, 'preparation_time': 15, 'allergens': 'Gluten, Dairy',
+            'serving_size': '1 burger + fries', 'dietary_info': 'High protein'
+        },
+        {
+            'name': 'Fish & Chips',
+            'description': 'Crispy battered fish fillet served with golden fries and tartar sauce',
+            'price': 110.00, 'category_id': 4, 'stock': 16, 'image_url': 'fish_and_chips.jpg',
+            'ingredients': 'White fish fillet, Flour, Beer batter, Potatoes, Vegetable oil, Tartar sauce, Lemon, Mushy peas',
+            'calories': 590, 'preparation_time': 18, 'allergens': 'Gluten, Fish',
+            'serving_size': '1 fish fillet + chips', 'dietary_info': 'High protein'
+        },
+
         # Desserts
-        {'name': 'Chocolate Cake', 'description': 'Rich chocolate layer cake', 'price': 40.00, 'category_id': 5, 'stock': 12},
-        {'name': 'Baklava', 'description': 'Traditional Middle Eastern pastry', 'price': 35.00, 'category_id': 5, 'stock': 20},
-        {'name': 'Ice Cream', 'description': 'Vanilla ice cream with toppings', 'price': 30.00, 'category_id': 5, 'stock': 25},
+        {
+            'name': 'Chocolate Cake',
+            'description': 'Rich chocolate layer cake with chocolate ganache and fresh cream',
+            'price': 40.00, 'category_id': 5, 'stock': 12, 'image_url': 'chocolate_cake.jpg',
+            'ingredients': 'Dark chocolate, Flour, Sugar, Eggs, Butter, Cocoa powder, Heavy cream, Vanilla extract',
+            'calories': 420, 'preparation_time': 5, 'allergens': 'Gluten, Eggs, Dairy',
+            'serving_size': '1 slice', 'dietary_info': 'Vegetarian'
+        },
+        {
+            'name': 'Baklava',
+            'description': 'Traditional Middle Eastern pastry with layers of phyllo, nuts, and honey syrup',
+            'price': 35.00, 'category_id': 5, 'stock': 20, 'image_url': 'baklava.jpg',
+            'ingredients': 'Phyllo pastry, Mixed nuts (walnuts, pistachios), Honey, Sugar syrup, Butter, Cinnamon, Rose water',
+            'calories': 280, 'preparation_time': 3, 'allergens': 'Gluten, Nuts, Dairy',
+            'serving_size': '2 pieces', 'dietary_info': 'Vegetarian'
+        },
+        {
+            'name': 'Ice Cream',
+            'description': 'Vanilla ice cream served with chocolate sauce, nuts, and fresh fruit toppings',
+            'price': 30.00, 'category_id': 5, 'stock': 25, 'image_url': 'ice_cream.jpg',
+            'ingredients': 'Vanilla ice cream, Chocolate sauce, Mixed nuts, Fresh fruits, Whipped cream, Wafer cone',
+            'calories': 320, 'preparation_time': 3, 'allergens': 'Dairy, Nuts, Gluten',
+            'serving_size': '2 scoops + toppings', 'dietary_info': 'Vegetarian'
+        },
     ]
     
     for item_data in menu_items_data:
-        menu_item = MenuItem(**item_data)
+        menu_item = MenuItem(
+            name=item_data['name'],
+            description=item_data['description'],
+            price=item_data['price'],
+            category_id=item_data['category_id'],
+            stock=item_data['stock'],
+            image_url=item_data['image_url'],
+            ingredients=item_data['ingredients'],
+            calories=item_data['calories'],
+            preparation_time=item_data['preparation_time'],
+            allergens=item_data['allergens'],
+            serving_size=item_data['serving_size'],
+            dietary_info=item_data['dietary_info']
+        )
         db.session.add(menu_item)
     
     db.session.commit()

@@ -1,0 +1,629 @@
+{% extends "base.html" %}
+
+{% block title %}Orders - Admin Dashboard{% endblock %}
+{% block page_title %}Orders{% endblock %}
+
+{% block head %}
+{{ super() }}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Orders Page Specific Styles */
+    .orders-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        border: 1px solid var(--glass-border);
+        transition: all 0.3s ease;
+    }
+
+    .orders-section:hover {
+        box-shadow: var(--hover-shadow);
+        transform: translateY(-2px);
+    }
+
+    /* Filters Section */
+    .filters-section {
+        padding: 25px 30px;
+        border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
+    }
+
+    .filters-container {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .filter-item {
+        position: relative;
+    }
+
+    .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(243, 205, 33, 0.3);
+    }
+
+    .filter-btn:hover {
+        background: var(--primary-dark);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(243, 205, 33, 0.4);
+    }
+
+    .filter-btn.active {
+        background: var(--primary-dark);
+        color: white;
+    }
+
+    .filter-select {
+        appearance: none;
+        padding: 12px 40px 12px 16px;
+        background: white;
+        border: 1px solid rgba(209, 213, 219, 0.5);
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 140px;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary-yellow);
+        box-shadow: 0 0 0 3px rgba(243, 205, 33, 0.1);
+    }
+
+    .filter-arrow {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        pointer-events: none;
+        font-size: 12px;
+    }
+
+    .reset-filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: white;
+        color: #6b7280;
+        border: 1px solid rgba(209, 213, 219, 0.5);
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .reset-filter-btn:hover {
+        background: #f8fafc;
+        color: var(--primary-dark);
+        border-color: var(--primary-yellow);
+    }
+
+    /* Orders Table */
+    .orders-table-container {
+        overflow-x: auto;
+        text-align: center;
+    }
+
+    .orders-table {
+        width: 100%;
+        margin: 0 auto;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .orders-table th {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 18px 30px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6b7280;
+        border: none;
+        border-bottom: 2px solid rgba(243, 205, 33, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        text-align: center;
+    }
+
+    .orders-table td {
+        padding: 20px 30px;
+        border: none;
+        border-bottom: 1px solid rgba(243, 244, 246, 0.5);
+        vertical-align: middle;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .orders-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .orders-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(243, 244, 246, 0.4) 100%);
+        transform: scale(1.01);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .order-id {
+        font-weight: 700;
+        color: var(--primary-dark);
+        font-size: 15px;
+    }
+
+    .order-name {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 15px;
+    }
+
+    .qr-number {
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .order-date {
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .order-type {
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid transparent;
+        display: inline-block;
+    }
+
+    .status-completed {
+        background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+        color: white;
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .status-processing {
+        background: linear-gradient(135deg, var(--warning-yellow) 0%, #d97706 100%);
+        color: white;
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .status-rejected {
+        background: linear-gradient(135deg, var(--danger-red) 0%, #dc2626 100%);
+        color: white;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .status-on-hold {
+        background: linear-gradient(135deg, var(--info-blue) 0%, #2563eb 100%);
+        color: white;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .status-in-transit {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .filters-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-item {
+            width: 100%;
+        }
+
+        .filter-select {
+            width: 100%;
+        }
+
+        .orders-table-container {
+            font-size: 14px;
+        }
+
+        .orders-table th,
+        .orders-table td {
+            padding: 12px 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Orders Section -->
+<div class="orders-section">
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <div class="filters-container">
+            <button class="filter-btn active" data-filter="all">
+                <i class="fas fa-list"></i>
+                All Orders
+            </button>
+            
+            <div class="filter-item">
+                <select class="filter-select" data-filter="type">
+                    <option value="">Filter by Type</option>
+                    <option value="brunch">Brunch</option>
+                    <option value="drinks">Drinks</option>
+                </select>
+                <i class="fas fa-chevron-down filter-arrow"></i>
+            </div>
+            
+            <div class="filter-item">
+                <select class="filter-select" data-filter="status">
+                    <option value="">Filter by Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="processing">Processing</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="on-hold">On Hold</option>
+                    <option value="in-transit">In Transit</option>
+                </select>
+                <i class="fas fa-chevron-down filter-arrow"></i>
+            </div>
+            
+            <button class="reset-filter-btn">
+                <i class="fas fa-undo"></i>
+                Reset Filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="orders-table-container">
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>ORDER ID</th>
+                    <th>NAME</th>
+                    <th>QR NUMBER</th>
+                    <th>DATE</th>
+                    <th>TYPE</th>
+                    <th>STATUS</th>
+                    <th>ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr class="order-row" data-type="{{ order.type.lower() }}" data-status="{{ order.status.lower().replace(' ', '-') }}" data-order-id="{{ order.id|int }}">
+                    <td class="order-id">{{ order.id|int }}</td>
+                    <td class="order-name">{{ order.name }}</td>
+                    <td><span class="qr-number">{{ order.qr_number }}</span></td>
+                    <td class="order-date">{{ order.date }}</td>
+                    <td class="order-type">{{ order.type }}</td>
+                    <td>
+                        <span class="status-badge status-{{ order.status.lower().replace(' ', '-') }}">
+                            {{ order.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-order-btn" data-order-id="{{ order.id|int }}">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include 'shared/edit_order_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/order-realtime.js') }}"></script>
+
+<!-- Edit Order Modal Functionality -->
+<script>
+// IMMEDIATE TEST - NO WAITING
+console.log('SCRIPT LOADED IMMEDIATELY');
+alert('STEP 1: Script is executing!');
+
+// Test if buttons exist
+const buttonsNow = document.querySelectorAll('.edit-order-btn');
+console.log('Buttons found immediately:', buttonsNow.length);
+alert('STEP 2: Found ' + buttonsNow.length + ' buttons immediately');
+
+// Test DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM READY');
+    alert('STEP 3: DOM is ready!');
+    
+    const buttonsReady = document.querySelectorAll('.edit-order-btn');
+    console.log('Buttons found after DOM ready:', buttonsReady.length);
+    alert('STEP 4: Found ' + buttonsReady.length + ' buttons after DOM ready');
+    
+    // Add simple onclick to each button
+    buttonsReady.forEach(function(btn, index) {
+        btn.onclick = function() {
+            alert('BUTTON ' + index + ' CLICKED! Order ID: ' + this.getAttribute('data-order-id'));
+        };
+    });
+    
+    alert('STEP 5: Button handlers added!');
+});
+
+// Test window load
+window.addEventListener('load', function() {
+    console.log('WINDOW LOADED');
+    alert('STEP 6: Window fully loaded!');
+    
+    const buttonsLoaded = document.querySelectorAll('.edit-order-btn');
+    alert('STEP 7: Found ' + buttonsLoaded.length + ' buttons after window load');
+});
+    
+    function setupEditOrderButtons() {
+        const buttons = document.querySelectorAll('.edit-order-btn');
+        console.log('Found', buttons.length, 'edit order buttons');
+        
+        buttons.forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const orderId = this.getAttribute('data-order-id');
+                console.log('Opening edit modal for order:', orderId);
+                
+                openEditOrderModal(orderId);
+            });
+        });
+    }
+    
+    function openEditOrderModal(orderId) {
+        const modal = document.getElementById('editOrderModal');
+        
+        if (!modal) {
+            console.error('Edit order modal not found');
+            alert('Error: Modal not found');
+            return;
+        }
+        
+        // Check if Bootstrap is available
+        if (typeof bootstrap === 'undefined') {
+            console.error('Bootstrap not loaded');
+            alert('Error: Bootstrap not loaded');
+            return;
+        }
+        
+        try {
+            // Create and show Bootstrap modal
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // Update modal title
+            const modalTitle = modal.querySelector('.modal-title');
+            if (modalTitle) {
+                modalTitle.textContent = 'Edit Order #' + orderId;
+            }
+            
+            // Load order data
+            loadOrderData(orderId);
+            
+            console.log('Modal opened successfully for order:', orderId);
+            
+        } catch (error) {
+            console.error('Error opening modal:', error);
+            alert('Error opening modal: ' + error.message);
+        }
+    }
+    
+    function loadOrderData(orderId) {
+        console.log('Loading order data for:', orderId);
+        
+        // Show loading state
+        const modalBody = document.querySelector('#editOrderModal .modal-body');
+        if (modalBody) {
+            modalBody.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading order data...</div>';
+        }
+        
+        // Fetch order data from API
+        fetch(`/api/order/${orderId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Order data loaded:', data);
+                populateEditForm(data);
+            })
+            .catch(error => {
+                console.error('Error loading order data:', error);
+                if (modalBody) {
+                    modalBody.innerHTML = '<div class="alert alert-danger">Error loading order data: ' + error.message + '</div>';
+                }
+            });
+    }
+    
+    function populateEditForm(orderData) {
+        // Restore the form HTML first
+        const modalBody = document.querySelector('#editOrderModal .modal-body');
+        if (modalBody) {
+            modalBody.innerHTML = `
+                <form id="editOrderForm">
+                    <input type="hidden" id="editOrderId" value="${orderData.order_id}">
+                    <div class="mb-3">
+                        <label for="editOrderStatus" class="form-label">Order Status</label>
+                        <select class="form-control" id="editOrderStatus">
+                            <option value="new">New</option>
+                            <option value="processing">Processing</option>
+                            <option value="completed">Completed</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editOrderNotes" class="form-label">Order Notes</label>
+                        <textarea class="form-control" id="editOrderNotes" rows="2" style="resize: vertical; min-height: 60px;">${orderData.notes || ''}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Order Items</label>
+                        <div id="editOrderItemsList" class="mt-3"></div>
+                    </div>
+                </form>
+            `;
+        }
+        
+        // Set status
+        const statusSelect = document.getElementById('editOrderStatus');
+        if (statusSelect) {
+            statusSelect.value = orderData.status;
+        }
+        
+        // Populate items
+        const itemsList = document.getElementById('editOrderItemsList');
+        if (itemsList && orderData.items) {
+            itemsList.innerHTML = orderData.items.map(item => `
+                <div class="border rounded p-2 mb-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <strong>${item.name}</strong>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control form-control-sm" value="${item.quantity}" min="1" data-item-id="${item.item_id}">
+                        </div>
+                        <div class="col-md-3">
+                            $${item.unit_price.toFixed(2)}
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-sm btn-danger remove-item-btn" data-item-id="${item.item_id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    ${item.note ? `<div class="mt-2"><small class="text-muted">Note: ${item.note}</small></div>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        // Setup save button
+        setupSaveButton(orderData.order_id);
+    }
+    
+    function setupSaveButton(orderId) {
+        const saveBtn = document.getElementById('saveOrderEditBtn');
+        if (saveBtn) {
+            saveBtn.onclick = function() {
+                saveOrderChanges(orderId);
+            };
+        }
+    }
+    
+    function saveOrderChanges(orderId) {
+        const statusSelect = document.getElementById('editOrderStatus');
+        const notesTextarea = document.getElementById('editOrderNotes');
+        
+        if (!statusSelect) {
+            alert('Error: Form elements not found');
+            return;
+        }
+        
+        const updateData = {
+            status: statusSelect.value,
+            notes: notesTextarea ? notesTextarea.value : ''
+        };
+        
+        console.log('Saving order changes:', updateData);
+        
+        // Show saving state
+        const saveBtn = document.getElementById('saveOrderEditBtn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        }
+        
+        fetch(`/api/order/${orderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+            },
+            body: JSON.stringify(updateData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Order updated successfully:', data);
+            
+            // Close modal
+            const modal = document.getElementById('editOrderModal');
+            if (modal && bootstrap.Modal.getInstance(modal)) {
+                bootstrap.Modal.getInstance(modal).hide();
+            }
+            
+            // Refresh page to show updated data
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error saving order:', error);
+            alert('Error saving order: ' + error.message);
+        })
+        .finally(() => {
+            // Reset save button
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
+            }
+        });
+    }
+    
+    console.log('Edit order functionality initialized');
+});
+</script>
+{% endblock %}

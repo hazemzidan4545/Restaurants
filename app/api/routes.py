@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from app.api import bp
-from app.models import MenuItem, Category, Order, OrderItem, User
+from app.models import MenuItem, Category, Order, OrderItem, User, Table
 from app.extensions import db
 from datetime import datetime
 import uuid
@@ -111,11 +111,12 @@ def create_order():
 
         # Create new order
         order = Order(
-            user_id=1,  # Default user for now (will be updated when auth is implemented)
+            user_id=data.get('user_id', 1),  # Use provided user_id or default to 1
             status='new',
             total_amount=0,  # Will be calculated
             notes=data.get('notes', ''),
-            order_time=datetime.utcnow()
+            order_time=datetime.utcnow(),
+            table_id=data.get('table_id')  # Add table_id if provided
         )
 
         db.session.add(order)
@@ -158,6 +159,12 @@ def create_order():
 
         # Update order total
         order.total_amount = total_amount
+        
+        # Update table status if a table is associated with this order
+        if order.table_id:
+            table = Table.query.get(order.table_id)
+            if table:
+                table.status = 'occupied'  # Mark table as occupied for new orders
 
         # Commit transaction
         db.session.commit()
@@ -243,13 +250,21 @@ def update_order_status(order_id):
             }), 400
 
         order = Order.query.get_or_404(order_id)
+        previous_status = order.status
         order.status = data['status']
 
         # Set completion time if order is completed
         if data['status'] == 'completed':
             order.completed_at = datetime.utcnow()
 
-        db.session.commit()
+        # Update table status if the order has a table assigned
+        # Check table status on ANY order status change, not just completion
+        if order.table_id is not None:
+            table = order.table
+            table.update_status_based_on_orders()  # This now handles the commit
+        else:
+            # Only commit here if we didn't update a table (since update_status_based_on_orders commits)
+            db.session.commit()
 
         return jsonify({
             'status': 'success',
@@ -266,4 +281,254 @@ def update_order_status(order_id):
         return jsonify({
             'status': 'error',
             'message': str(e)
+        }), 500
+
+@bp.route('/orders/<int:order_id>', methods=['PUT'])
+def update_order(order_id):
+    """Update order details (status, notes, items)"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Request data is required'
+            }), 400
+
+        order = Order.query.get_or_404(order_id)
+        
+        # Update status if provided
+        if 'status' in data:
+            valid_statuses = ['new', 'processing', 'completed', 'rejected', 'cancelled', 'on-hold', 'in-transit']
+            if data['status'] in valid_statuses:
+                order.status = data['status']
+                
+                # Set completion time if order is completed
+                if data['status'] == 'completed':
+                    order.completed_at = datetime.utcnow()
+        
+        # Update notes if provided
+        if 'notes' in data:
+            order.notes = data['notes']
+        
+        # Update items if provided
+        if 'items' in data and isinstance(data['items'], list):
+            # For now, we'll only update existing items (quantity and notes)
+            # Not adding/removing items as that's more complex
+            for item_data in data['items']:
+                if 'item_id' not in item_data:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Item missing item_id'
+                    }), 400
+                
+                # Find the order item
+                order_item = None
+                for existing_item in order.order_items:
+                    if existing_item.item_id == item_data['item_id']:
+                        order_item = existing_item
+                        break
+                
+                if order_item:
+                    # Update quantity and note
+                    if 'quantity' in item_data:
+                        order_item.quantity = max(1, int(item_data['quantity']))
+                    if 'note' in item_data:
+                        order_item.note = item_data['note']
+                else:
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'Order item with id {item_data["item_id"]} not found'
+                    }), 400
+            
+            # Recalculate total amount after updating items
+            total = sum(item.unit_price * item.quantity for item in order.order_items)
+            order.total_amount = total
+        
+        db.session.commit()
+
+        # Return updated order data
+        order_items = []
+        for item in order.order_items:
+            order_items.append({
+                'id': item.item_id,
+                'name': item.menu_item.name,
+                'quantity': item.quantity,
+                'unit_price': float(item.unit_price),
+                'total_price': float(item.unit_price * item.quantity),
+                'note': item.note
+            })
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Order updated successfully',
+            'data': {
+                'order_id': order.order_id,
+                'order_number': f"ORD-{order.order_id:06d}",
+                'status': order.status,
+                'total_amount': float(order.total_amount),
+                'order_time': order.order_time.isoformat(),
+                'estimated_time': order.estimated_time or 25,
+                'notes': order.notes,
+                'items': order_items
+            }
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@bp.route('/admin/sync-table-statuses', methods=['POST'])
+def sync_table_statuses():
+    """Synchronize all table statuses based on their orders
+    
+    This is useful for admin purposes if table statuses get out of sync.
+    It checks all tables and updates their statuses based on active orders.
+    """
+    try:
+        # Get counts before sync for comparison
+        before_occupied = Table.query.filter_by(status='occupied').count()
+        active_orders = Order.query.filter(
+            Order.status.in_(['new', 'processing']),
+            Order.table_id.isnot(None)
+        ).count()
+        
+        print(f"Before sync - Occupied tables: {before_occupied}, Active orders: {active_orders}")
+        
+        # Call our table update method
+        total_count = Table.update_all_table_statuses()
+        
+        # Get counts after sync
+        after_occupied = Table.query.filter_by(status='occupied').count()
+        
+        print(f"After sync - Total tables: {total_count}, Occupied tables: {after_occupied}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Updated status for {total_count} tables. Now {after_occupied} tables are occupied.',
+            'data': {
+                'total_tables': total_count,
+                'occupied_tables': after_occupied,
+                'available_tables': total_count - after_occupied
+            }
+        })
+
+    except Exception as e:
+        print(f"Error in sync_table_statuses: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'status': 'error',
+            'message': f'Error synchronizing table statuses: {str(e)}'
+        }), 500
+
+@bp.route('/admin/table-status', methods=['GET'])
+def get_table_statuses():
+    """Get detailed information about table statuses
+    
+    This is a debugging endpoint to help diagnose issues with table status tracking.
+    It shows each table along with its status and any active orders.
+    
+    Query parameters:
+    - fix=true: Automatically fix any status mismatches
+    """
+    try:
+        auto_fix = request.args.get('fix', 'false').lower() == 'true'
+        results = []
+        tables = Table.query.all()
+        
+        # Track tables with mismatches
+        mismatched_tables = []
+        
+        for table in tables:
+            # Get active orders for this table
+            active_orders = Order.query.filter(
+                Order.table_id == table.table_id,
+                Order.status.in_(['new', 'processing'])
+            ).all()
+            
+            # Check for status mismatch
+            has_active_orders = len(active_orders) > 0
+            status_mismatch = (table.status == 'occupied' and not has_active_orders) or \
+                             (table.status == 'available' and has_active_orders)
+            
+            if status_mismatch:
+                mismatched_tables.append(table.table_id)
+                
+                # Auto-fix if requested
+                if auto_fix:
+                    expected_status = 'occupied' if has_active_orders else 'available'
+                    print(f"Fixing table {table.table_number} status: {table.status} -> {expected_status}")
+                    table.status = expected_status
+            
+            # Format active orders
+            order_info = []
+            for order in active_orders:
+                order_info.append({
+                    'id': order.order_id,
+                    'status': order.status,
+                    'time': order.order_time.isoformat() if order.order_time else None,
+                    'items_count': Order.query.filter_by(order_id=order.order_id).first().items.count() 
+                    if hasattr(Order, 'items') else 0
+                })
+            
+            results.append({
+                'table_id': table.table_id,
+                'table_number': table.table_number,
+                'status': table.status,
+                'active_orders_count': len(active_orders),
+                'active_orders': order_info,
+                'status_mismatch': status_mismatch,
+                'expected_status': 'occupied' if has_active_orders else 'available'
+            })
+        
+        # Commit changes if we did auto-fixes
+        if auto_fix and mismatched_tables:
+            db.session.commit()
+            print(f"Fixed status for {len(mismatched_tables)} tables")
+        
+        # Also get overall stats
+        total_tables = Table.query.count()
+        occupied_tables = Table.query.filter_by(status='occupied').count()
+        tables_with_active_orders = len([t for t in results if t['active_orders_count'] > 0])
+        
+        mismatch_tables = [
+            t for t in results 
+            if (t['status'] == 'occupied' and t['active_orders_count'] == 0) or
+               (t['status'] == 'available' and t['active_orders_count'] > 0)
+        ]
+        
+        return jsonify({
+            'status': 'success',
+            'auto_fix_applied': auto_fix,
+            'data': {
+                'tables': results,
+                'stats': {
+                    'total_tables': total_tables,
+                    'occupied_tables': occupied_tables,
+                    'tables_with_active_orders': tables_with_active_orders,
+                    'tables_with_status_mismatch': len(mismatch_tables),
+                    'mismatch_details': [
+                        {
+                            'table_id': t['table_id'], 
+                            'table_number': t['table_number'],
+                            'current': t['status'], 
+                            'expected': t['expected_status']
+                        }
+                        for t in mismatch_tables
+                    ]
+                }
+            }
+        })
+    except Exception as e:
+        print(f"Error in get_table_statuses: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'status': 'error',
+            'message': f'Error getting table statuses: {str(e)}'
         }), 500

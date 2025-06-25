@@ -287,12 +287,7 @@
     letter-spacing: -0.02em;
 }
 
-.menu-item-old-price {
-    font-size: 0.9rem;
-    color: #999;
-    text-decoration: line-through;
-    font-weight: 500;
-}
+
 
 .add-btn {
     background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
@@ -417,9 +412,7 @@
         font-size: 1rem;
     }
 
-    .menu-item-old-price {
-        font-size: 0.8rem;
-    }
+
 
     .add-btn {
         padding: 6px 12px;
@@ -1146,10 +1139,7 @@
         font-weight: 800;
     }
 
-    .menu-item-old-price {
-        font-size: 0.9rem;
-        margin-left: 6px;
-    }
+
 
     .add-btn {
         width: 38px;
@@ -1274,10 +1264,7 @@
         font-weight: 800;
     }
 
-    .menu-item-old-price {
-        font-size: 0.85rem;
-        margin-left: 5px;
-    }
+
 
     .add-btn {
         padding: 5px 8px;
@@ -1347,10 +1334,7 @@
         font-weight: 800;
     }
 
-    .menu-item-old-price {
-        font-size: 0.8rem;
-        margin-left: 4px;
-    }
+
 
     .add-btn {
         padding: 4px 6px;
@@ -1369,176 +1353,73 @@
     <!-- Category Tabs -->
     <div class="category-tabs">
         <div class="tabs-container">
-            <button class="category-tab active" data-meal="breakfast">
-                <i class="fas fa-coffee me-1"></i>
-                Breakfast
+            <button class="category-tab active" data-category="all">
+                <i class="fas fa-th-large me-1"></i>
+                All Items
             </button>
-            <button class="category-tab" data-meal="dinner">
-                <i class="fas fa-utensils me-1"></i>
-                Dinner
+            {% for category in categories %}
+            <button class="category-tab" data-category="{{ category.category_id }}">
+                {% if category.name == 'Hookah' %}
+                    <i class="fas fa-smoking me-1"></i>
+                {% elif category.name == 'Drinks' %}
+                    <i class="fas fa-glass-cheers me-1"></i>
+                {% elif category.name == 'Brunch' %}
+                    <i class="fas fa-coffee me-1"></i>
+                {% elif category.name == 'Main Courses' %}
+                    <i class="fas fa-utensils me-1"></i>
+                {% elif category.name == 'Desserts' %}
+                    <i class="fas fa-ice-cream me-1"></i>
+                {% else %}
+                    <i class="fas fa-star me-1"></i>
+                {% endif %}
+                {{ category.name }}
             </button>
-            <button class="category-tab" data-meal="drinks">
-                <i class="fas fa-glass-cheers me-1"></i>
-                Drinks
-            </button>
+            {% endfor %}
         </div>
-    </div>
-
-    <!-- Subcategory Tabs -->
-    <div class="subcategory-tabs">
-        <div class="tabs-container">
-            <button class="subcategory-tab active" data-type="pasta">
-                <span class="full-text">Pasta</span>
-                <span class="short-text">Pasta</span>
-                <span class="ultra-short-text">Pasta</span>
-            </button>
-            <button class="subcategory-tab" data-type="grills">
-                <span class="full-text">Grills</span>
-                <span class="short-text">Grills</span>
-                <span class="ultra-short-text">Grills</span>
-            </button>
-            <button class="subcategory-tab" data-type="meat">
-                <span class="full-text">Meat And Chicken</span>
-                <span class="short-text">Meat & Chicken</span>
-                <span class="ultra-short-text">Meat</span>
-            </button>
-            <button class="subcategory-tab" data-type="seafood">
-                <span class="full-text">Seafood</span>
-                <span class="short-text">Seafood</span>
-                <span class="ultra-short-text">Sea</span>
-            </button>
-            <button class="subcategory-tab" data-type="oriental">
-                <span class="full-text">Oriental</span>
-                <span class="short-text">Oriental</span>
-                <span class="ultra-short-text">Asian</span>
-            </button>
-        </div>
-
     </div>
 
     <!-- Menu Items List -->
     <div class="menu-items-list" id="menuItems">
-        <!-- Pasta Items -->
-        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Spaghetti Carbonara', 'Spaghetti, Pancetta, Egg yolks, Parmesan cheese, Black pepper', '14.99', 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=300&h=200&fit=crop', {description: 'Classic Italian pasta dish with creamy egg-based sauce, crispy pancetta, and freshly ground black pepper', calories: 520, prepTime: 15, allergens: 'Eggs, Dairy', category: 'Pasta', features: {featured: true, spicy: false, vegetarian: false, vegan: false}})"
-            <img src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Spaghetti Carbonara">
+        {% for item in menu_items %}
+        <div class="menu-item-card" data-category="{{ item.category_id }}"
+             data-item-name="{{ item.name }}"
+             data-item-description="{{ item.description }}"
+             data-item-price="{{ item.price }}"
+             data-item-image="{% if item.image_url %}{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}{% else %}https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop{% endif %}"
+             data-item-category="{{ item.category.name }}"
+             data-item-ingredients="{{ item.ingredients or '' }}"
+             data-item-calories="{{ item.calories or 0 }}"
+             data-item-prep-time="{{ item.preparation_time or 0 }}"
+             data-item-allergens="{{ item.allergens or '' }}"
+             data-item-serving-size="{{ item.serving_size or '' }}"
+             data-item-dietary-info="{{ item.dietary_info or '' }}"
+             onclick="showItemDetailFromCard(this)">
+            {% if item.image_url %}
+            <img src="{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}"
+                 class="menu-item-image" alt="{{ item.name }}">
+            {% else %}
+            <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=120&h=80&fit=crop"
+                 class="menu-item-image" alt="{{ item.name }}">
+            {% endif %}
             <div class="menu-item-content">
-                <div class="menu-item-title">Spaghetti Carbonara</div>
-                <div class="menu-item-description">Spaghetti, Pancetta, Egg yolks, Parmesan cheese, Black pepper</div>
+                <div class="menu-item-title">{{ item.name }}</div>
+                <div class="menu-item-description">{{ item.description }}</div>
                 <div class="menu-item-footer">
                     <div class="price-section">
-                        <div class="menu-item-price">14.99 EGP <span class="menu-item-old-price">16.00 EGP</span></div>
+                        <div class="menu-item-price">{{ item.price }} EGP</div>
                     </div>
                     <button class="add-btn add-to-cart"
-                            data-item-id="1"
-                            data-item-name="Spaghetti Carbonara"
-                            data-item-price="14.99"
+                            data-item-id="{{ item.item_id }}"
+                            data-item-name="{{ item.name }}"
+                            data-item-price="{{ item.price }}"
+                            data-item-image="{% if item.image_url %}{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}{% else %}https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop{% endif %}"
                             onclick="event.stopPropagation(); addToCartFromButton(this)">
                         order
                     </button>
                 </div>
             </div>
         </div>
-
-        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Fettuccine Alfredo', 'Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1563379091339-03246963d96c?w=300&h=200&fit=crop', {description: 'Rich and creamy fettuccine pasta tossed in a classic Alfredo sauce made with butter, heavy cream, and Parmesan cheese', calories: 680, prepTime: 12, allergens: 'Dairy, Gluten', category: 'Pasta', features: {featured: false, spicy: false, vegetarian: true, vegan: false}})">
-            <img src="https://images.unsplash.com/photo-1563379091339-03246963d96c?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Fettuccine Alfredo">
-            <div class="menu-item-content">
-                <div class="menu-item-title">Fettuccine Alfredo</div>
-                <div class="menu-item-description">Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic</div>
-                <div class="menu-item-footer">
-                    <div class="price-section">
-                        <div class="menu-item-price">14.99 EGP <span class="menu-item-old-price">16.00 EGP</span></div>
-                    </div>
-                    <button class="add-btn add-to-cart"
-                            data-item-id="2"
-                            data-item-name="Fettuccine Alfredo"
-                            data-item-price="14.99"
-                            onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        order
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Creamy Parmesan Fettuccine', 'Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=300&h=200&fit=crop')">
-            <img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Creamy Parmesan Fettuccine">
-            <div class="menu-item-content">
-                <div class="menu-item-title">Creamy Parmesan Fettuccine</div>
-                <div class="menu-item-description">Fettuccine, Heavy cream, Butter, Parmesan cheese, Garlic</div>
-                <div class="menu-item-footer">
-                    <div class="price-section">
-                        <div class="menu-item-price">14.99 EGP <span class="menu-item-old-price">16.00 EGP</span></div>
-                    </div>
-                    <button class="add-btn add-to-cart"
-                            data-item-id="3"
-                            data-item-name="Creamy Parmesan Fettuccine"
-                            data-item-price="14.99"
-                            onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        order
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="menu-item-card" data-category="pasta" onclick="showItemDetail('Alfredo Noodles', 'Noodles, Heavy cream, Butter, Parmesan cheese, Garlic', '14.99', 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=300&h=200&fit=crop')"
-            <img src="https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Alfredo Noodles">
-            <div class="menu-item-content">
-                <div class="menu-item-title">Alfredo Noodles</div>
-                <div class="menu-item-description">Noodles, Heavy cream, Butter, Parmesan cheese, Garlic</div>
-                <div class="menu-item-footer">
-                    <div class="price-section">
-                        <div class="menu-item-price">14.99 EGP <span class="menu-item-old-price">16.00 EGP</span></div>
-                    </div>
-                    <button class="add-btn add-to-cart"
-                            data-item-id="4"
-                            data-item-name="Alfredo Noodles"
-                            data-item-price="14.99"
-                            onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        order
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Grill Items -->
-        <div class="menu-item-card" data-category="grills" style="display: none;" onclick="showItemDetail('Grilled Chicken', 'Grilled chicken breast with herbs and spices', '18.99', 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=300&h=200&fit=crop', {description: 'Tender grilled chicken breast marinated in Mediterranean herbs and spices, served with your choice of sides', calories: 320, prepTime: 25, allergens: 'None', category: 'Grills', features: {featured: false, spicy: false, vegetarian: false, vegan: false}})"
-            <img src="https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="Grilled Chicken">
-            <div class="menu-item-content">
-                <div class="menu-item-title">Grilled Chicken</div>
-                <div class="menu-item-description">Grilled chicken breast with herbs and spices</div>
-                <div class="menu-item-footer">
-                    <div class="price-section">
-                        <div class="menu-item-price">18.99 EGP <span class="menu-item-old-price">20.00 EGP</span></div>
-                    </div>
-                    <button class="add-btn add-to-cart"
-                            data-item-id="5"
-                            data-item-name="Grilled Chicken"
-                            data-item-price="18.99"
-                            onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        order
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="menu-item-card" data-category="grills" style="display: none;" onclick="showItemDetail('BBQ Ribs', 'Tender BBQ ribs with smoky sauce', '22.99', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop', {description: 'Fall-off-the-bone tender pork ribs slow-cooked and glazed with our signature smoky BBQ sauce', calories: 750, prepTime: 45, allergens: 'Soy', category: 'Grills', features: {featured: true, spicy: true, vegetarian: false, vegan: false}})">
-            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=120&h=80&fit=crop&crop=left" class="menu-item-image" alt="BBQ Ribs">
-            <div class="menu-item-content">
-                <div class="menu-item-title">BBQ Ribs</div>
-                <div class="menu-item-description">Tender BBQ ribs with smoky sauce</div>
-                <div class="menu-item-footer">
-                    <div class="price-section">
-                        <div class="menu-item-price">22.99 EGP <span class="menu-item-old-price">25.00 EGP</span></div>
-                    </div>
-                    <button class="add-btn add-to-cart"
-                            data-item-id="6"
-                            data-item-name="BBQ Ribs"
-                            data-item-price="22.99"
-                            onclick="event.stopPropagation(); addToCartFromButton(this)">
-                        order
-                    </button>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 
     <!-- Services section removed -->
@@ -1557,7 +1438,7 @@ let currentItem = {};
 // Category tab filtering
 document.querySelectorAll('.category-tab').forEach(button => {
     button.addEventListener('click', function() {
-        const meal = this.dataset.meal;
+        const categoryId = this.dataset.category;
 
         // Update active button
         document.querySelectorAll('.category-tab').forEach(btn => {
@@ -1565,38 +1446,42 @@ document.querySelectorAll('.category-tab').forEach(button => {
         });
         this.classList.add('active');
 
-        // Filter logic can be added here based on meal type
-        console.log('Selected meal:', meal);
-    });
-});
-
-// Subcategory tab filtering
-document.querySelectorAll('.subcategory-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        const category = this.dataset.type;
-
-        // Update active tab
-        document.querySelectorAll('.subcategory-tab').forEach(t => {
-            t.classList.remove('active');
-        });
-        this.classList.add('active');
-
         // Filter menu items
         document.querySelectorAll('.menu-item-card').forEach(item => {
-            if (category === 'pasta' && item.dataset.category === 'pasta') {
+            if (categoryId === 'all') {
                 item.style.display = 'flex';
-            } else if (category === 'grills' && item.dataset.category === 'grills') {
-                item.style.display = 'flex';
-            } else if (category === 'pasta') {
-                item.style.display = item.dataset.category === 'pasta' ? 'flex' : 'none';
-            } else if (category === 'grills') {
-                item.style.display = item.dataset.category === 'grills' ? 'flex' : 'none';
             } else {
-                item.style.display = 'none';
+                item.style.display = item.dataset.category === categoryId ? 'flex' : 'none';
             }
         });
     });
 });
+
+// Function to show item detail from card data attributes
+function showItemDetailFromCard(card) {
+    const name = card.dataset.itemName;
+    const description = card.dataset.itemDescription;
+    const price = card.dataset.itemPrice;
+    const image = card.dataset.itemImage;
+    const category = card.dataset.itemCategory;
+    const ingredients = card.dataset.itemIngredients;
+    const calories = parseInt(card.dataset.itemCalories) || 0;
+    const prepTime = parseInt(card.dataset.itemPrepTime) || 0;
+    const allergens = card.dataset.itemAllergens;
+    const servingSize = card.dataset.itemServingSize;
+    const dietaryInfo = card.dataset.itemDietaryInfo;
+
+    showItemDetail(name, ingredients, price, image, {
+        description: description,
+        category: category,
+        calories: calories,
+        prepTime: prepTime,
+        allergens: allergens,
+        servingSize: servingSize,
+        dietaryInfo: dietaryInfo,
+        features: {featured: false, spicy: false, vegetarian: false, vegan: false}
+    });
+}
 
 // Services toggle functions removed
 
@@ -1622,6 +1507,11 @@ function showItemDetail(name, ingredients, price, image, options = {}) {
     document.getElementById('modalItemPrice').textContent = price;
     document.getElementById('modalTotalPrice').textContent = price;
     document.getElementById('itemQuantity').textContent = '1';
+    // Remove old price element from DOM if present
+    const oldPriceElem = document.getElementById('modalItemOldPrice');
+    if (oldPriceElem) {
+        oldPriceElem.parentNode.removeChild(oldPriceElem);
+    }
 
     // Set description
     const descriptionElement = document.getElementById('modalItemDescription');

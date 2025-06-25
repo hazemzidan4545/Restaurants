@@ -1,0 +1,709 @@
+{% extends "base.html" %}
+
+{% block title %}Popular Items Analytics - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.analytics-header {
+    position: relative;
+    padding-left: 20px;
+
+}
+
+.analytics-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 6px;
+    background-color: var(--primary-yellow, #f3cd21);
+    border-radius: 3px;
+}
+
+/* Filter Buttons */
+.filter-buttons {
+    gap: 10px;
+}
+
+.filter-buttons .btn {
+    transition: all 0.2s ease;
+    border-radius: 10px;
+    padding: 8px 15px;
+    font-weight: 500;
+}
+
+.filter-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Stats Cards Styles */
+.stats-card {
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+    color: #fff;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover .stats-icon {
+    transform: scale(1.1);
+}
+
+.bg-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.bg-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.bg-info {
+    background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+}
+
+.stats-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    background: linear-gradient(135deg, #333 0%, #555 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+}
+
+.stats-label {
+    color: #6b7280;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.stats-trend-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 5px;
+    gap: 5px;
+}
+
+.trend-positive {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #047857;
+}
+
+.trend-negative {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #b91c1c;
+}
+
+.trend-neutral {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #1e40af;
+}
+
+/* Table styles */
+.admin-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #eaeaea;
+    text-align: center;
+}
+
+.admin-table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    text-align: center;
+}
+
+.admin-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+    background-color: rgba(243, 205, 33, 0.05);
+}
+
+/* Item info specific styles */
+.item-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    max-width: 250px;
+    margin: 0 auto;
+}
+
+.item-info strong {
+    font-weight: 600;
+    display: inline-block;
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.thumbnail-container {
+    width: 60px;
+    height: 60px;
+    overflow: hidden;
+    border-radius: 12px;
+    flex-shrink: 0;
+    box-sizing: content-box;
+    max-width: 60px;
+}
+
+.item-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.item-thumbnail:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.no-image-placeholder-small {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.category-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.price-text {
+    font-weight: 600;
+    color: #28a745;
+}
+
+.order-count {
+    font-weight: 700;
+    color: #007bff;
+    font-size: 1.1rem;
+}
+
+.revenue-text {
+    font-weight: 600;
+    color: #28a745;
+}
+
+.popularity-bar {
+    position: relative;
+    background: #e9ecef;
+    height: 25px;
+    border-radius: 12px;
+    overflow: hidden;
+    min-width: 100px;
+    margin: 0 auto;
+}
+
+.popularity-fill {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.popularity-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Empty state styling */
+.empty-state {
+    padding: 30px;
+    text-align: center;
+    color: #6c757d;
+}
+
+.empty-state h4 {
+    margin: 10px 0;
+    font-weight: 600;
+    color: #495057;
+}
+
+.empty-state p {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Responsive fixes */
+@media (max-width: 992px) {
+    .stats-content {
+        text-align: left;
+    }
+    
+    .admin-card .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-number {
+        font-size: 1.5rem;
+    }
+    
+    .admin-table {
+        min-width: 800px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="content-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="analytics-header">
+            <h1 class="page-title"><i class="fas fa-chart-line"></i> Popular Items Analytics</h1>
+            <p class="text-muted">Track your most popular menu items based on order frequency and revenue</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('admin.menu_management') }}" class="btn btn-outline-primary">
+                <i class="fas fa-utensils"></i> Menu Management
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="admin-content">
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="admin-card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-primary">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-counter="{{ total_orders }}">{{ total_orders }}</div>
+                            <div class="stats-label">Total Orders</div>
+                            <div class="stats-trend-badge trend-positive">
+                                <i class="fas fa-arrow-up"></i> Recent Growth
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="admin-card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-success">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-counter="{{ total_revenue }}">{{ "%.2f"|format(total_revenue) }} EGP</div>
+                            <div class="stats-label">Total Revenue</div>
+                            <div class="stats-trend-badge trend-positive">
+                                <i class="fas fa-chart-line"></i> Increasing
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="admin-card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-warning">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-counter="{{ analytics_data|length }}">{{ analytics_data|length }}</div>
+                            <div class="stats-label">Popular Items</div>
+                            <div class="stats-trend-badge trend-neutral">
+                                <i class="fas fa-star"></i> Featured
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Filter -->
+    <div class="admin-card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-calendar-alt"></i>
+                Time Period
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap filter-buttons">
+                <a href="{{ url_for('admin.popular_items_analytics', period='all') }}" 
+                   class="btn {% if request.args.get('period') == 'all' or not request.args.get('period') %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-infinity me-1"></i> All Time
+                </a>
+                <a href="{{ url_for('admin.popular_items_analytics', period='month') }}" 
+                   class="btn {% if request.args.get('period') == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-calendar-month me-1"></i> This Month
+                </a>
+                <a href="{{ url_for('admin.popular_items_analytics', period='week') }}" 
+                   class="btn {% if request.args.get('period') == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-calendar-week me-1"></i> This Week
+                </a>
+                <a href="{{ url_for('admin.popular_items_analytics', period='today') }}" 
+                   class="btn {% if request.args.get('period') == 'today' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-calendar-day me-1"></i> Today
+                </a>
+                <button type="button" class="btn btn-outline-primary me-2 mb-2" data-bs-toggle="modal" data-bs-target="#customDateModal">
+                    <i class="fas fa-calendar-alt me-1"></i> Custom
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Date Modal -->
+    <div class="modal fade" id="customDateModal" tabindex="-1" aria-labelledby="customDateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customDateModalLabel">Select Custom Date Range</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('admin.popular_items_analytics') }}" method="get">
+                        <input type="hidden" name="period" value="custom">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Apply Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Items Table -->
+    <div class="admin-card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="card-title">
+                    <i class="fas fa-trophy me-2"></i>
+                    Most Popular Items
+                </h3>
+                <div class="header-actions">
+                    <button class="btn btn-sm btn-outline-secondary" id="exportToCsv">
+                        <i class="fas fa-download me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="admin-table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">Rank</th>
+                            <th class="text-center">Item</th>
+                            <th class="text-center">Category</th>
+                            <th class="text-center">Price</th>
+                            <th class="text-center">Orders</th>
+                            <th class="text-center">Revenue</th>
+                            <th class="text-center">Popularity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if analytics_data %}
+                            {% for item in analytics_data %}
+                            <tr>
+                                <td>
+                                    {% if loop.index <= 3 %}
+                                        <span class="rank-badge rank-{{ loop.index }}">
+                                            {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% else %}🥉{% endif %}
+                                            {{ loop.index }}
+                                        </span>
+                                    {% else %}
+                                        <span class="rank-number">{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                            <td>
+                                <div class="item-info">
+                                    {% if item.image_url %}
+                                    <div class="thumbnail-container">
+                                        <img src="{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}" 
+                                             alt="{{ item.name }}" class="item-thumbnail">
+                                    </div>
+                                    {% else %}
+                                    <div class="no-image-placeholder-small">
+                                        <i class="fas fa-utensils"></i>
+                                    </div>
+                                    {% endif %}
+                                    <strong title="{{ item.name }}">{{ item.name }}</strong>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="category-badge">{{ item.category }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="price-text">{{ item.price }} EGP</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="order-count">{{ item.total_ordered }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="revenue-text">{{ "%.2f"|format(item.revenue) }} EGP</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="popularity-bar">
+                                    {% set max_ordered = analytics_data[0].total_ordered if analytics_data|length > 0 else 1 %}
+                                    {% set percentage = (item.total_ordered / max_ordered * 100)|round if max_ordered > 0 else 0 %}
+                                    <div class="popularity-fill" style="width: {{ percentage }}%"></div>
+                                    <span class="popularity-text">{{ percentage }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-search mb-3" style="font-size: 2.5rem; color: #adb5bd;"></i>
+                                        <h4>No popular items found</h4>
+                                        <p class="text-muted">There is no data available for the selected time period.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animate the stats counters on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all elements with data-counter attribute
+    const counterElements = document.querySelectorAll('[data-counter]');
+    
+    counterElements.forEach(counter => {
+        const target = parseFloat(counter.getAttribute('data-counter'));
+        const isDecimal = counter.textContent.includes('.');
+        const suffix = counter.textContent.includes('EGP') ? ' EGP' : '';
+        let decimalPlaces = 0;
+        
+        // Check if we need to display decimals
+        if (isDecimal) {
+            decimalPlaces = 2;
+            animateCounterWithDecimals(counter, 0, target, 1500, decimalPlaces, suffix);
+        } else {
+            animateCounter(counter, 0, target, 1500, suffix);
+        }
+    });
+
+    // Set up export to CSV functionality
+    document.getElementById('exportToCsv').addEventListener('click', exportTableToCsv);
+});
+
+// Function to animate integer counters
+function animateCounter(element, start, end, duration, suffix = '') {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const currentValue = Math.floor(progress * (end - start) + start);
+        element.textContent = currentValue + suffix;
+        
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+// Function to animate counters with decimal values
+function animateCounterWithDecimals(element, start, end, duration, decimals = 2, suffix = '') {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const currentValue = progress * (end - start) + start;
+        element.textContent = currentValue.toFixed(decimals) + suffix;
+        
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+// Function to export table data to CSV file
+function exportTableToCsv() {
+    const table = document.querySelector('.admin-table');
+    const rows = table.querySelectorAll('tr');
+    
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    
+    // Add headers
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        headers.push(th.textContent.trim());
+    });
+    csvContent += headers.join(',') + '\r\n';
+    
+    // Add rows
+    table.querySelectorAll('tbody tr').forEach(row => {
+        const rowData = [];
+        
+        // Handle rank
+        const rankCell = row.querySelector('td:first-child');
+        rowData.push(rankCell.textContent.trim().replace(/[🥇🥈🥉]/g, '').trim());
+        
+        // Handle item name
+        const itemCell = row.querySelector('td:nth-child(2)');
+        rowData.push('"' + itemCell.textContent.trim() + '"');
+        
+        // Get remaining cells
+        for (let i = 2; i < row.cells.length; i++) {
+            let cellText = row.cells[i].textContent.trim();
+            
+            // Clean up percentage
+            if (i === row.cells.length - 1) {
+                cellText = cellText.replace('%', '');
+            }
+            
+            // If there are commas in the text, wrap in quotes
+            if (cellText.includes(',')) {
+                rowData.push('"' + cellText + '"');
+            } else {
+                rowData.push(cellText);
+            }
+        }
+        
+        csvContent += rowData.join(',') + '\r\n';
+    });
+    
+    // Create download link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    
+    // Get current date for filename
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    link.setAttribute('download', `popular_items_${dateStr}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Initialize date pickers with validation
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (startDateInput && endDateInput) {
+        // Set default dates (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        startDateInput.valueAsDate = thirtyDaysAgo;
+        endDateInput.valueAsDate = today;
+        
+        // Validate date range
+        endDateInput.addEventListener('change', function() {
+            if (startDateInput.value && new Date(startDateInput.value) > new Date(endDateInput.value)) {
+                alert('End date must be after start date');
+                endDateInput.valueAsDate = today;
+            }
+        });
+        
+        startDateInput.addEventListener('change', function() {
+            if (endDateInput.value && new Date(startDateInput.value) > new Date(endDateInput.value)) {
+                alert('Start date must be before end date');
+                startDateInput.valueAsDate = thirtyDaysAgo;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -41,6 +41,10 @@ def create_app(config_name='default'):
     from app.api import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
     
+    # Register order API blueprint directly with the Flask app
+    from app.modules.order.api.order_api import bp as order_api_bp
+    app.register_blueprint(order_api_bp)
+    
     # Register main routes
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)

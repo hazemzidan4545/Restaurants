@@ -2,8 +2,9 @@ from flask import render_template, redirect, url_for, request, flash, jsonify, c
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app.modules.admin import bp
-from app.models import MenuItem, Category, User, Order, Table
+from app.models import MenuItem, Category, User, Order, Table, OrderItem, QRCode
 from app.extensions import db
+from datetime import datetime, timedelta
 import os
 from PIL import Image
 
@@ -56,13 +57,19 @@ def index():
 @bp.route('/dashboard')
 @login_required
 def dashboard():
-    """Admin dashboard - Optimized with single query"""
+    """Admin dashboard - Enhanced with comprehensive statistics and charts"""
     if not current_user.is_admin():
         return redirect(url_for('main.index'))
 
     # Performance: Use single query with aggregation for better performance
-    from sqlalchemy import func, case
+    from sqlalchemy import func, case, desc, extract, and_
+    from datetime import datetime, timedelta, timezone
 
+    # Current time and date (UTC for database operations)
+    now = datetime.now(timezone.utc)
+    today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+
+    # Dashboard stats query
     stats_query = db.session.query(
         func.count(MenuItem.item_id).label('total_menu_items'),
         func.sum(case((MenuItem.status == 'available', 1), else_=0)).label('active_menu_items'),
@@ -71,22 +78,234 @@ def dashboard():
 
     # Separate query for categories (usually small dataset)
     total_categories = Category.query.filter_by(is_active=True).count()
+    
+    # Staff count - Use the dedicated method for accurate counting
+    staff_count = User.get_active_staff_count()
 
-    # Performance: Get recent orders count for dashboard
-    from datetime import datetime, timedelta, timezone
-    recent_orders = Order.query.filter(
-        Order.order_time >= datetime.now(timezone.utc) - timedelta(days=7)
+    # Tables status based on active QR codes and their table status
+    # Get all tables that have active QR codes
+    tables_with_qr = db.session.query(Table.table_id).join(
+        QRCode, QRCode.table_id == Table.table_id
+    ).filter(
+        QRCode.is_active == True,
+        QRCode.qr_type == 'menu'
+    ).distinct().all()
+    
+    # Extract table IDs from result
+    table_ids = [table.table_id for table in tables_with_qr]
+    
+    if table_ids:
+        # If we have tables with QR codes, get their stats
+        tables_data = db.session.query(
+            func.count(Table.table_id).label('total_tables'),
+            func.sum(case((Table.status == 'available', 1), else_=0)).label('available_tables'),
+            func.sum(case((Table.status == 'occupied', 1), else_=0)).label('occupied_tables')
+        ).filter(Table.table_id.in_(table_ids)).first()
+    else:
+        # If no tables with QR codes, use None to trigger fallback
+        tables_data = None
+
+    # Today's orders and revenue
+    today_orders_query = db.session.query(
+        func.count(Order.order_id).label('order_count'),
+        func.sum(Order.total_amount).label('total_revenue')
+    ).filter(
+        Order.order_time >= today_start
+    ).first()
+    
+    # Recent orders for last 7 days
+    week_orders_count = Order.query.filter(
+        Order.order_time >= now - timedelta(days=7)
     ).count()
-
+    
+    # Monthly revenue (current month)
+    month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+    monthly_revenue = db.session.query(
+        func.sum(Order.total_amount)
+    ).filter(
+        Order.order_time >= month_start
+    ).scalar() or 0
+    
+    # Prepare today's order data
+    todays_orders = today_orders_query.order_count or 0
+    todays_revenue = round(float(today_orders_query.total_revenue or 0), 2)
+    
+    # Revenue data for chart (last 7 days)
+    revenue_data = {'labels': [], 'orders': [], 'revenue': []}
+    
+    for i in range(6, -1, -1):
+        day_date = now - timedelta(days=i)
+        day_start = datetime(day_date.year, day_date.month, day_date.day, tzinfo=timezone.utc)
+        day_end = day_start + timedelta(days=1)
+        
+        # Get orders and revenue for this day
+        day_data = db.session.query(
+            func.count(Order.order_id).label('order_count'),
+            func.sum(Order.total_amount).label('revenue')
+        ).filter(
+            Order.order_time >= day_start,
+            Order.order_time < day_end
+        ).first()
+        
+        # Format date as day name
+        day_label = day_date.strftime('%a')
+        revenue_data['labels'].append(day_label)
+        revenue_data['orders'].append(day_data.order_count or 0)
+        revenue_data['revenue'].append(float(day_data.revenue or 0))
+    
+    # Popular categories data for chart
+    category_data = {'labels': [], 'data': []}
+    
+    # Get top 5 categories by order count in the past month
+    top_categories = db.session.query(
+        Category.name,
+        func.count(OrderItem.order_item_id).label('item_count')
+    ).join(
+        MenuItem, MenuItem.item_id == OrderItem.item_id
+    ).join(
+        Category, Category.category_id == MenuItem.category_id
+    ).join(
+        Order, Order.order_id == OrderItem.order_id
+    ).filter(
+        Order.order_time >= now - timedelta(days=30)
+    ).group_by(
+        Category.category_id
+    ).order_by(
+        desc('item_count')
+    ).limit(5).all()
+    
+    for cat in top_categories:
+        category_data['labels'].append(cat.name)
+        category_data['data'].append(cat.item_count)
+    
+    # Order status distribution
+    status_data = {'labels': ['New', 'Processing', 'Completed', 'Rejected'], 'data': [], 'colors': []}
+    status_colors = {
+        'new': 'rgba(59, 130, 246, 0.8)',        # Blue
+        'processing': 'rgba(245, 158, 11, 0.8)',  # Yellow/Orange
+        'completed': 'rgba(16, 185, 129, 0.8)',   # Green
+        'rejected': 'rgba(239, 68, 68, 0.8)'      # Red
+    }
+    
+    for status in status_data['labels']:
+        count = Order.query.filter(
+            Order.status == status.lower(),
+            Order.order_time >= now - timedelta(days=7)
+        ).count()
+        status_data['data'].append(count)
+        status_data['colors'].append(status_colors[status.lower()])
+    
+    # Prepare stats dictionary
+    # Count total QR codes for tables
+    qr_code_count = QRCode.query.filter_by(is_active=True, qr_type='menu').count()
+    
+    # Force sync all table statuses before generating stats
+    # This will set tables with active orders to 'occupied' and others to 'available'
+    print("Dashboard view: Updating all table statuses before rendering")
+    Table.update_all_table_statuses()
+    
+    # If no tables with QR codes found or no tables in result, get total count of all tables
+    if not tables_data or not tables_data.total_tables:
+        # Explicit query for all tables
+        all_tables_data = db.session.query(
+            func.count(Table.table_id).label('total_tables'),
+        ).first()
+        
+        total_tables = all_tables_data.total_tables or 0
+        print(f"Using all_tables_data count: {total_tables}")
+    else:
+        total_tables = tables_data.total_tables or 0
+        print(f"Using tables_with_qr count: {total_tables}")
+    
+    # Double check - get full table count for validation
+    actual_total = Table.query.count()
+    print(f"Actual total tables in database: {actual_total}")
+    
+    # Direct query for occupied tables - should match get_occupied_tables_count
+    direct_occupied_count = Table.query.filter_by(status='occupied').count()
+    print(f"Direct query occupied tables: {direct_occupied_count}")
+    
+    # Get accurate count of occupied tables using our newly fixed method
+    # This checks both table status and active orders in a single query
+    occupied_tables = Table.get_occupied_tables_count()
+    print(f"Final occupied tables count: {occupied_tables}")
+    
+    # Ensure total_tables is at least the number of occupied tables
+    if total_tables < occupied_tables:
+        print(f"Warning: total_tables ({total_tables}) < occupied_tables ({occupied_tables}), adjusting")
+        total_tables = actual_total
+    
+    # Calculate available tables as the difference between total and occupied
+    # This ensures consistency between the numbers
+    available_tables = max(0, total_tables - occupied_tables)
+    print(f"Available tables: {available_tables}")
+    
     stats = {
         'total_menu_items': stats_query.total_menu_items or 0,
         'active_menu_items': stats_query.active_menu_items or 0,
         'total_categories': total_categories,
         'out_of_stock_items': stats_query.out_of_stock_items or 0,
-        'recent_orders': recent_orders
+        'recent_orders': week_orders_count,
+        'todays_orders': todays_orders,
+        'todays_revenue': todays_revenue,
+        'monthly_revenue': round(float(monthly_revenue), 2),
+        'staff_count': staff_count,
+        'total_tables': total_tables,
+        'available_tables': available_tables,
+        'occupied_tables': occupied_tables,
+        'qr_code_count': qr_code_count
     }
+    
+    # Get recent orders for display
+    recent_orders = []
+    orders_query = Order.query.order_by(Order.order_time.desc()).limit(10)
+    
+    for order in orders_query:
+        # Get customer name
+        customer_name = order.customer.name if order.customer else 'Guest'
+        
+        # Get order type based on whether it has a table
+        order_type = 'Dine-in' if order.table else 'Takeaway'
+        
+        recent_orders.append({
+            'id': order.order_id,
+            'name': customer_name,
+            'qr_number': order.table.table_number if order.table else 'N/A',
+            'date': order.order_time.strftime('%d %b %Y, %H:%M'),
+            'type': order_type,
+            'status': order.status.capitalize(),
+            'total': f"{float(order.total_amount):.2f} EGP"
+        })
 
-    return render_template('dashboard.html', stats=stats)
+    # Ensure admin_name is properly set and extract first name for a friendlier greeting
+    if current_user and current_user.name:
+        admin_name = current_user.name
+        # Extract first name for a more personal greeting
+        admin_first_name = admin_name.split()[0] if admin_name and ' ' in admin_name else admin_name
+    else:
+        admin_name = "Admin"
+        admin_first_name = "Admin"
+    
+    # Time-based greeting (based on local time)
+    hour = now.hour
+    if 5 <= hour < 12:
+        greeting = "Good morning"
+    elif 12 <= hour < 18:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
+    
+    return render_template('dashboard.html', 
+                           stats=stats, 
+                           now=now, 
+                           recent_orders=recent_orders, 
+                           revenue_data=revenue_data,
+                           category_data=category_data,
+                           status_data=status_data,
+                           current_user=current_user,
+                           admin_name=admin_name,
+                           admin_first_name=admin_first_name,
+                           greeting=greeting)
 
 @bp.route('/orders')
 @login_required
@@ -111,136 +330,80 @@ def orders():
     formatted_orders = []
     for order in orders_pagination.items:
         formatted_orders.append({
-            'id': f"{order.order_id:05d}",
-            'name': order.customer.name,
+            'id': order.order_id,  # Keep as integer for JS to handle correctly
+            'name': order.customer.name if hasattr(order, 'customer') and order.customer else "Unknown",
             'qr_number': f"#{order.table.table_number}" if order.table else "N/A",
             'date': order.order_time.strftime('%d %b %Y'),
             'type': 'Order',  # Could be enhanced based on order items
             'status': order.status.title(),
-            'total': f"{order.total_amount:.2f}"
+            'total': f"{order.total_amount:.2f} EGP"
         })
 
     return render_template('orders.html',
                          orders=formatted_orders,
                          pagination=orders_pagination)
 
-@bp.route('/meals')
+@bp.route('/analytics/popular-items')
 @login_required
-def meals():
-    """Admin meals page"""
+def popular_items_analytics():
+    """Popular items analytics page with time period filtering"""
     if not current_user.is_admin():
         return redirect(url_for('main.index'))
 
-    # Sample meals data - replace with actual database queries
-    meals = [
-        {
-            'id': 1,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 2,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 3,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 4,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 5,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 6,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 7,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 8,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 9,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 10,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 11,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 12,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 13,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 14,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop'
-        },
-        {
-            'id': 15,
-            'name': 'Office',
-            'description': 'Office Ipsum you must be Office Ipsum you must be',
-            'price': '500.00',
-            'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop'
-        }
-    ]
+    # Get time period from request args
+    period = request.args.get('period', 'all')
+    
+    # Calculate date range based on period
+    end_date = datetime.now()
+    start_date = None
+    
+    if period == 'today':
+        start_date = end_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == 'week':
+        start_date = end_date - timedelta(days=7)
+    elif period == 'month':
+        start_date = end_date.replace(day=1)
+    elif period == 'custom':
+        # Parse custom date range
+        try:
+            start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d')
+            end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d')
+            # Set end_date to end of day
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+        except (ValueError, TypeError):
+            # If parsing fails, fall back to all-time
+            pass
 
-    return render_template('meals.html', meals=meals)
+    # Get popular items with counts, filtered by date range if applicable
+    if start_date and period != 'all':
+        popular_items_data = MenuItem.get_popular_items_with_counts(limit=15, start_date=start_date, end_date=end_date)
+    else:
+        popular_items_data = MenuItem.get_popular_items_with_counts(limit=15)
+
+    # Format data for template
+    analytics_data = []
+    for item, count in popular_items_data:
+        analytics_data.append({
+            'name': item.name,
+            'category': item.category.name,
+            'price': float(item.price),
+            'total_ordered': int(count),
+            'revenue': float(item.price) * int(count),
+            'image_url': item.image_url
+        })
+
+    # Handle empty analytics data
+    if not analytics_data:
+        flash('No data available for the selected time period.', 'info')
+        
+    # Calculate totals
+    total_orders = sum(item['total_ordered'] for item in analytics_data) if analytics_data else 0
+    total_revenue = sum(item['revenue'] for item in analytics_data) if analytics_data else 0
+
+    return render_template('popular_items_analytics.html',
+                         analytics_data=analytics_data,
+                         total_orders=total_orders,
+                         total_revenue=total_revenue)
 
 @bp.route('/services')
 @login_required
@@ -574,6 +737,14 @@ def add_menu_item():
         stock = request.form.get('stock', type=int, default=0)
         status = request.form.get('status', 'available')
 
+        # Get nutritional information
+        ingredients = request.form.get('ingredients')
+        calories = request.form.get('calories', type=int)
+        preparation_time = request.form.get('preparation_time', type=int)
+        allergens = request.form.get('allergens')
+        serving_size = request.form.get('serving_size')
+        dietary_info = request.form.get('dietary_info')
+
         if not name or not price or not category_id:
             flash('Name, price, and category are required', 'error')
             return render_template('add_menu_item.html', categories=categories)
@@ -600,7 +771,13 @@ def add_menu_item():
             category_id=category_id,
             image_url=image_filename,
             stock=stock,
-            status=status
+            status=status,
+            ingredients=ingredients,
+            calories=calories,
+            preparation_time=preparation_time,
+            allergens=allergens,
+            serving_size=serving_size,
+            dietary_info=dietary_info
         )
 
         try:
@@ -632,6 +809,14 @@ def edit_menu_item(item_id):
         category_id = request.form.get('category_id', type=int)
         stock = request.form.get('stock', type=int)
         status = request.form.get('status')
+
+        # Get nutritional information
+        ingredients = request.form.get('ingredients')
+        calories = request.form.get('calories', type=int)
+        preparation_time = request.form.get('preparation_time', type=int)
+        allergens = request.form.get('allergens')
+        serving_size = request.form.get('serving_size')
+        dietary_info = request.form.get('dietary_info')
 
         if not name or not price or not category_id:
             flash('Name, price, and category are required', 'error')
@@ -670,6 +855,12 @@ def edit_menu_item(item_id):
         menu_item.category_id = category_id
         menu_item.stock = stock or 0
         menu_item.status = status
+        menu_item.ingredients = ingredients
+        menu_item.calories = calories
+        menu_item.preparation_time = preparation_time
+        menu_item.allergens = allergens
+        menu_item.serving_size = serving_size
+        menu_item.dietary_info = dietary_info
 
         try:
             db.session.commit()
@@ -737,6 +928,8 @@ def api_recent_activity():
         })
 
     return jsonify({'activities': activities})
+
+
 
 @bp.route('/api/search')
 @login_required
@@ -838,3 +1031,65 @@ def update_item_status(item_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to update status'}), 500
+
+# API Endpoints for Real-time Notifications
+
+@bp.route('/api/order-notifications')
+@login_required
+def api_order_notifications():
+    """API endpoint to get order notification data"""
+    if not current_user.is_admin():
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    try:
+        # Get count of new and processing orders
+        new_orders_count = Order.get_new_orders_count()
+
+        # Get recent orders from last 2 hours for more immediate notifications
+        recent_cutoff = datetime.utcnow() - timedelta(hours=2)
+        recent_orders_count = Order.query.filter(
+            Order.order_time >= recent_cutoff,
+            Order.status.in_(['new', 'processing'])
+        ).count()
+
+        # Determine if there are new orders to notify about
+        has_new_orders = new_orders_count > 0
+
+        return jsonify({
+            'success': True,
+            'has_new_orders': has_new_orders,
+            'new_orders_count': new_orders_count,
+            'recent_orders_count': recent_orders_count,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching order notifications: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch notifications',
+            'has_new_orders': False,
+            'new_orders_count': 0
+        }), 500
+
+@bp.route('/api/mark-orders-seen', methods=['POST'])
+@login_required
+def api_mark_orders_seen():
+    """API endpoint to mark orders as seen (for notification management)"""
+    if not current_user.is_admin():
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    try:
+        # This could be enhanced to track which admin has seen which orders
+        # For now, we'll just return success
+        return jsonify({
+            'success': True,
+            'message': 'Orders marked as seen'
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Error marking orders as seen: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to mark orders as seen'
+        }), 500

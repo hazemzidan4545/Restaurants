@@ -85,7 +85,7 @@
                     <a href="{{ url_for('admin.orders') }}" class="nav-link {% if request.endpoint == 'admin.orders' %}active{% endif %}">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="nav-text">Orders</span>
-                        <span class="nav-badge">3</span>
+                        <span class="nav-badge" id="orderNotificationBadge" style="display: none;">0</span>
                     </a>
                 </div>
             </div>
@@ -104,10 +104,11 @@
                         <span class="nav-text">Categories</span>
                     </a>
                 </div>
+
                 <div class="nav-item">
-                    <a href="{{ url_for('admin.meals') }}" class="nav-link {% if request.endpoint == 'admin.meals' %}active{% endif %}">
-                        <i class="fas fa-hamburger"></i>
-                        <span class="nav-text">Meals</span>
+                    <a href="{{ url_for('admin.popular_items_analytics') }}" class="nav-link {% if request.endpoint == 'admin.popular_items_analytics' %}active{% endif %}">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="nav-text">Popular Items</span>
                     </a>
                 </div>
             </div>
@@ -253,8 +254,7 @@
         // Performance: Preload critical pages
         const criticalPages = [
             '{{ url_for("admin.dashboard") }}',
-            '{{ url_for("admin.orders") }}',
-            '{{ url_for("admin.meals") }}'
+            '{{ url_for("admin.orders") }}'
         ];
 
         criticalPages.forEach(url => {
@@ -263,8 +263,149 @@
             link.href = url;
             document.head.appendChild(link);
         });
+
+        // Order notification system
+        function updateOrderNotifications() {
+            fetch('{{ url_for("admin.api_order_notifications") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('orderNotificationBadge');
+                    if (badge) {
+                        if (data.has_new_orders && data.new_orders_count > 0) {
+                            badge.textContent = data.new_orders_count;
+                            badge.style.display = 'inline-block';
+                            badge.classList.add('pulse-animation');
+                        } else {
+                            badge.style.display = 'none';
+                            badge.classList.remove('pulse-animation');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching order notifications:', error);
+                });
+        }
+
+        // Update notifications on page load
+        updateOrderNotifications();
+
+        // Update notifications every 30 seconds
+        setInterval(updateOrderNotifications, 30000);
+
+        // Toast notification function
+        function showNotification(title, message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            // Add type-specific styling
+            if (type === 'success') {
+                toast.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            } else if (type === 'warning') {
+                toast.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            } else if (type === 'error') {
+                toast.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            }
+
+            document.body.appendChild(toast);
+
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 100);
+
+            // Hide and remove toast after 4 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 4000);
+        }
+
+        // Listen for new order events (if using WebSocket/Socket.IO)
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            socket.on('new_order', function(data) {
+                updateOrderNotifications();
+                // Show toast notification
+                showNotification('New Order', `Order #${data.order_id} received from ${data.customer_name}`, 'info');
+            });
+        }
     </script>
 
     {% block extra_js %}{% endblock %}
+
+    <!-- Additional CSS for enhanced notifications -->
+    <style>
+        .pulse-animation {
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% {
+                transform: scale(1) translateZ(0);
+                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+            }
+            50% {
+                transform: scale(1.1) translateZ(0);
+                box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
+            }
+        }
+
+        /* Enhanced notification badge for new orders */
+        #orderNotificationBadge {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #orderNotificationBadge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        #orderNotificationBadge.pulse-animation::before {
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Toast notification styles */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            z-index: 9999;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .toast-notification.show {
+            transform: translateX(0);
+        }
+
+        .toast-notification .toast-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .toast-notification .toast-message {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+    </style>
 </body>
 </html>

@@ -1,6 +1,7 @@
 from flask import render_template, redirect, url_for, send_from_directory, current_app
 from flask_login import current_user
 from app.main import bp
+from app.models import MenuItem, Category
 import os
 
 @bp.route('/')
@@ -13,7 +14,15 @@ def index():
             return redirect(url_for('waiter.dashboard'))
         else:
             return redirect(url_for('customer.menu'))
-    return render_template('shared/landing.html')
+
+    # Load popular menu items based on order frequency for the landing page
+    popular_items = MenuItem.get_popular_items(limit=4)
+
+    # If no popular items (no orders yet), fall back to first 4 available items
+    if not popular_items:
+        popular_items = MenuItem.query.filter_by(status='available').limit(4).all()
+
+    return render_template('shared/landing.html', popular_items=popular_items)
 
 @bp.route('/test-checkout')
 def test_checkout():
