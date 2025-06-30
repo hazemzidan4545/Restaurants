@@ -463,8 +463,13 @@
     <!-- Hero Section -->
     <div class="hero-section">
         <div class="hero-content">
+            {% if current_user.is_authenticated %}
+            <h1>Welcome back, {{ current_user.name }}!<br></h1>
+            <p>Ready to explore our menu and services?</p>
+            {% else %}
             <h1>Welcome to Hive Restaurant<br></h1>
             <p>Explore our menu and services</p>
+            {% endif %}
             <div class="hero-buttons">
                 <a href="{{ url_for('customer.menu') }}" class="hero-btn primary">Menu</a>
                 <a href="{{ url_for('service.index') }}" class="hero-btn secondary">Services</a>

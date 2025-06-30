@@ -7,6 +7,8 @@ class AdminPerformance {
     constructor() {
         this.cache = new Map();
         this.loadingStates = new Set();
+        this.activeFilters = new Set();
+        this.currentView = 'grid'; // or 'table'
         this.init();
     }
 
@@ -15,6 +17,11 @@ class AdminPerformance {
         this.setupTableOptimizations();
         this.setupSearchOptimizations();
         this.setupNavigationOptimizations();
+        this.setupFilters();
+        this.setupViewToggle();
+        this.setupSorting();
+        this.setupQuickFilters();
+        this.setupDeleteHandlers();
         this.monitorPerformance();
     }
 
@@ -89,28 +96,20 @@ class AdminPerformance {
      * Setup optimized search functionality
      */
     setupSearchOptimizations() {
-        const searchInputs = document.querySelectorAll('.search-input');
-        
-        searchInputs.forEach(input => {
-            let searchTimeout;
-            
-            input.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                
-                // Show loading state
-                this.showSearchLoading(input);
-                
-                searchTimeout = setTimeout(() => {
-                    this.performSearch(e.target.value, input);
-                }, 300); // Debounce search
-            });
+        const searchInput = document.getElementById('menuSearch');
+        if (!searchInput) return;
 
-            // Cache search results
-            input.addEventListener('focus', () => {
-                if (!this.cache.has('search-suggestions')) {
-                    this.preloadSearchSuggestions();
-                }
-            });
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            
+            // Show loading state
+            this.showSearchLoading(searchInput);
+            
+            searchTimeout = setTimeout(() => {
+                this.applyFilters();
+                this.hideSearchLoading(searchInput);
+            }, 300); // Debounce search for better performance
         });
     }
 
@@ -315,6 +314,251 @@ class AdminPerformance {
     preloadSearchSuggestions() {
         // Implementation for preloading search suggestions
         console.log('Preloading search suggestions');
+    }
+
+    setupFilters() {
+        // Category filter
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', () => this.applyFilters());
+        }
+
+        // Status filter
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => this.applyFilters());
+        }
+
+        // Sort filter
+        const sortBy = document.getElementById('sortBy');
+        if (sortBy) {
+            sortBy.addEventListener('change', () => this.applyFilters());
+        }
+
+        // Items per page
+        const itemsPerPage = document.getElementById('itemsPerPage');
+        if (itemsPerPage) {
+            itemsPerPage.addEventListener('change', () => this.applyFilters());
+        }
+
+        // Clear all filters
+        const clearAllBtn = document.getElementById('clearAllFilters');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => this.clearAllFilters());
+        }
+    }
+
+    setupViewToggle() {
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const gridView = document.getElementById('gridView');
+        const tableView = document.getElementById('tableView');
+
+        if (gridViewBtn && tableViewBtn) {
+            gridViewBtn.addEventListener('click', () => {
+                this.currentView = 'grid';
+                gridViewBtn.classList.add('active');
+                tableViewBtn.classList.remove('active');
+                gridView.style.display = 'block';
+                tableView.style.display = 'none';
+            });
+
+            tableViewBtn.addEventListener('click', () => {
+                this.currentView = 'table';
+                tableViewBtn.classList.add('active');
+                gridViewBtn.classList.remove('active');
+                tableView.style.display = 'block';
+                gridView.style.display = 'none';
+            });
+        }
+    }
+
+    setupSorting() {
+        const headers = document.querySelectorAll('th[data-sort]');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const sortKey = header.dataset.sort;
+                this.sortItems(sortKey);
+            });
+        });
+    }
+
+    setupQuickFilters() {
+        const quickFilters = document.querySelectorAll('.quick-filter-pill');
+        quickFilters.forEach(filter => {
+            filter.addEventListener('click', () => {
+                filter.classList.toggle('active');
+                this.applyFilters();
+            });
+        });
+    }
+
+    setupDeleteHandlers() {
+        const deleteButtons = document.querySelectorAll('.delete-item');
+        const deleteModal = document.getElementById('deleteConfirmModal');
+        const deleteForm = document.getElementById('deleteForm');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const itemId = e.currentTarget.dataset.itemId;
+                deleteForm.action = `/admin/menu/items/${itemId}/delete`;
+                new bootstrap.Modal(deleteModal).show();
+            });
+        });
+    }
+
+    applyFilters() {
+        const searchQuery = document.getElementById('menuSearch')?.value.toLowerCase() || '';
+        const categoryId = document.getElementById('categoryFilter')?.value || '';
+        const status = document.getElementById('statusFilter')?.value || '';
+        const sortValue = document.getElementById('sortBy')?.value || '';
+
+        // Get active quick filters
+        const activeQuickFilters = Array.from(document.querySelectorAll('.quick-filter-pill.active'))
+            .map(filter => filter.dataset.filter);
+
+        // Get all menu items based on current view
+        const menuItems = this.currentView === 'grid' 
+            ? document.querySelectorAll('.menu-item-card:not(.add-menu-item-card)')
+            : document.querySelectorAll('.menu-item-row');
+
+        let visibleCount = 0;
+        menuItems.forEach(item => {
+            const itemName = item.dataset.name?.toLowerCase() || '';
+            const itemCategory = item.dataset.category || '';
+            const itemStatus = item.dataset.status || '';
+            const itemPrice = parseFloat(item.dataset.price || '0');
+            const itemStock = parseInt(item.dataset.stock || '0');
+            const itemPopularity = parseInt(item.dataset.popularity || '0');
+            const isNew = item.dataset.isNew === 'true';
+
+            // Apply search filter
+            const matchesSearch = !searchQuery || 
+                                itemName.includes(searchQuery);
+
+            // Apply category filter
+            const matchesCategory = !categoryId || itemCategory === categoryId;
+
+            // Apply status filter
+            const matchesStatus = !status || itemStatus === status;
+
+            // Apply quick filters
+            const matchesQuickFilters = activeQuickFilters.length === 0 || activeQuickFilters.every(filter => {
+                switch (filter) {
+                    case 'available':
+                        return itemStatus === 'available';
+                    case 'low_stock':
+                        return itemStock <= 10 && itemStock > 0;
+                    case 'high_price':
+                        return itemPrice >= 100;
+                    case 'new_items':
+                        return isNew;
+                    case 'popular':
+                        return itemPopularity >= 8;
+                    default:
+                        return true;
+                }
+            });
+
+            // Show/hide item based on all filters
+            const shouldShow = matchesSearch && matchesCategory && matchesStatus && matchesQuickFilters;
+            item.style.display = shouldShow ? '' : 'none';
+            if (shouldShow) visibleCount++;
+        });
+
+        // Update filter count badge
+        const filterCountBadge = document.getElementById('filterCountBadge');
+        const filterCount = document.getElementById('filterCount');
+        if (filterCountBadge && filterCount) {
+            const activeFilterCount = (searchQuery ? 1 : 0) + 
+                                   (categoryId ? 1 : 0) + 
+                                   (status ? 1 : 0) + 
+                                   activeQuickFilters.length;
+            
+            filterCountBadge.style.display = activeFilterCount > 0 ? '' : 'none';
+            filterCount.textContent = activeFilterCount;
+        }
+
+        // Update search results text
+        const searchResultsText = document.getElementById('searchResultsText');
+        if (searchResultsText) {
+            if (visibleCount === 0) {
+                searchResultsText.textContent = 'No items found matching your criteria';
+            } else {
+                searchResultsText.textContent = `Showing ${visibleCount} items`;
+            }
+        }
+
+        // Apply sorting if specified
+        if (sortValue) {
+            this.sortItems(sortValue);
+        }
+    }
+
+    sortItems(sortKey) {
+        const container = this.currentView === 'grid' 
+            ? document.querySelector('.menu-items-grid')
+            : document.querySelector('.menu-table tbody');
+
+        if (!container) return;
+
+        const items = Array.from(this.currentView === 'grid' 
+            ? container.querySelectorAll('.menu-item-card:not(.add-menu-item-card)')
+            : container.querySelectorAll('.menu-item-row'));
+
+        items.sort((a, b) => {
+            const aValue = this.getSortValue(a, sortKey);
+            const bValue = this.getSortValue(b, sortKey);
+
+            if (sortKey.endsWith('_desc')) {
+                return bValue.localeCompare(aValue);
+            }
+            return aValue.localeCompare(bValue);
+        });
+
+        // Clear and re-append sorted items
+        const addNewCard = container.querySelector('.add-menu-item-card');
+        container.innerHTML = '';
+        items.forEach(item => container.appendChild(item));
+        if (addNewCard && this.currentView === 'grid') {
+            container.appendChild(addNewCard);
+        }
+    }
+
+    getSortValue(item, sortKey) {
+        switch (sortKey) {
+            case 'name_asc':
+            case 'name_desc':
+                return item.dataset.name || '';
+            case 'price_asc':
+            case 'price_desc':
+                return (parseFloat(item.dataset.price || '0')).toString().padStart(10, '0');
+            case 'created_asc':
+            case 'created_desc':
+                return item.dataset.created || '';
+            default:
+                return '';
+        }
+    }
+
+    clearAllFilters() {
+        // Reset search
+        const searchInput = document.getElementById('menuSearch');
+        if (searchInput) searchInput.value = '';
+
+        // Reset select filters
+        ['categoryFilter', 'statusFilter', 'sortBy', 'itemsPerPage'].forEach(id => {
+            const select = document.getElementById(id);
+            if (select) select.selectedIndex = 0;
+        });
+
+        // Reset quick filters
+        document.querySelectorAll('.quick-filter-pill.active').forEach(filter => {
+            filter.classList.remove('active');
+        });
+
+        // Apply cleared filters
+        this.applyFilters();
     }
 }
 

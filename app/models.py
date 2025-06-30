@@ -3,6 +3,7 @@ from decimal import Decimal
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import Numeric
+from sqlalchemy.orm import foreign
 from app.extensions import db
 
 class User(UserMixin, db.Model):
@@ -404,6 +405,30 @@ class Payment(db.Model):
     def __repr__(self):
         return f'<Payment {self.payment_id}>'
 
+class Service(db.Model):
+    """Available services for customers"""
+    __tablename__ = 'services'
+
+    service_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    icon = db.Column(db.String(50), nullable=False, default='fas fa-concierge-bell')
+    description = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    display_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship with service requests (manual join condition)
+    service_requests = db.relationship(
+        'ServiceRequest', 
+        primaryjoin='Service.service_id == foreign(ServiceRequest.service_id)',
+        backref='service', 
+        lazy='dynamic'
+    )
+
+    def __repr__(self):
+        return f'<Service {self.name}>'
+
 class ServiceRequest(db.Model):
     """Waiter service requests"""
     __tablename__ = 'service_requests'
@@ -411,9 +436,10 @@ class ServiceRequest(db.Model):
     request_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     table_id = db.Column(db.Integer, db.ForeignKey('tables.table_id'), nullable=False)
+    service_id = db.Column(db.Integer, nullable=True)  # Removed FK constraint for now
     request_type = db.Column(db.String(50), nullable=False)  # 'clean_table', 'refill_coals', 'adjust_ac', etc.
-    status = db.Column(db.Enum('pending', 'acknowledged', 'done', name='request_status'),
-                      nullable=False, default='pending')
+    status = db.Column(db.String(12), nullable=False, default='pending')  # Changed from Enum to String
+    description = db.Column(db.Text, nullable=True)  # Changed from notes to description
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -603,3 +629,30 @@ class AuditLog(db.Model):
 
     def __repr__(self):
         return f'<AuditLog {self.log_id}>'
+
+class CustomerPreferences(db.Model):
+    """Customer notification and privacy preferences"""
+    __tablename__ = 'customer_preferences'
+
+    preference_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False, unique=True)
+    
+    # Notification preferences
+    notify_order_updates = db.Column(db.Boolean, default=True)
+    notify_loyalty_points = db.Column(db.Boolean, default=True)
+    notify_promotions = db.Column(db.Boolean, default=True)
+    notify_service_requests = db.Column(db.Boolean, default=True)
+    
+    # Privacy preferences
+    profile_visible = db.Column(db.Boolean, default=False)
+    order_history_private = db.Column(db.Boolean, default=True)
+    analytics_enabled = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship back to user
+    user = db.relationship('User', backref=db.backref('preferences', uselist=False))
+
+    def __repr__(self):
+        return f'<CustomerPreferences {self.user_id}>'

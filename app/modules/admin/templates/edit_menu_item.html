@@ -295,28 +295,66 @@
                                     </div>
                                 </div>
 
-                                <!-- Item Statistics -->
+                                <!-- Enhanced Item Statistics -->
                                 <div class="mb-3">
-                                    <div class="stats-card">
-                                        <h6 class="stats-title">
-                                            <i class="fas fa-chart-line me-1"></i>Item Statistics
-                                        </h6>
-                                        <div class="stats-grid">
-                                            <div class="stat-item">
-                                                <span class="stat-label">Created:</span>
-                                                <span class="stat-value">{{ menu_item.created_at.strftime('%Y-%m-%d') }}</span>
+                                    <div class="stats-card enhanced-stats-card">
+                                        <div class="stats-header">
+                                            <div class="stats-icon-wrapper">
+                                                <i class="fas fa-chart-line"></i>
                                             </div>
-                                            <div class="stat-item">
-                                                <span class="stat-label">Updated:</span>
-                                                <span class="stat-value">{{ menu_item.updated_at.strftime('%Y-%m-%d') }}</span>
+                                            <h6 class="stats-title">
+                                                Item Statistics
+                                            </h6>
+                                            <div class="stats-badge">
+                                                <i class="fas fa-info-circle"></i>
                                             </div>
-                                            <div class="stat-item">
-                                                <span class="stat-label">Current Stock:</span>
-                                                <span class="stat-value">{{ menu_item.stock if menu_item.stock > 0 else 'Unlimited' }}</span>
+                                        </div>
+                                        <div class="stats-grid enhanced-stats-grid">
+                                            <div class="stat-item enhanced-stat-item">
+                                                <div class="stat-icon created-icon">
+                                                    <i class="fas fa-calendar-plus"></i>
+                                                </div>
+                                                <div class="stat-content">
+                                                    <span class="stat-label">Created:</span>
+                                                    <span class="stat-value created-date">{{ menu_item.created_at.strftime('%Y-%m-%d') }}</span>
+                                                </div>
                                             </div>
-                                            <div class="stat-item">
-                                                <span class="stat-label">Status:</span>
-                                                <span class="stat-value status-{{ menu_item.status }}">{{ menu_item.status|title }}</span>
+                                            <div class="stat-item enhanced-stat-item">
+                                                <div class="stat-icon updated-icon">
+                                                    <i class="fas fa-calendar-edit"></i>
+                                                </div>
+                                                <div class="stat-content">
+                                                    <span class="stat-label">Updated:</span>
+                                                    <span class="stat-value updated-date">{{ menu_item.updated_at.strftime('%Y-%m-%d') }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-item enhanced-stat-item">
+                                                <div class="stat-icon stock-icon">
+                                                    <i class="fas fa-boxes"></i>
+                                                </div>
+                                                <div class="stat-content">
+                                                    <span class="stat-label">Current Stock:</span>
+                                                    <span class="stat-value stock-value {% if menu_item.stock and menu_item.stock > 0 %}in-stock{% else %}unlimited{% endif %}">
+                                                        {{ menu_item.stock if menu_item.stock and menu_item.stock > 0 else 'Unlimited' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-item enhanced-stat-item">
+                                                <div class="stat-icon status-icon">
+                                                    <i class="fas fa-toggle-on"></i>
+                                                </div>
+                                                <div class="stat-content">
+                                                    <span class="stat-label">Status:</span>
+                                                    <span class="stat-value status-badge status-{{ menu_item.status }}">
+                                                        {% if menu_item.status == 'available' %}
+                                                            <i class="fas fa-check-circle me-1"></i>Available
+                                                        {% elif menu_item.status == 'out_of_stock' %}
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>Out of Stock
+                                                        {% else %}
+                                                            <i class="fas fa-times-circle me-1"></i>{{ menu_item.status|title }}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -325,36 +363,64 @@
                         </div>
                     </div>
 
-                    <!-- Form Actions -->
-                    <div class="form-actions">
+                    <!-- Enhanced Form Actions -->
+                    <div class="form-actions enhanced-form-actions">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-summary">
-                                    <h6 class="mb-2">
-                                        <i class="fas fa-check-circle me-1"></i>Form Completion
-                                    </h6>
-                                    <div class="progress mb-2">
-                                        <div class="progress-bar" id="completionProgress" style="width: 0%"></div>
+                                <div class="form-summary enhanced-form-summary">
+                                    <div class="summary-header">
+                                        <div class="summary-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <h6 class="summary-title">Form Completion</h6>
                                     </div>
-                                    <small class="text-muted" id="completionText">Updating item information</small>
+                                    <div class="progress enhanced-progress mb-3">
+                                        <div class="progress-bar enhanced-progress-bar" id="completionProgress" 
+                                             style="width: 85%" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100">
+                                            <span class="progress-text">85%</span>
+                                        </div>
+                                    </div>
+                                    <div class="completion-status">
+                                        <div class="status-indicator ready">
+                                            <i class="fas fa-check me-2"></i>
+                                            <span id="completionText">Ready to update!</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="button" class="btn btn-outline-secondary" id="previewBtn">
-                                        <i class="fas fa-eye me-2"></i>Preview
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger" id="deleteBtn">
-                                        <i class="fas fa-trash me-2"></i>Delete
-                                    </button>
-                                    <a href="{{ url_for('admin.menu_management') }}" class="btn btn-secondary">
-                                        <i class="fas fa-times me-2"></i>Cancel
-                                    </a>
-                                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                                        <span class="spinner-border spinner-border-sm d-none me-2" id="submitSpinner"></span>
-                                        <i class="fas fa-save me-2" id="submitIcon"></i>
-                                        <span id="submitText">Update Menu Item</span>
-                                    </button>
+                                <div class="action-buttons-container">
+                                    <div class="action-buttons enhanced-action-buttons">
+                                        <button type="button" class="btn btn-outline-info enhanced-preview-btn" id="previewBtn">
+                                            <div class="btn-icon">
+                                                <i class="fas fa-eye"></i>
+                                            </div>
+                                            <span class="btn-text">Preview</span>
+                                            <div class="btn-shine"></div>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger enhanced-delete-btn" id="deleteBtn">
+                                            <div class="btn-icon">
+                                                <i class="fas fa-trash"></i>
+                                            </div>
+                                            <span class="btn-text">Delete</span>
+                                            <div class="btn-shine"></div>
+                                        </button>
+                                        <a href="{{ url_for('admin.menu_management') }}" class="btn btn-secondary enhanced-cancel-btn">
+                                            <div class="btn-icon">
+                                                <i class="fas fa-times"></i>
+                                            </div>
+                                            <span class="btn-text">Cancel</span>
+                                            <div class="btn-shine"></div>
+                                        </a>
+                                        <button type="submit" class="btn btn-primary enhanced-submit-btn" id="submitBtn">
+                                            <span class="spinner-border spinner-border-sm d-none me-2" id="submitSpinner"></span>
+                                            <div class="btn-icon" id="submitIcon">
+                                                <i class="fas fa-save"></i>
+                                            </div>
+                                            <span class="btn-text" id="submitText">Update Menu Item</span>
+                                            <div class="btn-shine"></div>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -424,28 +490,50 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+<!-- Enhanced Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" style="z-index: 999999;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content enhanced-delete-modal">
+            <div class="modal-header enhanced-delete-header">
+                <h5 class="modal-title text-danger enhanced-delete-title">
+                    <div class="danger-icon-wrapper">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <span>Confirm Delete</span>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete <strong>{{ menu_item.name }}</strong>?</p>
-                <div class="alert alert-warning">
-                    <i class="fas fa-warning me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone. All data associated with this menu item will be permanently deleted.
+            <div class="modal-body enhanced-delete-body">
+                <div class="delete-confirmation-content">
+                    <div class="delete-item-info">
+                        <div class="item-preview">
+                            <div class="item-icon">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <div class="item-details">
+                                <h6 class="item-name">{{ menu_item.name }}</h6>
+                                <p class="item-category text-muted">{{ menu_item.category.name if menu_item.category else 'No Category' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="delete-question">Are you sure you want to delete this menu item?</p>
+                    <div class="alert alert-danger enhanced-warning">
+                        <div class="warning-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="warning-content">
+                            <strong>Warning:</strong> This action cannot be undone. All data associated with this menu item will be permanently deleted.
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-footer enhanced-delete-footer">
+                <button type="button" class="btn btn-secondary enhanced-cancel-btn" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
                 <form method="POST" action="{{ url_for('admin.delete_menu_item', item_id=menu_item.item_id) }}" style="display: inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-danger enhanced-delete-btn">
                         <i class="fas fa-trash me-2"></i>Delete Item
                     </button>
                 </form>
@@ -694,161 +782,640 @@
     color: var(--danger-red);
 }
 
-/* Form Actions */
-.form-actions {
-    background: rgba(var(--primary-dark-rgb), 0.02);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-top: 2rem;
-    border: 1px solid var(--border-color);
-}
-
-.form-summary {
-    background: white;
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-
-.progress {
-    height: 8px;
-    background: rgba(var(--primary-yellow-rgb), 0.2);
-}
-
-.progress .progress-bar {
-    background: linear-gradient(90deg, var(--primary-yellow) 0%, #e6b800 100%);
-}
-
-/* Character Counters */
-.form-text {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-#descriptionCount, #ingredientsCount {
-    font-weight: 600;
-    color: var(--primary-yellow);
-}
-
-/* Checkbox Styling */
-.form-check-input:checked {
-    background-color: var(--primary-yellow);
-    border-color: var(--primary-yellow);
-}
-
-.form-check-label {
-    font-weight: 500;
-    color: var(--text-dark);
-}
-
-/* Button Enhancements */
-.btn {
-    border-radius: 8px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
-    border-color: var(--primary-yellow);
-    color: var(--text-dark);
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #e6b800 0%, #cc9900 100%);
-    border-color: #e6b800;
-    color: var(--text-dark);
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, var(--danger-red) 0%, #dc2626 100%);
-    border-color: var(--danger-red);
-}
-
-.btn-danger:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    border-color: #dc2626;
-}
-
-/* Preview Modal Styling */
-.menu-item-preview {
-    padding: 1rem;
-}
-
-.preview-image-container {
+/* Enhanced Stats Card */
+.enhanced-stats-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: none;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
     position: relative;
-    height: 200px;
-    border-radius: 12px;
     overflow: hidden;
-    background: #f8f9fa;
+    margin-bottom: 2rem;
+}
+
+.enhanced-stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+.stats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.stats-icon-wrapper {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 12px;
+    border-radius: 12px;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-.preview-image-container img {
+.stats-title {
+    color: #495057;
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.3rem;
+    letter-spacing: 0.5px;
+}
+
+.stats-badge {
+    background: linear-gradient(135deg, #f3cd21 0%, #ffd700 100%);
+    color: #212529;
+    padding: 8px;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(243, 205, 33, 0.3);
+}
+
+.enhanced-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.enhanced-stat-item {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    border: 2px solid rgba(102, 126, 234, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.enhanced-stat-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.6s;
 }
 
-.no-image-placeholder {
+.enhanced-stat-item:hover::before {
+    left: 100%;
+}
+
+.enhanced-stat-item:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: white;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.created-icon {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.updated-icon {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+.stock-icon {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.status-icon {
+    background: linear-gradient(135deg, #6f42c1 0%, #563d7c 100%);
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+}
+
+.stat-content {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.enhanced-stat-item .stat-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.enhanced-stat-item .stat-value {
+    font-weight: 700;
+    color: #212529;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.stat-value.in-stock {
+    color: #28a745;
+}
+
+.stat-value.unlimited {
+    color: #17a2b8;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-badge.status-available {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.status-badge.status-out_of_stock {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.status-badge.status-discontinued {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Enhanced Form Actions */
+.enhanced-form-actions {
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f0fe 100%);
+    border: 2px solid rgba(102, 126, 234, 0.1);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-top: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.enhanced-form-actions::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+.enhanced-form-summary {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    border: 2px solid rgba(102, 126, 234, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    height: 100%;
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.summary-icon {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    padding: 12px;
+    border-radius: 12px;
+    color: white;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.summary-title {
+    color: #495057;
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.enhanced-progress {
+    height: 12px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.enhanced-progress-bar {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: width 0.6s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.enhanced-progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.completion-status {
     text-align: center;
-    color: var(--text-muted);
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.status-indicator.ready {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+/* Enhanced Action Buttons */
+.action-buttons-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+}
+
+.enhanced-action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.enhanced-action-buttons .btn {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-text {
+    font-size: 0.9rem;
+}
+
+.btn-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.6s;
+}
+
+.enhanced-action-buttons .btn:hover .btn-shine {
+    left: 100%;
+}
+
+.enhanced-action-buttons .btn:hover .btn-icon {
+    transform: scale(1.1);
+}
+
+.enhanced-preview-btn {
+    border-color: #17a2b8;
+    color: #17a2b8;
+    background: linear-gradient(135deg, #ffffff 0%, #e8f7fa 100%);
+}
+
+.enhanced-preview-btn:hover {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border-color: #17a2b8;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.4);
+}
+
+.enhanced-delete-btn {
+    border-color: #dc3545;
+    color: #dc3545;
+    background: linear-gradient(135deg, #ffffff 0%, #fdf2f2 100%);
+}
+
+.enhanced-delete-btn:hover {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-color: #dc3545;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+}
+
+.enhanced-cancel-btn {
+    border-color: #6c757d;
+    color: #6c757d;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    text-decoration: none;
+}
+
+.enhanced-cancel-btn:hover {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+    border-color: #6c757d;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+    text-decoration: none;
+}
+
+.enhanced-submit-btn {
+    border-color: #f3cd21;
+    background: linear-gradient(135deg, #f3cd21 0%, #ffd700 100%);
+    color: #212529;
+}
+
+.enhanced-submit-btn:hover {
+    background: linear-gradient(135deg, #e6b800 0%, #f3cd21 100%);
+    color: #212529;
+    border-color: #e6b800;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(243, 205, 33, 0.4);
+}
+
+.enhanced-submit-btn:disabled {
+    opacity: 0.7;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Enhanced Delete Modal Styles */
+.enhanced-delete-modal {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 999999;
+}
+
+.enhanced-delete-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.enhanced-delete-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    transform: rotate(45deg);
+}
+
+.enhanced-delete-title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.danger-icon-wrapper {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 12px;
+    border-radius: 12px;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.enhanced-delete-body {
+    padding: 2rem;
+    background: linear-gradient(135deg, #ffffff 0%, #fdf2f2 100%);
+}
+
+.delete-confirmation-content {
+    text-align: center;
+}
+
+.item-preview {
+    background: white;
+    border: 2px solid rgba(220, 53, 69, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.item-icon {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 1.2rem;
+}
+
+.item-details {
+    text-align: left;
+    flex: 1;
+}
+
+.item-name {
+    margin: 0;
+    font-weight: 700;
+    color: #212529;
+}
+
+.item-category {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.delete-question {
+    font-size: 1.1rem;
+    color: #495057;
+    margin-bottom: 1.5rem;
+}
+
+.enhanced-warning {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+    border: 2px solid rgba(220, 53, 69, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.warning-icon {
+    color: #dc3545;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.warning-content {
+    flex: 1;
+    color: #721c24;
+}
+
+.enhanced-delete-footer {
+    background: #f8f9fa;
+    border: none;
+    padding: 1.5rem 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.enhanced-cancel-btn,
+.enhanced-delete-btn {
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.enhanced-delete-footer .enhanced-cancel-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.enhanced-delete-footer .enhanced-delete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+/* Modal Backdrop Enhancement */
+.modal-backdrop.show {
+    opacity: 0.7;
+    z-index: 999998;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .form-section {
+    .enhanced-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .enhanced-action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .enhanced-action-buttons .btn {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .enhanced-form-actions .row {
+        flex-direction: column;
+    }
+    
+    .enhanced-form-actions .col-md-6 {
+        margin-bottom: 2rem;
+    }
+    
+    .action-buttons-container {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .enhanced-stats-card,
+    .enhanced-form-actions {
+        padding: 1.5rem;
+    }
+    
+    .stats-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .enhanced-stat-item {
         padding: 1rem;
     }
-
-    .section-title {
-        font-size: 1.1rem;
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
     }
-
-    .form-actions {
-        padding: 1rem;
-    }
-
-    .form-actions .row {
-        flex-direction: column-reverse;
-    }
-
-    .form-actions .col-md-6:last-child {
-        margin-bottom: 1rem;
-    }
-
-    .d-flex.justify-content-end {
-        justify-content: center !important;
-    }
-}
-
-/* Animation for form validation */
-.shake {
-    animation: shake 0.5s ease-in-out;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
-
-/* Loading states */
-.loading {
-    opacity: 0.7;
-    pointer-events: none;
-}
-
-.spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
 }
 </style>
 {% endblock %}

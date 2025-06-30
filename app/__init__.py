@@ -45,6 +45,10 @@ def create_app(config_name='default'):
     from app.modules.order.api.order_api import bp as order_api_bp
     app.register_blueprint(order_api_bp)
     
+    # Register loyalty API blueprint
+    from app.modules.loyalty.api import bp as loyalty_api_bp
+    app.register_blueprint(loyalty_api_bp)
+    
     # Register main routes
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)

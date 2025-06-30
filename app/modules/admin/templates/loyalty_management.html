@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block page_title %}Loyalty Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-crown text-warning me-2"></i>
+        Loyalty Program Management
+    </h2>
+    <div>
+        <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#settingsModal">
+            <i class="fas fa-cogs me-1"></i> Settings
+        </button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+            <i class="fas fa-user-plus me-1"></i> Add Customer
+        </button>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+                <h3 class="mb-0">{{ total_customers }}</h3>
+                <p class="text-muted mb-0">Total Customers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-star fa-2x"></i>
+                </div>
+                <h3 class="mb-0">{{ active_customers }}</h3>
+                <p class="text-muted mb-0">Active Members</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-coins fa-2x"></i>
+                </div>
+                <h3 class="mb-0">{{ total_points_distributed }}</h3>
+                <p class="text-muted mb-0">Points Distributed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-gift fa-2x"></i>
+                </div>
+                <h3 class="mb-0">{{ total_redemptions }}</h3>
+                <p class="text-muted mb-0">Redemptions</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer List -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom-0 pb-0">
+        <h5 class="mb-3">Customer Loyalty Overview</h5>
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" placeholder="Search customers...">
+                </div>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="filter" id="all" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="all">All</label>
+                    
+                    <input type="radio" class="btn-check" name="filter" id="active" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="active">Active</label>
+                    
+                    <input type="radio" class="btn-check" name="filter" id="vip" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="vip">VIP</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="border-0">Customer</th>
+                        <th class="border-0">Tier</th>
+                        <th class="border-0">Total Points</th>
+                        <th class="border-0">Available Points</th>
+                        <th class="border-0">Total Spent</th>
+                        <th class="border-0">Join Date</th>
+                        <th class="border-0">Status</th>
+                        <th class="border-0">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3">
+                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                        {{ (customer.user.first_name[0] if customer.user and customer.user.first_name else 'U').upper() }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ customer.user.first_name if customer.user else 'Unknown' }} {{ customer.user.last_name if customer.user else '' }}</h6>
+                                    <small class="text-muted">{{ customer.user.email if customer.user else 'No email' }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'warning' if customer.tier_level == 'gold' else 'secondary' if customer.tier_level == 'silver' else 'info' if customer.tier_level == 'platinum' else 'primary' }}">
+                                {{ customer.tier_level.title() }}
+                            </span>
+                        </td>
+                        <td>{{ customer.lifetime_points }}</td>
+                        <td>{{ customer.total_points }}</td>
+                        <td>${{ "%.2f"|format(0) }}</td>
+                        <td>{{ customer.join_date.strftime('%b %d, %Y') }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if customer.total_points > 0 else 'secondary' }}">
+                                {{ 'Active' if customer.total_points > 0 else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customerModal{{ customer.loyalty_id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="adjustPoints({{ customer.customer_id }})">
+                                    <i class="fas fa-coins"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if customers.pages > 1 %}
+<nav aria-label="Customer pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if customers.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.loyalty_management', page=customers.prev_num) }}">Previous</a>
+            </li>
+        {% endif %}
+        
+        {% for page_num in customers.iter_pages() %}
+            {% if page_num %}
+                {% if page_num != customers.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.loyalty_management', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if customers.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.loyalty_management', page=customers.next_num) }}">Next</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Settings Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Loyalty Program Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Points per Dollar Spent</label>
+                        <input type="number" class="form-control" value="1" min="0" step="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Points Value (cents per point)</label>
+                        <input type="number" class="form-control" value="1" min="0" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tier Thresholds</label>
+                        <div class="row">
+                            <div class="col-4">
+                                <label class="form-label small">Bronze</label>
+                                <input type="number" class="form-control" value="0">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">Silver</label>
+                                <input type="number" class="form-control" value="500">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">Gold</label>
+                                <input type="number" class="form-control" value="1000">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+}
+</style>
+
+<script>
+function adjustPoints(customerId) {
+    // Implement points adjustment functionality
+    alert('Points adjustment for customer ' + customerId);
+}
+</script>
+{% endblock %}

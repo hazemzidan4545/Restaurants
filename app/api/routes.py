@@ -1,6 +1,7 @@
 from flask import jsonify, request
+from flask_login import current_user, login_required
 from app.api import bp
-from app.models import MenuItem, Category, Order, OrderItem, User, Table
+from app.models import MenuItem, Category, Order, OrderItem, User, Table, Service, ServiceRequest
 from app.extensions import db
 from datetime import datetime
 import uuid
@@ -54,27 +55,59 @@ def get_menu_items():
 def get_suggested_items():
     """Get suggested menu items for cart"""
     try:
-        # Get 3 random available items
-        items = MenuItem.query.filter_by(status='available').limit(3).all()
+        # Get different types of items for variety
         suggested_items = []
+        
+        # Try to get popular items from different categories
+        categories = ['Beverages', 'Main Courses', 'Desserts', 'Appetizers', 'Drinks']
+        
+        for category_name in categories:
+            # Find items from this category
+            category_items = MenuItem.query.join(Category).filter(
+                Category.name == category_name,
+                MenuItem.status == 'available'
+            ).limit(1).all()
+            
+            if category_items:
+                suggested_items.extend(category_items)
+            
+            # Stop if we have enough items
+            if len(suggested_items) >= 3:
+                break
+        
+        # If we don't have enough items from specific categories, get random ones
+        if len(suggested_items) < 3:
+            remaining_needed = 3 - len(suggested_items)
+            existing_ids = [item.item_id for item in suggested_items]
+            
+            additional_items = MenuItem.query.filter(
+                MenuItem.status == 'available',
+                ~MenuItem.item_id.in_(existing_ids) if existing_ids else True
+            ).order_by(db.func.random()).limit(remaining_needed).all()
+            
+            suggested_items.extend(additional_items)
 
-        for item in items:
+        # Format response
+        response_items = []
+        for item in suggested_items[:3]:  # Ensure max 3 items
             # Get default image URL based on category
             default_images = {
-                'Hookah': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=80&h=80&fit=crop',
-                'Drinks': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=80&h=80&fit=crop',
-                'Brunch': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=80&h=80&fit=crop',
-                'Main Courses': 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=80&h=80&fit=crop',
-                'Desserts': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=80&h=80&fit=crop'
+                'Hookah': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&h=200&fit=crop',
+                'Beverages': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&h=200&fit=crop',
+                'Drinks': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&h=200&fit=crop',
+                'Brunch': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=200&h=200&fit=crop',
+                'Main Courses': 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&h=200&fit=crop',
+                'Desserts': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=200&h=200&fit=crop',
+                'Appetizers': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop'
             }
 
             category_name = item.category.name if item.category else 'Main Courses'
-            image_url = item.image_url or default_images.get(category_name, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=80&h=80&fit=crop')
+            image_url = item.image_url or default_images.get(category_name, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&h=200&fit=crop')
 
-            suggested_items.append({
+            response_items.append({
                 'id': item.item_id,
                 'name': item.name,
-                'description': item.description,
+                'description': item.description or f'Delicious {category_name.lower()}',
                 'price': float(item.price),
                 'category': category_name,
                 'image': image_url
@@ -82,7 +115,7 @@ def get_suggested_items():
 
         return jsonify({
             'status': 'success',
-            'data': suggested_items
+            'data': response_items
         })
     except Exception as e:
         return jsonify({
@@ -531,4 +564,63 @@ def get_table_statuses():
         return jsonify({
             'status': 'error',
             'message': f'Error getting table statuses: {str(e)}'
+        }), 500
+
+@bp.route('/service_request', methods=['POST'])
+@login_required
+def create_service_request():
+    """Create a new service request from customer"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No data provided'
+            }), 400
+            
+        service_id = data.get('service_id')
+        if not service_id:
+            return jsonify({
+                'success': False,
+                'message': 'Service ID is required'
+            }), 400
+            
+        # Verify service exists and is active
+        service = Service.query.filter_by(service_id=service_id, is_active=True).first()
+        if not service:
+            return jsonify({
+                'success': False,
+                'message': 'Service not found or unavailable'
+            }), 404
+            
+        # Get user's current table (you may need to implement table assignment logic)
+        # For now, we'll use a default or the user can be assigned a table
+        table_id = 1  # Default table - you might want to implement proper table assignment
+        
+        # Create service request
+        service_request = ServiceRequest(
+            service_id=service_id,
+            customer_id=current_user.user_id,
+            table_id=table_id,
+            status='pending',
+            request_time=datetime.utcnow(),
+            notes=data.get('notes', '')
+        )
+        
+        db.session.add(service_request)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{service.name} request submitted successfully',
+            'request_id': service_request.request_id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating service request: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Unable to submit service request. Please try again.'
         }), 500

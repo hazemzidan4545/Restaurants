@@ -1096,7 +1096,11 @@ body {
 
 /* Footer */
 footer {
-    background: var(--gradient-secondary) !important;
+    background: #000000 !important;
+}
+
+.footer-sections {
+    background: #000000 !important;
 }
 
 /* Utility Classes */

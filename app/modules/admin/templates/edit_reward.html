@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Reward - Admin Panel{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-yellow: #f3cd21;
+        --primary-dark: #1c1d1f;
+        --success-green: #28a745;
+        --danger-red: #dc3545;
+        --light-gray: #f8f9fa;
+        --border-color: #e9ecef;
+        --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --border-radius: 8px;
+    }
+
+    .edit-reward-container {
+        padding: 2rem;
+        background: var(--light-gray);
+        min-height: 100vh;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-header {
+        background: var(--primary-dark);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .form-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .form-header i {
+        color: var(--primary-yellow);
+        font-size: 2rem;
+    }
+
+    .form-body {
+        padding: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-yellow);
+        box-shadow: 0 0 0 3px rgba(243, 205, 33, 0.1);
+    }
+
+    .form-text {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 0.5rem;
+    }
+
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .input-group-text {
+        background: var(--light-gray);
+        border: 2px solid var(--border-color);
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .btn {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+    }
+
+    .btn-primary:hover {
+        background: #e6b800;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-danger {
+        background: var(--danger-red);
+        color: white;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border-color);
+    }
+
+    .stats-card {
+        background: var(--light-gray);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .stat-item h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--primary-dark);
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stat-item p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+        .edit-reward-container {
+            padding: 1rem;
+        }
+
+        .form-header {
+            padding: 1.5rem;
+        }
+
+        .form-header h1 {
+            font-size: 1.5rem;
+            flex-direction: column;
+        }
+
+        .form-body {
+            padding: 1.5rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .stats-card {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-reward-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1>
+                <i class="fas fa-edit"></i>
+                Edit Reward
+            </h1>
+        </div>
+
+        <div class="form-body">
+            <!-- Reward Statistics -->
+            <div class="stats-card">
+                <div class="stat-item">
+                    <h4>{{ reward.redemptions.count() }}</h4>
+                    <p>Total Redemptions</p>
+                </div>
+                <div class="stat-item">
+                    <h4>{{ reward.created_at.strftime('%Y-%m-%d') }}</h4>
+                    <p>Created Date</p>
+                </div>
+                <div class="stat-item">
+                    <h4>{{ reward.status|title }}</h4>
+                    <p>Current Status</p>
+                </div>
+            </div>
+
+            <form method="POST">
+                <!-- Basic Information -->
+                <div class="form-group">
+                    <label for="name" class="form-label">Reward Name *</label>
+                    <input type="text" id="name" name="name" class="form-control" required
+                           value="{{ reward.name }}" placeholder="e.g., Free Chocolate Cake">
+                    <div class="form-text">Enter a clear, descriptive name for the reward</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="3"
+                              placeholder="Describe what this reward includes...">{{ reward.description or '' }}</textarea>
+                    <div class="form-text">Optional detailed description of the reward</div>
+                </div>
+
+                <!-- Points and Category -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="points_required" class="form-label">Points Required *</label>
+                        <div class="input-group">
+                            <input type="number" id="points_required" name="points_required" 
+                                   class="form-control" required min="1" value="{{ reward.points_required }}">
+                            <span class="input-group-text">points</span>
+                        </div>
+                        <div class="form-text">How many points customers need to redeem</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category" class="form-label">Category</label>
+                        <select id="category" name="category" class="form-control">
+                            <option value="">Select Category</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}" {{ 'selected' if cat == reward.category else '' }}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Helps customers find rewards</div>
+                    </div>
+                </div>
+
+                <!-- Menu Item Link -->
+                <div class="form-group">
+                    <label for="item_id" class="form-label">Linked Menu Item</label>
+                    <select id="item_id" name="item_id" class="form-control">
+                        <option value="">No linked item</option>
+                        {% for item in menu_items %}
+                        <option value="{{ item.item_id }}" {{ 'selected' if item.item_id == reward.item_id else '' }}>
+                            {{ item.name }} - {{ item.price }} EGP
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Optional: Link to a specific menu item</div>
+                </div>
+
+                <!-- Status and Expiry -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="status" class="form-label">Status</label>
+                        <select id="status" name="status" class="form-control">
+                            <option value="active" {{ 'selected' if reward.status == 'active' else '' }}>Active</option>
+                            <option value="inactive" {{ 'selected' if reward.status == 'inactive' else '' }}>Inactive</option>
+                            <option value="expired" {{ 'selected' if reward.status == 'expired' else '' }}>Expired</option>
+                        </select>
+                        <div class="form-text">Set to inactive to hide from customers</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expiry_date" class="form-label">Expiry Date</label>
+                        <input type="date" id="expiry_date" name="expiry_date" class="form-control"
+                               value="{{ reward.expiry_date.strftime('%Y-%m-%d') if reward.expiry_date else '' }}">
+                        <div class="form-text">Optional: When this reward expires</div>
+                    </div>
+                </div>
+
+                <!-- Warning for Active Redemptions -->
+                {% if reward.redemptions.count() > 0 %}
+                <div class="form-group">
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 1rem; color: #856404;">
+                        <strong>⚠️ Warning:</strong> This reward has {{ reward.redemptions.count() }} redemption(s). 
+                        Changes may affect existing customer redemptions.
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Update Reward
+                    </button>
+                    <a href="{{ url_for('admin.rewards_management') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to List
+                    </a>
+                    {% if reward.redemptions.count() == 0 %}
+                    <button type="button" class="btn btn-danger" onclick="deleteReward()">
+                        <i class="fas fa-trash"></i>
+                        Delete Reward
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const points = document.getElementById('points_required').value;
+
+    if (!name) {
+        e.preventDefault();
+        alert('Please enter a reward name');
+        document.getElementById('name').focus();
+        return;
+    }
+
+    if (!points || points < 1) {
+        e.preventDefault();
+        alert('Please enter a valid points requirement (minimum 1)');
+        document.getElementById('points_required').focus();
+        return;
+    }
+
+    // Confirm update
+    if (!confirm('Are you sure you want to update this reward?')) {
+        e.preventDefault();
+    }
+});
+
+function deleteReward() {
+    if (confirm('Are you sure you want to delete this reward? This action cannot be undone.')) {
+        fetch('{{ url_for("admin.delete_reward", reward_id=reward.reward_id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Reward deleted successfully');
+                window.location.href = '{{ url_for("admin.rewards_management") }}';
+            } else {
+                alert('Error deleting reward');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred');
+        });
+    }
+}
+
+// Auto-save draft functionality (optional enhancement)
+let autoSaveTimer;
+function autoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+        // Save form data to localStorage
+        const formData = {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+            points_required: document.getElementById('points_required').value,
+            category: document.getElementById('category').value,
+            status: document.getElementById('status').value,
+            expiry_date: document.getElementById('expiry_date').value
+        };
+        localStorage.setItem('editReward_{{ reward.reward_id }}', JSON.stringify(formData));
+    }, 2000);
+}
+
+// Add auto-save to form fields
+document.querySelectorAll('input, textarea, select').forEach(field => {
+    field.addEventListener('input', autoSave);
+    field.addEventListener('change', autoSave);
+});
+
+// Clear auto-save on successful form submission
+document.querySelector('form').addEventListener('submit', function() {
+    localStorage.removeItem('editReward_{{ reward.reward_id }}');
+});
+</script>
+{% endblock %}

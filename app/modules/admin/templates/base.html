@@ -60,6 +60,438 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+
+        /* Mobile hamburger menu styles */
+        .mobile-toggle {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-right: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .hamburger-line {
+            width: 24px;
+            height: 3px;
+            background: #333;
+            margin: 2px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .mobile-toggle.active .hamburger-line:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-toggle.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-toggle.active .hamburger-line:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        /* Mobile sidebar overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .admin-sidebar.mobile-open {
+                transform: translateX(0);
+            }
+        }
+
+        /* Enhanced Page Header Styles */
+        .page-header {
+            position: relative;
+            background: linear-gradient(135deg, #f3cd21 0%, #e6b800 50%, #d4a500 100%);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(243, 205, 33, 0.2);
+        }
+
+        .header-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .header-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            animation: headerFloat 20s ease-in-out infinite;
+        }
+
+        .header-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            min-height: 140px;
+        }
+
+        .header-icon-container {
+            position: relative;
+        }
+
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-icon i {
+            font-size: 2.2rem;
+            color: #2c3e50;
+        }
+
+        .header-text {
+            flex: 1;
+            color: #2c3e50;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            -webkit-text-stroke: 1px rgba(28, 29, 31, 0.1);
+        }
+
+        .page-description {
+            font-size: 1.1rem;
+            margin: 0 0 20px 0;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-description i {
+            font-size: 1rem;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            opacity: 0.8;
+            font-weight: 500;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .header-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-btn-primary {
+            background: linear-gradient(135deg, #1c1d1f, #333);
+            color: #f3cd21;
+            border: 2px solid rgba(28, 29, 31, 0.3);
+            font-weight: 700;
+        }
+
+        .header-btn-primary:hover {
+            background: linear-gradient(135deg, #333, #444);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(28, 29, 31, 0.4);
+            color: #f3cd21;
+            text-decoration: none;
+        }
+
+        .header-btn-secondary {
+            background: rgba(28, 29, 31, 0.1);
+            color: #1c1d1f;
+            border: 2px solid rgba(28, 29, 31, 0.2);
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+        }
+
+        .header-btn-secondary:hover {
+            background: rgba(28, 29, 31, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(28, 29, 31, 0.3);
+            color: #1c1d1f;
+        }
+
+        .header-btn-refresh {
+            background: rgba(52, 152, 219, 0.9);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .header-btn-refresh:hover {
+            background: rgba(41, 128, 185, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+            color: white;
+        }
+
+        .header-btn i {
+            font-size: 14px;
+        }
+
+        .header-quick-actions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 30px;
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .quick-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            text-decoration: none;
+            color: #2c3e50;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            color: #2c3e50;
+        }
+
+        .quick-action-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #f3cd21, #e6b800);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+
+        .quick-action-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .action-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #2c3e50;
+        }
+
+        .action-subtitle {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+
+        .analytics-btn .quick-action-icon {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .bulk-action-btn .quick-action-icon {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+        }
+
+        .export-btn .quick-action-icon {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        @keyframes headerFloat {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(1deg);
+            }
+        }
+
+        /* Responsive Design for Page Header */
+        @media (max-width: 1200px) {
+            .header-stats {
+                gap: 20px;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .header-actions {
+                flex-direction: row;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .header-quick-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .header-stats {
+                gap: 15px;
+            }
+            
+            .stat-number {
+                font-size: 1.3rem;
+            }
+            
+            .header-content {
+                padding: 20px;
+            }
+            
+            .header-quick-actions {
+                padding: 15px 20px;
+                gap: 15px;
+            }
+            
+            .quick-action-btn {
+                padding: 12px 15px;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -130,6 +562,28 @@
             </div>
 
             <div class="nav-section">
+                <div class="nav-section-title">Loyalty & Rewards</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.rewards_management') }}" class="nav-link {% if request.endpoint in ['admin.rewards_management', 'admin.add_reward', 'admin.edit_reward'] %}active{% endif %}">
+                        <i class="fas fa-gift"></i>
+                        <span class="nav-text">Manage Rewards</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.loyalty_management') }}" class="nav-link {% if request.endpoint == 'admin.loyalty_management' %}active{% endif %}">
+                        <i class="fas fa-crown"></i>
+                        <span class="nav-text">Loyalty Program</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.campaigns_management') }}" class="nav-link {% if request.endpoint in ['admin.campaigns_management', 'admin.add_campaign', 'admin.edit_campaign'] %}active{% endif %}">
+                        <i class="fas fa-bullhorn"></i>
+                        <span class="nav-text">Campaigns</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
                 <div class="nav-section-title">Account</div>
                 <div class="nav-item">
                     <a href="{{ url_for('admin.profile') }}" class="nav-link {% if request.endpoint == 'admin.profile' %}active{% endif %}">
@@ -147,10 +601,20 @@
         </nav>
     </div>
 
+    <!-- Sidebar overlay for mobile -->
+    <div class="sidebar-overlay"></div>
+
     <!-- Main Content -->
     <div class="main-content">
         <!-- Top Navigation -->
         <div class="top-nav">
+            <!-- Mobile menu toggle -->
+            <button class="mobile-toggle d-md-none" type="button" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            
             <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
 
             <div class="top-nav-actions">
@@ -176,14 +640,19 @@
 
         <!-- Content Area -->
         <div class="admin-content">
-            <!-- Flash Messages -->
+            <!-- Flash Messages - Centered Notifications -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                    <div class="flash-messages mb-4">
+                    <div class="flash-messages-center">
                         {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            <div class="alert-center alert-{{ 'danger' if category == 'error' else category }}">
+                                <div class="alert-content">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
+                                    <span>{{ message }}</span>
+                                </div>
+                                <button type="button" class="btn-close-center" onclick="this.parentElement.style.display='none'">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         {% endfor %}
                     </div>
@@ -202,6 +671,18 @@
     <script>
         // Performance: Optimize page loading
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto-hide flash messages after 5 seconds
+            const flashMessages = document.querySelector('.flash-messages-center');
+            if (flashMessages) {
+                setTimeout(function() {
+                    flashMessages.style.opacity = '0';
+                    flashMessages.style.transform = 'translate(-50%, -60%) scale(0.9)';
+                    setTimeout(function() {
+                        flashMessages.style.display = 'none';
+                    }, 400);
+                }, 5000);
+            }
+        });
             // Lazy load images
             const images = document.querySelectorAll('img[data-src]');
             const imageObserver = new IntersectionObserver((entries, observer) => {
@@ -244,9 +725,32 @@
             // Performance: Mobile sidebar optimization
             const sidebar = document.querySelector('.admin-sidebar');
             const mobileToggle = document.querySelector('.mobile-toggle');
+            const sidebarOverlay = document.querySelector('.sidebar-overlay');
+            
             if (mobileToggle && sidebar) {
                 mobileToggle.addEventListener('click', function() {
                     sidebar.classList.toggle('mobile-open');
+                    sidebarOverlay.classList.toggle('active');
+                    mobileToggle.classList.toggle('active');
+                });
+                
+                // Close sidebar when clicking overlay
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                    mobileToggle.classList.remove('active');
+                });
+                
+                // Close sidebar when clicking nav links on mobile
+                const navLinks = document.querySelectorAll('.nav-link');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth <= 768) {
+                            sidebar.classList.remove('mobile-open');
+                            sidebarOverlay.classList.remove('active');
+                            mobileToggle.classList.remove('active');
+                        }
+                    });
                 });
             }
         });

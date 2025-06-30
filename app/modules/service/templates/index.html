@@ -32,9 +32,9 @@
 
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
-    max-width: 600px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -108,6 +108,19 @@
         padding: 40px 15px;
     }
 }
+
+.no-services {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.no-services p {
+    margin: 0;
+    font-size: 1.1rem;
+}
 </style>
 {% endblock %}
 
@@ -128,61 +141,20 @@
 <div class="services-section">
     <h2 class="services-title">Services we provide</h2>
     <div class="services-grid">
-        <div class="service-item" onclick="submitServiceRequest('waiter')">
-            <div class="service-icon">
-                <i class="fas fa-user-tie"></i>
+        {% if services %}
+            {% for service in services %}
+            <div class="service-item" onclick="submitServiceRequest('{{ service.service_id }}', '{{ service.name }}', '{{ service.description or service.name }}')">
+                <div class="service-icon">
+                    <i class="{{ service.icon }}"></i>
+                </div>
+                <p class="service-name">{{ service.name }}</p>
             </div>
-            <p class="service-name">Waiter</p>
-        </div>
-
-        <div class="service-item" onclick="submitServiceRequest('napkins')">
-            <div class="service-icon">
-                <i class="fas fa-tissue"></i>
+            {% endfor %}
+        {% else %}
+            <div class="no-services">
+                <p>No services available at the moment.</p>
             </div>
-            <p class="service-name">Extra Napkins</p>
-        </div>
-
-        <div class="service-item" onclick="submitServiceRequest('refill')">
-            <div class="service-icon">
-                <i class="fas fa-glass-water"></i>
-            </div>
-            <p class="service-name">Refill Goals</p>
-        </div>
-
-        <div class="service-item" onclick="submitServiceRequest('ice')">
-            <div class="service-icon">
-                <i class="fas fa-snowflake"></i>
-            </div>
-            <p class="service-name">Order Ice</p>
-        </div>
-
-        <div class="service-item" onclick="submitServiceRequest('cleaning')">
-            <div class="service-icon">
-                <i class="fas fa-broom"></i>
-            </div>
-            <p class="service-name">Clean My Table</p>
-        </div>
-
-        <div class="service-item" onclick="submitServiceRequest('bill')">
-            <div class="service-icon">
-                <i class="fas fa-receipt"></i>
-            </div>
-            <p class="service-name">Request the Bill</p>
-        </div>
-
-        <div class="service-item" onclick="submitServiceRequest('ac')">
-            <div class="service-icon">
-                <i class="fas fa-wind"></i>
-            </div>
-            <p class="service-name">Adjust AC</p>
-        </div>
-
-        <div class="service-item" onclick="submitServiceRequest('custom')">
-            <div class="service-icon">
-                <i class="fas fa-comment-dots"></i>
-            </div>
-            <p class="service-name">Custom Request</p>
-        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -190,53 +162,74 @@
 {% block extra_js %}
 <script>
 // Service request functionality
-function submitServiceRequest(type) {
-    // Show confirmation dialog
-    let message = '';
-    let confirmText = '';
-    
-    switch(type) {
-        case 'waiter':
-            confirmText = 'Call a waiter to your table?';
-            break;
-        case 'napkins':
-            confirmText = 'Request extra napkins?';
-            break;
-        case 'refill':
-            confirmText = 'Request drink refills?';
-            break;
-        case 'ice':
-            confirmText = 'Order more ice?';
-            break;
-        case 'cleaning':
-            confirmText = 'Request table cleaning?';
-            break;
-        case 'bill':
-            confirmText = 'Request the bill?';
-            break;
-        case 'ac':
-            message = prompt('Please specify your AC preference (warmer/cooler):');
-            if (!message) return;
-            confirmText = 'Submit AC adjustment request?';
-            break;
-        case 'custom':
-            message = prompt('Please describe your custom request:');
-            if (!message) return;
-            confirmText = 'Submit your custom request?';
-            break;
-        default:
-            confirmText = 'Submit this service request?';
-    }
-    
-    if (confirm(confirmText)) {
-        // Use the global RestaurantApp function if available
-        if (window.RestaurantApp && window.RestaurantApp.submitServiceRequest) {
-            window.RestaurantApp.submitServiceRequest(type, message);
-        } else {
-            // Fallback notification
-            alert('Service request submitted! Our staff will assist you shortly.');
+function submitServiceRequest(serviceId, serviceName, serviceDescription) {
+    // Get table ID from user
+    let tableId = sessionStorage.getItem('currentTableId');
+    if (!tableId) {
+        tableId = prompt('Please enter your table number (1-10):');
+        if (!tableId || isNaN(tableId)) {
+            alert('Please enter a valid table number.');
+            return;
         }
+        sessionStorage.setItem('currentTableId', tableId);
     }
+    
+    // Handle special cases for certain services
+    let description = serviceDescription;
+    let confirmText = `Request ${serviceName} for your table?`;
+    
+    // Special handling for AC adjustment
+    if (serviceName.toLowerCase().includes('ac') || serviceName.toLowerCase().includes('air')) {
+        const preference = prompt('Please specify your AC preference (warmer/cooler):');
+        if (!preference) return;
+        description = `AC adjustment: ${preference}`;
+        confirmText = 'Submit AC adjustment request?';
+    }
+    
+    // Special handling for custom request
+    if (serviceName.toLowerCase().includes('custom')) {
+        const customDesc = prompt('Please describe your custom request:');
+        if (!customDesc) return;
+        description = customDesc;
+        confirmText = 'Submit your custom request?';
+    }
+    
+    // Confirm the request
+    if (!confirm(confirmText)) {
+        return;
+    }
+    
+    // Submit the request
+    const requestData = {
+        service_id: serviceId,
+        table_id: parseInt(tableId),
+        description: description
+    };
+    
+    fetch('/service/api/request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.request_id) {
+            alert(`✅ ${serviceName} request submitted successfully!\n\nRequest ID: ${data.request_id}\nTable: ${tableId}\n\nOur staff will assist you shortly.`);
+        } else {
+            alert(`❌ Error: ${data.error || 'Failed to submit request'}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting service request:', error);
+        alert(`❌ Failed to submit request: ${error.message}\n\nPlease try again or contact staff directly.`);
+    });
 }
 </script>
 {% endblock %}

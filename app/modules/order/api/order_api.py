@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app.extensions import db, socketio, csrf
 from app.models import Order, OrderItem, MenuItem, Table, User
@@ -148,8 +148,20 @@ def update_order_status(order_id):
     new_status = data.get('status')
     if new_status not in ['new', 'processing', 'completed', 'rejected', 'cancelled']:
         return jsonify({'error': 'Invalid status'}), 400
+    
+    old_status = order.status
     order.status = new_status
-    db.session.commit()    # Emit real-time update event
+    db.session.commit()
+    
+    # Award loyalty points when order is completed
+    if new_status == 'completed' and old_status != 'completed':
+        try:
+            from app.modules.loyalty.loyalty_service import award_points_for_order
+            award_points_for_order(order_id, order.user_id)
+        except Exception as e:
+            current_app.logger.error(f"Error awarding loyalty points: {str(e)}")
+    
+    # Emit real-time update event
     socketio.emit('order_status_updated', {
         'order_id': order.order_id,
         'status': order.status,

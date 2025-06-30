@@ -1,8 +1,9 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
+from sqlalchemy import func
 from app.modules.admin import bp
-from app.models import MenuItem, Category, User, Order, Table, OrderItem, QRCode
+from app.models import MenuItem, Category, User, Order, Table, OrderItem, QRCode, RewardItem, CustomerLoyalty, PointTransaction, RewardRedemption, PromotionalCampaign, Service
 from app.extensions import db
 from datetime import datetime, timedelta
 import os
@@ -408,81 +409,155 @@ def popular_items_analytics():
 @bp.route('/services')
 @login_required
 def services():
-    """Admin services page"""
+    """Admin services management page"""
     if not current_user.is_admin():
         return redirect(url_for('main.index'))
 
-    # Sample services data - replace with actual database queries
-    services = [
-        {
-            'id': 1,
-            'name': 'Waiter',
-            'icon': 'fas fa-user-tie',
-            'description': 'Professional waiter service'
-        },
-        {
-            'id': 2,
-            'name': 'Request the Bill',
-            'icon': 'fas fa-receipt',
-            'description': 'Request bill service'
-        },
-        {
-            'id': 3,
-            'name': 'Extra Napkins',
-            'icon': 'fas fa-tissue',
-            'description': 'Additional napkins service'
-        },
-        {
-            'id': 4,
-            'name': 'Refill Coals',
-            'icon': 'fas fa-fire',
-            'description': 'Hookah coal refill service'
-        },
-        {
-            'id': 5,
-            'name': 'Order Ice',
-            'icon': 'fas fa-cube',
-            'description': 'Ice order service'
-        },
-        {
-            'id': 6,
-            'name': 'Adjust AC',
-            'icon': 'fas fa-snowflake',
-            'description': 'Air conditioning adjustment'
-        },
-        {
-            'id': 7,
-            'name': 'Clean My Table',
-            'icon': 'fas fa-broom',
-            'description': 'Table cleaning service'
-        },
-        {
-            'id': 8,
-            'name': 'Custom Request',
-            'icon': 'fas fa-comment-dots',
-            'description': 'Custom service request'
-        },
-        {
-            'id': 9,
-            'name': 'Custom Request',
-            'icon': 'fas fa-comment-dots',
-            'description': 'Custom service request'
-        },
-        {
-            'id': 10,
-            'name': 'Custom Request',
-            'icon': 'fas fa-comment-dots',
-            'description': 'Custom service request'
-        },
-        {
-            'id': 11,
-            'name': 'Custom Service',
-            'icon': 'fas fa-plus',
-            'description': 'Add custom service'
-        }
-    ]
+    # Get all services from database
+    services = Service.query.order_by(Service.display_order, Service.name).all()
+    
+    return render_template('services_management.html', services=services)
 
-    return render_template('services.html', services=services)
+@bp.route('/services/add', methods=['GET', 'POST'])
+@login_required
+def add_service():
+    """Add new service"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+
+    if request.method == 'POST':
+        try:
+            # Get form data
+            name = request.form.get('name', '').strip()
+            icon = request.form.get('icon', 'fas fa-concierge-bell').strip()
+            description = request.form.get('description', '').strip()
+            is_active = 'is_active' in request.form
+            display_order = int(request.form.get('display_order', 0))
+
+            # Validate required fields
+            if not name:
+                flash('Service name is required', 'error')
+                return render_template('add_service.html')
+
+            # Create new service
+            service = Service(
+                name=name,
+                icon=icon,
+                description=description if description else None,
+                is_active=is_active,
+                display_order=display_order
+            )
+
+            db.session.add(service)
+            db.session.commit()
+
+            flash(f'Service "{name}" added successfully!', 'success')
+            return redirect(url_for('admin.services'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding service: {str(e)}', 'error')
+            return render_template('add_service.html')
+
+    return render_template('add_service.html')
+
+@bp.route('/services/edit/<int:service_id>', methods=['GET', 'POST'])
+@login_required
+def edit_service(service_id):
+    """Edit existing service"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+
+    service = Service.query.get_or_404(service_id)
+
+    if request.method == 'POST':
+        try:
+            # Get form data
+            name = request.form.get('name', '').strip()
+            icon = request.form.get('icon', 'fas fa-concierge-bell').strip()
+            description = request.form.get('description', '').strip()
+            is_active = 'is_active' in request.form
+            display_order = int(request.form.get('display_order', 0))
+
+            # Validate required fields
+            if not name:
+                flash('Service name is required', 'error')
+                return render_template('edit_service.html', service=service)
+
+            # Update service
+            service.name = name
+            service.icon = icon
+            service.description = description if description else None
+            service.is_active = is_active
+            service.display_order = display_order
+            service.updated_at = datetime.utcnow()
+
+            db.session.commit()
+
+            flash(f'Service "{name}" updated successfully!', 'success')
+            return redirect(url_for('admin.services'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating service: {str(e)}', 'error')
+            return render_template('edit_service.html', service=service)
+
+    return render_template('edit_service.html', service=service)
+
+@bp.route('/services/delete/<int:service_id>', methods=['POST'])
+@login_required
+def delete_service(service_id):
+    """Delete service"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+
+    try:
+        service = Service.query.get_or_404(service_id)
+        service_name = service.name
+
+        # Check if service has any requests (handle relationship error gracefully)
+        try:
+            request_count = service.service_requests.count()
+            if request_count > 0:
+                flash(f'Cannot delete service "{service_name}" - it has {request_count} associated requests', 'error')
+                return redirect(url_for('admin.services'))
+        except Exception:
+            # If relationship check fails, proceed with deletion (likely no foreign key constraint)
+            pass
+
+        db.session.delete(service)
+        db.session.commit()
+
+        flash(f'Service "{service_name}" deleted successfully!', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting service: {str(e)}', 'error')
+
+    return redirect(url_for('admin.services'))
+
+@bp.route('/services/toggle/<int:service_id>', methods=['POST'])
+@login_required
+def toggle_service(service_id):
+    """Toggle service active status"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+
+    try:
+        service = Service.query.get_or_404(service_id)
+        service.is_active = not service.is_active
+        service.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+
+        status = "activated" if service.is_active else "deactivated"
+        flash(f'Service "{service.name}" {status} successfully!', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating service: {str(e)}', 'error')
+
+    return redirect(url_for('admin.services'))
 
 @bp.route('/qr-codes')
 @login_required
@@ -901,6 +976,366 @@ def delete_menu_item(item_id):
         current_app.logger.error(f"Error deleting menu item: {e}")
 
     return redirect(url_for('admin.menu_management'))
+
+# ======================== REWARD MANAGEMENT ROUTES ========================
+
+@bp.route('/rewards')
+@login_required
+def rewards_management():
+    """Admin rewards management dashboard"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    # Get all rewards with their statistics
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    rewards = RewardItem.query.order_by(RewardItem.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Get reward statistics
+    total_rewards = RewardItem.query.count()
+    active_rewards = RewardItem.query.filter_by(status='active').count()
+    inactive_rewards = RewardItem.query.filter_by(status='inactive').count()
+    
+    # Get redemption statistics
+    total_redemptions = RewardRedemption.query.count()
+    recent_redemptions = RewardRedemption.query.order_by(
+        RewardRedemption.redemption_date.desc()
+    ).limit(10).all()
+    
+    return render_template('rewards_management.html',
+                         rewards=rewards,
+                         total_rewards=total_rewards,
+                         active_rewards=active_rewards,
+                         inactive_rewards=inactive_rewards,
+                         total_redemptions=total_redemptions,
+                         recent_redemptions=recent_redemptions)
+
+@bp.route('/rewards/add', methods=['GET', 'POST'])
+@login_required
+def add_reward():
+    """Add new reward item"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        try:
+            reward = RewardItem(
+                name=request.form.get('name'),
+                description=request.form.get('description'),
+                points_required=int(request.form.get('points_required')),
+                category=request.form.get('category'),
+                status=request.form.get('status', 'active'),
+                item_id=int(request.form.get('item_id')) if request.form.get('item_id') else None,
+                expiry_date=datetime.strptime(request.form.get('expiry_date'), '%Y-%m-%d') if request.form.get('expiry_date') else None
+            )
+            
+            db.session.add(reward)
+            db.session.commit()
+            
+            flash('Reward added successfully!', 'success')
+            return redirect(url_for('admin.rewards_management'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding reward: {str(e)}', 'error')
+    
+    # Get menu items for linking
+    menu_items = MenuItem.query.filter_by(status='available').all()
+    categories = ['Cakes & Sweets', 'Beverages', 'Main Course', 'Appetizers', 'Desserts', 'Special Offers']
+    
+    return render_template('add_reward.html',
+                         menu_items=menu_items,
+                         categories=categories)
+
+@bp.route('/rewards/edit/<int:reward_id>', methods=['GET', 'POST'])
+@login_required
+def edit_reward(reward_id):
+    """Edit existing reward"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    reward = RewardItem.query.get_or_404(reward_id)
+    
+    if request.method == 'POST':
+        try:
+            reward.name = request.form.get('name')
+            reward.description = request.form.get('description')
+            reward.points_required = int(request.form.get('points_required'))
+            reward.category = request.form.get('category')
+            reward.status = request.form.get('status')
+            reward.item_id = int(request.form.get('item_id')) if request.form.get('item_id') else None
+            reward.expiry_date = datetime.strptime(request.form.get('expiry_date'), '%Y-%m-%d') if request.form.get('expiry_date') else None
+            
+            db.session.commit()
+            
+            flash('Reward updated successfully!', 'success')
+            return redirect(url_for('admin.rewards_management'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating reward: {str(e)}', 'error')
+    
+    # Get menu items for linking
+    menu_items = MenuItem.query.filter_by(status='available').all()
+    categories = ['Cakes & Sweets', 'Beverages', 'Main Course', 'Appetizers', 'Desserts', 'Special Offers']
+    
+    return render_template('edit_reward.html',
+                         reward=reward,
+                         menu_items=menu_items,
+                         categories=categories)
+
+@bp.route('/rewards/delete/<int:reward_id>', methods=['POST'])
+@login_required
+def delete_reward(reward_id):
+    """Delete reward item"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    try:
+        reward = RewardItem.query.get_or_404(reward_id)
+        
+        # Check if reward has been redeemed
+        redemptions = RewardRedemption.query.filter_by(reward_id=reward_id).count()
+        
+        if redemptions > 0:
+            # Instead of deleting, mark as inactive
+            reward.status = 'inactive'
+            db.session.commit()
+            flash('Reward marked as inactive (has redemption history)', 'warning')
+        else:
+            db.session.delete(reward)
+            db.session.commit()
+            flash('Reward deleted successfully!', 'success')
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting reward: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.rewards_management'))
+
+@bp.route('/rewards/toggle/<int:reward_id>', methods=['POST'])
+@login_required
+def toggle_reward_status(reward_id):
+    """Toggle reward active/inactive status"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        reward = RewardItem.query.get_or_404(reward_id)
+        reward.status = 'inactive' if reward.status == 'active' else 'active'
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'status': reward.status,
+            'message': f'Reward {reward.status}'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error toggling reward status: {str(e)}'
+        }), 500
+
+@bp.route('/rewards/bulk-update', methods=['POST'])
+@login_required
+def bulk_update_rewards():
+    """Bulk update rewards (status, category, etc.)"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        data = request.get_json()
+        reward_ids = data.get('reward_ids', [])
+        action = data.get('action')
+        value = data.get('value')
+        
+        if not reward_ids or not action:
+            return jsonify({'success': False, 'message': 'Missing required parameters'}), 400
+        
+        rewards = RewardItem.query.filter(RewardItem.reward_id.in_(reward_ids)).all()
+        
+        for reward in rewards:
+            if action == 'status':
+                reward.status = value
+            elif action == 'category':
+                reward.category = value
+            elif action == 'points':
+                reward.points_required = int(value)
+        
+        db.session.commit();
+        
+        return jsonify({
+            'success': True,
+            'message': f'Updated {len(rewards)} rewards'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error updating rewards: {str(e)}'
+        }), 500
+
+# ======================== END REWARD MANAGEMENT ROUTES ========================
+
+# ======================== LOYALTY MANAGEMENT ROUTES ========================
+
+@bp.route('/loyalty-management')
+@login_required
+def loyalty_management():
+    """Admin loyalty program management dashboard"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    # Get pagination parameters
+    page = request.args.get('page', 1, type=int)
+    per_page = 20  # Number of customers per page
+    
+    # Get paginated customers
+    customers = CustomerLoyalty.query.order_by(
+        CustomerLoyalty.total_points.desc()
+    ).paginate(
+        page=page, 
+        per_page=per_page, 
+        error_out=False
+    )
+    
+    # Get loyalty program statistics
+    total_customers = CustomerLoyalty.query.count()
+    active_customers = CustomerLoyalty.query.filter(CustomerLoyalty.total_points > 0).count()
+    
+    # Get tier distribution
+    bronze_customers = CustomerLoyalty.query.filter_by(tier_level='bronze').count()
+    silver_customers = CustomerLoyalty.query.filter_by(tier_level='silver').count()
+    gold_customers = CustomerLoyalty.query.filter_by(tier_level='gold').count()
+    platinum_customers = CustomerLoyalty.query.filter_by(tier_level='platinum').count()
+    
+    # Get total points distributed
+    total_points_distributed = db.session.query(func.sum(PointTransaction.points_earned)).scalar() or 0
+    total_points_redeemed = db.session.query(func.sum(PointTransaction.points_redeemed)).scalar() or 0
+    
+    # Get recent transactions
+    recent_transactions = PointTransaction.query.order_by(
+        PointTransaction.timestamp.desc()
+    ).limit(10).all()
+    
+    # Top customers by points
+    top_customers = CustomerLoyalty.query.order_by(
+        CustomerLoyalty.total_points.desc()
+    ).limit(10).all()
+    
+    return render_template('loyalty_management.html',
+                         customers=customers,
+                         total_customers=total_customers,
+                         active_customers=active_customers,
+                         bronze_customers=bronze_customers,
+                         silver_customers=silver_customers,
+                         gold_customers=gold_customers,
+                         platinum_customers=platinum_customers,
+                         total_points_distributed=total_points_distributed,
+                         total_points_redeemed=total_points_redeemed,
+                         recent_transactions=recent_transactions,
+                         top_customers=top_customers)
+
+# ======================== END LOYALTY MANAGEMENT ROUTES ========================
+
+# ======================== CAMPAIGNS MANAGEMENT ROUTES ========================
+
+@bp.route('/campaigns-management')
+@login_required
+def campaigns_management():
+    """Admin campaigns management dashboard"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    # Get all campaigns with pagination
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    campaigns = PromotionalCampaign.query.order_by(
+        PromotionalCampaign.created_at.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Get campaign statistics
+    total_campaigns = PromotionalCampaign.query.count()
+    active_campaigns = PromotionalCampaign.query.filter_by(status='active').count()
+    inactive_campaigns = PromotionalCampaign.query.filter_by(status='inactive').count()
+    expired_campaigns = PromotionalCampaign.query.filter_by(status='expired').count()
+    
+    return render_template('campaigns_management.html',
+                         campaigns=campaigns,
+                         total_campaigns=total_campaigns,
+                         active_campaigns=active_campaigns,
+                         inactive_campaigns=inactive_campaigns,
+                         expired_campaigns=expired_campaigns)
+
+@bp.route('/campaigns/add', methods=['GET', 'POST'])
+@login_required
+def add_campaign():
+    """Add new promotional campaign"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        try:
+            campaign = PromotionalCampaign(
+                name=request.form.get('name'),
+                description=request.form.get('description'),
+                bonus_multiplier=float(request.form.get('bonus_multiplier', 1.0)),
+                start_date=datetime.strptime(request.form.get('start_date'), '%Y-%m-%d'),
+                end_date=datetime.strptime(request.form.get('end_date'), '%Y-%m-%d'),
+                conditions=request.form.get('conditions'),
+                status=request.form.get('status', 'active')
+            )
+            
+            db.session.add(campaign)
+            db.session.commit()
+            
+            flash('Campaign added successfully!', 'success')
+            return redirect(url_for('admin.campaigns_management'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding campaign: {str(e)}', 'error')
+    
+    return render_template('add_campaign.html')
+
+@bp.route('/campaigns/edit/<int:campaign_id>', methods=['GET', 'POST'])
+@login_required
+def edit_campaign(campaign_id):
+    """Edit existing campaign"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    campaign = PromotionalCampaign.query.get_or_404(campaign_id)
+    
+    if request.method == 'POST':
+        try:
+            campaign.name = request.form.get('name')
+            campaign.description = request.form.get('description')
+            campaign.bonus_multiplier = float(request.form.get('bonus_multiplier', 1.0))
+            campaign.start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d')
+            campaign.end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d')
+            campaign.conditions = request.form.get('conditions')
+            campaign.status = request.form.get('status')
+            
+            db.session.commit()
+            
+            flash('Campaign updated successfully!', 'success')
+            return redirect(url_for('admin.campaigns_management'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating campaign: {str(e)}', 'error')
+    
+    return render_template('edit_campaign.html', campaign=campaign)
+
+# ======================== END CAMPAIGNS MANAGEMENT ROUTES ========================
 
 # API Routes for AJAX operations
 

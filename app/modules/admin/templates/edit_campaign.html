@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block page_title %}Edit Campaign{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-edit text-primary me-2"></i>
+                            Edit Campaign: {{ campaign.name }}
+                        </h4>
+                        <a href="{{ url_for('admin.campaigns_management') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Campaigns
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.edit_campaign', campaign_id=campaign.campaign_id) }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Campaign Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ campaign.name }}" required>
+                                    <div class="form-text">Enter a descriptive name for the campaign</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="active" {% if campaign.status == 'active' %}selected{% endif %}>Active</option>
+                                        <option value="inactive" {% if campaign.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                        <option value="scheduled" {% if campaign.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                        <option value="expired" {% if campaign.status == 'expired' %}selected{% endif %}>Expired</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Enter campaign description...">{{ campaign.description or '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="bonus_multiplier" class="form-label">Bonus Multiplier</label>
+                                    <input type="number" class="form-control" id="bonus_multiplier" name="bonus_multiplier" 
+                                           min="0" step="0.1" value="{{ campaign.bonus_multiplier or 1.0 }}" placeholder="1.0">
+                                    <div class="form-text">Points multiplier (e.g., 2.0 for double points)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                                           value="{{ campaign.start_date.strftime('%Y-%m-%d') if campaign.start_date else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label">End Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" 
+                                           value="{{ campaign.end_date.strftime('%Y-%m-%d') if campaign.end_date else '' }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="conditions" class="form-label">Campaign Conditions</label>
+                            <textarea class="form-control" id="conditions" name="conditions" rows="4" 
+                                      placeholder="Enter campaign terms and conditions...">{{ campaign.conditions or '' }}</textarea>
+                            <div class="form-text">Specify any rules, restrictions, or requirements for this campaign</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('admin.campaigns_management') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Update Campaign
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Campaign Stats Card (if campaign is active) -->
+            {% if campaign.status == 'active' %}
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar text-info me-2"></i>
+                        Campaign Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-primary mb-1">{{ campaign.usage_count or 0 }}</h4>
+                                <small class="text-muted">Total Uses</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-success mb-1">
+                                    {% if campaign.start_date %}
+                                        {{ (now() - campaign.start_date).days }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </h4>
+                                <small class="text-muted">Days Active</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-warning mb-1">
+                                    {% if campaign.end_date %}
+                                        {{ (campaign.end_date - now()).days if campaign.end_date > now() else 0 }}
+                                    {% else %}
+                                        ∞
+                                    {% endif %}
+                                </h4>
+                                <small class="text-muted">Days Remaining</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-info mb-1">{{ "%.1f"|format(campaign.bonus_multiplier or 1.0) }}x</h4>
+                            <small class="text-muted">Multiplier</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to today for new campaigns, but allow past dates for existing campaigns
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Ensure end date is after start date
+    document.getElementById('start_date').addEventListener('change', function() {
+        const startDate = this.value;
+        document.getElementById('end_date').min = startDate;
+    });
+    
+    // Validate dates on form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const startDate = new Date(document.getElementById('start_date').value);
+        const endDate = new Date(document.getElementById('end_date').value);
+        
+        if (endDate <= startDate) {
+            e.preventDefault();
+            alert('End date must be after start date');
+        }
+    });
+});
+</script>
+{% endblock %}

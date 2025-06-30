@@ -260,7 +260,7 @@ Create a comprehensive web-based Restaurant Management System with the following
 - **Waste Tracking**: Inventory loss and expiration management
 
 ### Loyalty & Rewards System
-- **Point Earning**: Configurable points per dollar spent (default: 100 points per dollar)
+- **Point Earning**: Configurable points per 50 EGP spent (default: 100 points per 50 EGP)
 - **Automatic Point Allocation**: Points awarded on successful order completion
 - **Reward Catalog**: Menu items available for point redemption
 - **Point Redemption**: Direct integration with ordering system
@@ -372,7 +372,7 @@ restaurant-system/
 ## Loyalty Program Features
 
 ### Point Earning System
-- **Standard Rate**: 100 points per dollar spent on eligible purchases
+- **Standard Rate**: 100 points per 50 EGP spent on eligible purchases
 - **Automatic Allocation**: Points awarded upon successful order completion
 - **Eligible Purchases**: All menu items except promotional or discounted items
 - **Multiple Channels**: Earn points through app orders, in-store purchases, and drive-thru

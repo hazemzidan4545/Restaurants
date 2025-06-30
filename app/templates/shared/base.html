@@ -28,11 +28,28 @@
     /* Enhanced Modal Styles - Global for all pages */
     .enhanced-modal {
         border: none;
-        border-radius: 20px;
+        border-radius: 20px 20px 0 0;
         overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        max-height: 90vh;
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+        max-height: 85vh;
         background: white;
+        position: relative;
+        z-index: 1055;
+    }
+
+    /* Modal Dialog positioning for bottom sheet */
+    #itemDetailModal .modal-dialog {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        max-width: 100%;
+        width: 100%;
+        height: auto;
+        display: flex;
+        align-items: flex-end;
+        transform: none;
     }
 
     .enhanced-modal-header {
@@ -463,9 +480,16 @@
         display: flex;
         gap: 15px;
         flex-wrap: wrap;
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid #f0f0f0;
+        margin-top: auto;
+        padding: 20px;
+        background: white;
+        border-top: 1px solid rgba(0,0,0,0.1);
+        margin-left: 0;
+        margin-right: 0;
+        margin-bottom: 0;
+        z-index: 10;
+        border-radius: 0 0 20px 20px;
+        position: relative;
     }
 
     .enhanced-btn {
@@ -473,22 +497,29 @@
         padding: 18px 25px;
         border-radius: 12px;
         font-weight: 600;
-        font-size: 1rem;
+        font-size: 16px;
         border: none;
         cursor: pointer;
         transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        min-height: 55px;
+        gap: 8px;
+        min-height: 56px;
+        margin-bottom: 0;
+        background: #f3cd21 !important;
+        opacity: 1 !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .enhanced-btn.primary {
-        background: var(--primary-yellow);
-        color: var(--primary-dark);
+        background: var(--primary-yellow, #f3cd21);
+        color: var(--primary-dark, #1a1a1a);
         font-weight: 700;
+        opacity: 1;
+        backdrop-filter: none;
     }
 
     .enhanced-btn.primary:hover {
@@ -500,13 +531,17 @@
 
     .enhanced-btn.secondary {
         background: white;
-        color: var(--primary-dark);
+        background-color: white;
+        color: var(--primary-dark, #1a1a1a);
         border: 2px solid #e9ecef;
+        opacity: 1;
+        backdrop-filter: none;
     }
 
     .enhanced-btn.secondary:hover {
         background: #f8f9fa;
-        border-color: var(--primary-dark);
+        background-color: #f8f9fa;
+        border-color: var(--primary-dark, #1a1a1a);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
@@ -571,6 +606,7 @@
             width: 100%;
             padding: 16px 20px;
             min-height: 50px;
+            margin-bottom: 0;
         }
 
         .modal-details-section .quantity-controls {
@@ -597,6 +633,255 @@
             right: 10px;
             width: 35px;
             height: 35px;
+        }
+    }
+
+    /* Enhanced Mobile Modal Optimization */
+    @media (max-width: 480px) {
+        .enhanced-modal {
+            margin: 0px;
+            max-height: 100vh;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+            bottom: 0;
+        }
+
+        .modal-dialog {
+            margin: 0;
+            max-width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .modal-image-section {
+            height: 200px;
+            position: relative;
+        }
+
+        .enhanced-item-image {
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-details-section {
+            padding: 25px 20px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .enhanced-item-title {
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .item-rating {
+            margin-bottom: 15px;
+        }
+
+        .current-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            margin-top: 20px;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 15px;
+        }
+
+        .description-text,
+        .ingredients-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .nutrition-grid {
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .nutrition-item {
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .nutrition-value {
+            font-size: 1.1rem;
+        }
+
+        .quantity-controls {
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .quantity-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+        }
+
+        .quantity-display {
+            font-size: 1.6rem;
+            padding: 8px 16px;
+            min-width: 60px;
+        }
+
+        .enhanced-textarea {
+            padding: 15px;
+            font-size: 1rem;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .modal-actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px;
+            margin: 0;
+            border-radius: 0 0 20px 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .enhanced-btn {
+            width: 100%;
+            padding: 18px 20px;
+            min-height: 56px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0;
+            border-radius: 15px;
+        }
+
+        .enhanced-close-btn {
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .enhanced-close-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* Swipe indicator */
+        .enhanced-modal::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 2px;
+            z-index: 11;
+        }
+    }
+
+    /* Ultra Small Mobile Devices */
+    @media (max-width: 360px) {
+        .modal-details-section {
+            padding: 20px 15px;
+        }
+
+        .enhanced-item-title {
+            font-size: 1.4rem;
+        }
+
+        .current-price {
+            font-size: 1.6rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+        }
+
+        .quantity-btn {
+            width: 45px;
+            height: 45px;
+        }
+
+        .quantity-display {
+            font-size: 1.4rem;
+            padding: 6px 12px;
+            min-width: 50px;
+        }
+
+        .enhanced-btn {
+            padding: 16px 18px;
+            min-height: 52px;
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+
+        .modal-actions {
+            margin: 0;
+            padding: 20px;
+            border-radius: 0 0 15px 15px;
+        }
+    }
+
+    /* Landscape Orientation on Mobile */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .enhanced-modal {
+            max-height: 95vh;
+            border-radius: 15px;
+        }
+
+        .modal-dialog {
+            height: auto;
+            align-items: center;
+            margin: 10px;
+        }
+
+        .modal-image-section {
+            height: 150px;
+        }
+
+        .modal-details-section {
+            max-height: calc(95vh - 150px);
+            padding: 20px;
+        }
+
+        .enhanced-item-title {
+            font-size: 1.3rem;
+        }
+
+        .current-price {
+            font-size: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            margin-top: 15px;
+        }
+
+        .modal-actions {
+            position: relative;
+            background: white;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0 0 15px 15px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .enhanced-btn {
+            padding: 12px 16px;
+            min-height: 45px;
+            font-size: 0.95rem;
+            margin-bottom: 0;
         }
     }
 
@@ -629,6 +914,10 @@
     .enhanced-modal-body {
         position: relative;
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 85vh;
     }
 
     /* Fix for potential overflow issues */
@@ -1379,157 +1668,401 @@
         margin-right: 8px;
     }
 
-    .new-voucher-section {
-        margin-bottom: 25px;
-    }
-
-    .voucher-section-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 12px;
-    }
-
-    .voucher-input-container {
-        display: flex;
-        gap: 10px;
-    }
-
-    .new-voucher-input {
-        flex: 1;
-        padding: 12px 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        background: #f8f9fa;
-    }
-
-    .new-voucher-input:focus {
-        outline: none;
-        border-color: var(--primary-yellow);
+    /* Enhanced suggested item styling */
+    .suggested-item-card {
         background: white;
-    }
-
-    .new-voucher-btn {
-        padding: 12px 20px;
-        background: var(--primary-yellow);
-        border: none;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #333;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .new-voucher-btn:hover {
-        background: var(--primary-dark);
-        color: white;
-    }
-
-    .new-notes-section {
-        margin-bottom: 25px;
-    }
-
-    .notes-section-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 12px;
-    }
-
-    .new-notes-textarea {
-        width: 100%;
-        padding: 12px 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        background: #f8f9fa;
-        resize: vertical;
-        min-height: 80px;
-        font-family: inherit;
-    }
-
-    .new-notes-textarea:focus {
-        outline: none;
-        border-color: var(--primary-yellow);
-        background: white;
-    }
-
-    .new-cart-footer {
-        background: white;
-        padding: 20px;
-        border-top: 1px solid #e0e0e0;
-        margin-top: auto;
-    }
-
-    .cart-footer-actions {
-        margin-bottom: 15px;
+        border-radius: 12px;
+        padding: 15px;
         text-align: center;
-    }
-
-    .clear-cart-btn {
-        background: none;
-        border: 1px solid #dc3545;
-        color: #dc3545;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        cursor: pointer;
         transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+        position: relative;
     }
 
-    .clear-cart-btn:hover {
-        background: #dc3545;
-        color: white;
+    .suggested-item-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: var(--primary-yellow);
     }
 
-    .subtotal-row {
+    .suggested-item-card img {
+        width: 70px;
+        height: 70px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-bottom: 10px;
+    }
+
+    .suggested-item-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+        line-height: 1.2;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .suggested-item-actions {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 8px;
+    }
+
+    .suggested-add-btn {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        background: var(--primary-yellow);
+        color: #333;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .suggested-add-btn:hover {
+        background: var(--primary-dark);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .suggested-item-price {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--primary-yellow);
+        flex: 1;
+        text-align: left;
+    }
+
+    .suggested-error {
+        text-align: center;
+        color: #999;
+        padding: 20px;
+        grid-column: 1 / -1;
+        font-style: italic;
+    }
+
+    .suggested-error i {
+        margin-right: 8px;
+        color: #ff6b6b;
+    }
+
+    /* Mobile optimization for suggested items */
+    @media (max-width: 768px) {
+        .suggested-items-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .suggested-item-card {
+            padding: 12px;
+        }
+
+        .suggested-item-card img {
+            width: 60px;
+            height: 60px;
+        }
+
+        .suggested-item-name {
+            font-size: 0.8rem;
+        }
+
+        .suggested-add-btn {
+            width: 26px;
+            height: 26px;
+            font-size: 12px;
+        }
+
+        .suggested-item-price {
+            font-size: 0.8rem;
+        }
+    }
+    /* Navigation Bar */
+    .navbar {
+        background-color: var(--primary-dark);
+        padding: 10px 20px;
+        position: relative;
+        z-index: 1000;
+    }
+
+    .navbar-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-yellow);
+    }
+
+    .navbar-nav .nav-link {
+        color: white;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+
+    .navbar-nav .nav-link:hover {
+        color: var(--primary-yellow);
+    }
+
+    /* Footer Styles */
+    .footer-sections {
+        background: #f8f9fa;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .footer-section {
+        background: transparent;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-header {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .footer-header i {
+        color: var(--primary-yellow);
+        font-size: 1.2rem;
+    }
+
+    .footer-brand {
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    .footer-brand-logo {
+        height: 40px;
+        margin-bottom: 10px;
+    }
+
+    .footer-tagline {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .social-icons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .social-icon {
+        color: #333;
+        font-size: 1.2rem;
+        transition: color 0.3s;
+    }
+
+    .social-icon:hover {
+        color: var(--primary-yellow);
+    }
+
+    .footer-copyright {
+        font-size: 0.8rem;
+        color: #999;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 576px) {
+        .footer-section {
+            padding: 15px;
+        }
+
+        .footer-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .footer-header h6 {
+            margin-bottom: 10px;
+        }
+
+        .social-icons {
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+    /* Cart Modal Styles */
+    .cart-modal-header {
+        background: var(--primary-dark);
+        color: white;
+        padding: 15px 20px;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        position: relative;
+    }
+
+    .cart-modal-header .modal-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .cart-close-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 35px;
+        height: 35px;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: background 0.3s;
+    }
+
+    .cart-close-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .cart-close-btn i {
+        font-size: 16px;
+    }
+
+    .cart-modal-body {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 0 0 20px 20px;
+        position: relative;
+    }
+
+    .cart-items-container {
+        max-height: 60vh;
+        overflow-y: auto;
         margin-bottom: 20px;
     }
 
-    .subtotal-label {
-        font-size: 1.1rem;
+    .cart-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+
+    .cart-item-image {
+        width: 70px;
+        height: 70px;
+        border-radius: 10px;
+        object-fit: cover;
+        margin-right: 15px;
+    }
+
+    .cart-item-details {
+        flex: 1;
+    }
+
+    .cart-item-name {
+        font-size: 1rem;
         font-weight: 600;
         color: #333;
+        margin-bottom: 5px;
     }
 
-    .subtotal-amount {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #333;
+    .cart-item-desc {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 8px;
     }
 
-    .new-checkout-btn {
-        width: 100%;
-        background: var(--primary-yellow);
+    .cart-item-price {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #28a745;
+    }
+
+    .cart-item-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f8f9fa;
+        border-radius: 20px;
+        padding: 5px;
+    }
+
+    .quantity-btn {
+        width: 30px;
+        height: 30px;
         border: none;
-        border-radius: 12px;
-        padding: 16px;
-        font-size: 1.1rem;
-        font-weight: 600;
+        border-radius: 50%;
+        background: var(--primary-yellow);
         color: #333;
+        font-size: 0.9rem;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: all 0.3s ease;
     }
 
-    .new-checkout-btn:hover {
+    .quantity-btn:hover {
         background: var(--primary-dark);
         color: white;
-        transform: translateY(-1px);
     }
 
-    .new-checkout-btn:disabled {
-        background: #e9ecef;
-        color: #6c757d;
-        cursor: not-allowed;
-        transform: none;
+    .quantity-display {
+        min-width: 20px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
     }
 
-    /* Mobile Hamburger Menu Styles */
+    /* Empty Cart Styles */
+    .empty-cart-message {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .empty-cart-icon {
+        font-size: 3rem;
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+
+    .empty-cart-title {
+        color: #333;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .empty-cart-text {
+        color: #666;
+        margin-bottom: 0;
+    }
+
+    /* Mobile Menu Styles */
     .mobile-menu-overlay {
         position: fixed;
         top: 0;
@@ -1906,6 +2439,172 @@
         text-align: center;
         line-height: 1.2;
     }
+
+    /* Short Screen Optimization */
+    @media (max-height: 660px) {
+        .enhanced-btn {
+            padding: 12px 16px;
+            min-height: 44px;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        .modal-actions {
+            padding: 15px;
+            margin: 0;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .modal-details-section {
+            padding: 20px 20px 15px;
+        }
+
+        .section-title {
+            margin-top: 15px;
+            margin-bottom: 6px;
+        }
+
+        .quantity-controls {
+            margin: 15px 0;
+        }
+    }
+
+    /* Extra Short Screens */
+    @media (max-height: 580px) {
+        .enhanced-btn {
+            padding: 10px 14px;
+            min-height: 40px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            padding: 12px 15px 0 15px;
+            margin: 12px -20px -30px;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            margin-top: 12px;
+            margin-bottom: 5px;
+        }
+
+        .enhanced-textarea {
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+    }
+
+    /* Combined short screen and mobile optimization */
+    @media (max-width: 480px) and (max-height: 660px) {
+        .enhanced-btn {
+            padding: 14px 18px;
+            min-height: 48px;
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+
+        .modal-actions {
+            padding: 18px;
+            margin: 0;
+            border-radius: 0 0 15px 15px;
+        }
+    }
+
+    @media (max-width: 480px) and (max-height: 580px) {
+        .enhanced-btn {
+            padding: 12px 16px;
+            min-height: 44px;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        .modal-actions {
+            padding: 15px;
+            margin: 0;
+            border-radius: 0 0 15px 15px;
+        }
+    }
+
+    /* Specific styling for Continue Shopping button to ensure solid background */
+    #continueOrder {
+        background: white !important;
+        background-color: white !important;
+        color: #1a1a1a !important;
+        opacity: 1 !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 2px solid #e9ecef !important;
+    }
+
+    #continueOrder:hover {
+        background: #f8f9fa !important;
+        background-color: #f8f9fa !important;
+        border-color: #1a1a1a !important;
+    }
+
+    /* Specific styling for Add to Cart button to ensure solid background */
+    #addToCartModal {
+        background: #f3cd21 !important;
+        background-color: #f3cd21 !important;
+        color: #1a1a1a !important;
+        opacity: 1 !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    #addToCartModal:hover {
+        background: #e6b800 !important;
+        background-color: #e6b800 !important;
+    }
+
+    /* Cart Success Modal - Center positioned (override bottom positioning) */
+    #cartSuccessModal .modal-dialog {
+        position: relative !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        margin: auto !important;
+        max-width: 500px !important;
+        width: auto !important;
+        height: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transform: none !important;
+        min-height: 100vh !important;
+    }
+
+    #cartSuccessModal .modal-content {
+        border-radius: 20px !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+        margin: auto !important;
+    }
+
+    /* Ensure cart success modal is properly centered on mobile */
+    @media (max-width: 768px) {
+        #cartSuccessModal .modal-dialog {
+            margin: 1rem !important;
+            max-width: calc(100% - 2rem) !important;
+            min-height: calc(100vh - 2rem) !important;
+        }
+    }
+
+    /* Ensure modal has relative positioning for absolute buttons */
+    .enhanced-modal {
+        position: relative;
+    }
+
+    /* Add bottom padding to modal details to prevent overlap with fixed buttons */
+    .modal-details-section {
+        padding-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -1980,18 +2679,17 @@
                             <i class="fas fa-tags"></i>
                             <span>Categories</span>
                         </a>
-                        <a href="#" class="mobile-nav-link">
+                        <a href="{{ url_for('admin.orders') }}" class="mobile-nav-link">
                             <i class="fas fa-shopping-cart"></i>
                             <span>Orders</span>
-                            <span class="mobile-nav-badge">3</span>
                         </a>
-                        <a href="#" class="mobile-nav-link">
+                        <a href="{{ url_for('admin.services') }}" class="mobile-nav-link">
                             <i class="fas fa-users"></i>
-                            <span>Users</span>
+                            <span>Services</span>
                         </a>
-                        <a href="#" class="mobile-nav-link">
+                        <a href="{{ url_for('admin.rewards') }}" class="mobile-nav-link">
                             <i class="fas fa-chart-bar"></i>
-                            <span>Reports</span>
+                            <span>Rewards</span>
                         </a>
                     {% elif current_user.is_waiter() %}
                         <a href="{{ url_for('waiter.dashboard') }}" class="mobile-nav-link">
@@ -2015,7 +2713,11 @@
                             <i class="fas fa-utensils"></i>
                             <span>Menu</span>
                         </a>
-                        <a href="#" class="mobile-nav-link">
+                        <a href="{{ url_for('service.index') }}" class="mobile-nav-link">
+                            <i class="fas fa-concierge-bell"></i>
+                            <span>Services</span>
+                        </a>
+                        <a href="{{ url_for('customer.my_orders') }}" class="mobile-nav-link">
                             <i class="fas fa-shopping-cart"></i>
                             <span>My Orders</span>
                         </a>
@@ -2023,7 +2725,7 @@
                             <i class="fas fa-user"></i>
                             <span>Profile</span>
                         </a>
-                        <a href="#" class="mobile-nav-link">
+                        <a href="{{ url_for('loyalty.index') }}" class="mobile-nav-link">
                             <i class="fas fa-gift"></i>
                             <span>Loyalty Points</span>
                         </a>
@@ -2035,7 +2737,7 @@
                         <i class="fas fa-globe"></i>
                         <span>Language</span>
                     </a>
-                    <a href="#" class="mobile-nav-link">
+                    <a href="{{ url_for('customer.settings') }}" class="mobile-nav-link">
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
@@ -2054,6 +2756,10 @@
                     <a href="{{ url_for('customer.menu') }}" class="mobile-nav-link">
                         <i class="fas fa-utensils"></i>
                         <span>Menu</span>
+                    </a>
+                    <a href="{{ url_for('service.index') }}" class="mobile-nav-link">
+                        <i class="fas fa-concierge-bell"></i>
+                        <span>Services</span>
                     </a>
                     <a href="#" class="mobile-nav-link">
                         <i class="fas fa-info-circle"></i>
@@ -2152,7 +2858,7 @@
                 <!-- Modal Header with Close Button -->
                 <div class="modal-header cart-modal-header">
                     <h5 class="modal-title">Your Cart</h5>
-                    <button type="button" class="btn-close cart-close-btn" data-bs-dismiss="modal" aria-label="Close">
+                                       <button type="button" class="btn-close cart-close-btn" data-bs-dismiss="modal" aria-label="Close">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -2467,7 +3173,10 @@
                 closeBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Edit modal close button clicked');
+                    console.log('Enhanced close button clicked');
+
+                    // Reset modal state before closing
+                    resetItemDetailModal();
 
                     const modalInstance = bootstrap.Modal.getInstance(itemDetailModal);
                     if (modalInstance) {
@@ -2491,6 +3200,21 @@
                     }
                 }
             });
+
+            // Ensure continue shopping button also resets modal
+            const continueBtn = itemDetailModal.querySelector('#continueOrder');
+            if (continueBtn) {
+                continueBtn.addEventListener('click', function(e) {
+                    console.log('Continue Shopping button clicked');
+                    
+                    // Reset modal state before closing
+                    resetItemDetailModal();
+                    
+                    // The data-bs-dismiss="modal" attribute will handle the actual closing
+                });
+            } else {
+                console.warn('Continue order button not found in item detail modal');
+            }
         }
     });
 
@@ -2693,13 +3417,14 @@
         const itemDetailModal = document.getElementById('itemDetailModal');
         if (itemDetailModal) {
             itemDetailModal.addEventListener('hidden.bs.modal', function() {
+                console.log('Modal hidden event triggered');
+                
                 // Check if we were editing an item from the cart
                 const wasEditingCartItem = window.editingCartItem;
 
                 // Reset modal state
-                if (typeof resetItemDetailModal === 'function') {
-                    resetItemDetailModal();
-                }
+                console.log('Calling resetItemDetailModal...');
+                resetItemDetailModal();
 
                 // If we were editing a cart item, return to the cart modal
                 if (wasEditingCartItem) {
@@ -2719,17 +3444,202 @@
                 }
             });
         }
+
+        // Enhanced mobile modal interactions
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+
+        // Add swipe-to-close functionality for mobile
+        if (window.innerWidth <= 768) {
+            itemDetailModal.addEventListener('touchstart', function(e) {
+                if (e.target.closest('.modal-details-section')) return;
+                startY = e.touches[0].clientY;
+                isDragging = true;
+            }, { passive: true });
+
+            itemDetailModal.addEventListener('touchmove', function(e) {
+                if (!isDragging) return;
+                currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+                
+                if (deltaY > 0) {
+                    const modal = itemDetailModal.querySelector('.enhanced-modal');
+                    modal.style.transform = `translateY(${Math.min(deltaY, 200)}px)`;
+                    modal.style.opacity = Math.max(1 - (deltaY / 300), 0.5);
+                }
+            }, { passive: true });
+
+            itemDetailModal.addEventListener('touchend', function(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                const deltaY = currentY - startY;
+                const modal = itemDetailModal.querySelector('.enhanced-modal');
+                
+                if (deltaY > 100) {
+                    // Close modal if swiped down enough
+                    const modalInstance = bootstrap.Modal.getInstance(itemDetailModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                } else {
+                    // Reset position
+                    modal.style.transform = '';
+                    modal.style.opacity = '';
+                }
+            }, { passive: true });
+        }
+
+        // Prevent body scroll when modal is open on mobile
+        itemDetailModal.addEventListener('shown.bs.modal', function() {
+            if (window.innerWidth <= 768) {
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+            }
+        });
+
+        itemDetailModal.addEventListener('hidden.bs.modal', function() {
+            if (window.innerWidth <= 768) {
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+            }
+        });
+
+        // Auto-adjust modal position on orientation change
+        window.addEventListener('orientationchange', function() {
+            setTimeout(() => {
+                const modalInstance = bootstrap.Modal.getInstance(itemDetailModal);
+                if (modalInstance && itemDetailModal.classList.contains('show')) {
+                    modalInstance.handleUpdate();
+                }
+            }, 300);
+        });
     }
+
+    // Global function to reset item detail modal
+    function resetItemDetailModal() {
+        console.log('resetItemDetailModal called');
+        
+        try {
+            // Reset quantity to 1
+            const quantityDisplay = document.getElementById('itemQuantity');
+            if (quantityDisplay) {
+                quantityDisplay.textContent = '1';
+                console.log('Quantity reset to 1');
+            }
+
+            // Clear special instructions
+            const specialInstructions = document.getElementById('specialInstructions');
+            if (specialInstructions) {
+                specialInstructions.value = '';
+                console.log('Special instructions cleared');
+            }
+
+            // Reset price displays to empty/default
+            const modalItemPrice = document.getElementById('modalItemPrice');
+            const modalTotalPrice = document.getElementById('modalTotalPrice');
+            if (modalItemPrice) {
+                modalItemPrice.textContent = '';
+            }
+            if (modalTotalPrice) {
+                modalTotalPrice.textContent = '0.00';
+            }
+
+            // Clear item details
+            const modalItemName = document.getElementById('modalItemName');
+            if (modalItemName) {
+                modalItemName.textContent = '';
+            }
+
+            const modalItemIngredients = document.getElementById('modalItemIngredients');
+            if (modalItemIngredients) {
+                modalItemIngredients.textContent = '';
+            }
+
+            const modalItemDescription = document.getElementById('modalItemDescription');
+            if (modalItemDescription) {
+                modalItemDescription.textContent = '';
+            }
+
+            // Reset nutritional info to defaults
+            const caloriesElement = document.getElementById('modalItemCalories');
+            if (caloriesElement) {
+                caloriesElement.textContent = '-';
+            }
+
+            const prepTimeElement = document.getElementById('modalItemPrepTime');
+            if (prepTimeElement) {
+                prepTimeElement.textContent = '-';
+            }
+
+            const allergensElement = document.getElementById('modalItemAllergens');
+            if (allergensElement) {
+                allergensElement.textContent = 'None';
+            }
+
+            // Hide features section
+            const featuresSection = document.getElementById('modalFeaturesSection');
+            if (featuresSection) {
+                featuresSection.style.display = 'none';
+            }
+
+            // Reset image to default
+            const modalImage = document.getElementById('modalItemImage');
+            if (modalImage) {
+                modalImage.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop';
+            }
+
+            // Reset category badge
+            const categoryBadge = document.getElementById('modalItemCategory');
+            if (categoryBadge) {
+                categoryBadge.textContent = 'Main Course';
+            }
+
+            // Clear any global state
+            window.currentItem = null;
+            window.editingCartItem = false;
+
+            // Reset scroll position to top
+            const modalBody = document.querySelector('#itemDetailModal .enhanced-modal-body');
+            if (modalBody) {
+                modalBody.scrollTop = 0;
+                console.log('Modal scroll position reset to top');
+            }
+
+            // Also reset scroll for modal details section (in case it has scroll)
+            const modalDetailsSection = document.querySelector('#itemDetailModal .modal-details-section');
+            if (modalDetailsSection) {
+                modalDetailsSection.scrollTop = 0;
+            }
+
+            // Reset any transform styles that might affect positioning
+            const modal = document.querySelector('#itemDetailModal .enhanced-modal');
+            if (modal) {
+                modal.style.transform = '';
+                modal.style.opacity = '';
+            }
+
+            console.log('Item detail modal reset completed successfully');
+        } catch (error) {
+            console.error('Error during modal reset:', error);
+        }
+    }
+
+    // Make reset function globally available
+    window.resetItemDetailModal = resetItemDetailModal;
     </script>
 
     <!-- Global Item Detail Modal -->
-    <div class="modal fade" id="itemDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal fade" id="itemDetailModal" tabindex="-1" aria-labelledby="itemDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content enhanced-modal">
                 <!-- Modal Header -->
                 <div class="enhanced-modal-header">
-                    <button type="button" class="enhanced-close-btn" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i>
+                    <button type="button" class="enhanced-close-btn" data-bs-dismiss="modal" aria-label="Close modal">
+                        <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                 </div>
 
@@ -2737,7 +3647,7 @@
                 <div class="enhanced-modal-body">
                     <!-- Item Image Section -->
                     <div class="modal-image-section">
-                        <img id="modalItemImage" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop" class="enhanced-item-image" alt="Item Image">
+                        <img id="modalItemImage" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop" class="enhanced-item-image" alt="Item Image" loading="lazy">
                         <div class="image-overlay">
                             <div class="item-category-badge" id="modalItemCategory">Main Course</div>
                         </div>
@@ -2746,9 +3656,9 @@
                     <!-- Item Details Section -->
                     <div class="modal-details-section">
                         <div class="item-header">
-                            <h2 id="modalItemName" class="enhanced-item-title"></h2>
-                            <div class="item-rating">
-                                <div class="stars">
+                            <h2 id="modalItemName" class="enhanced-item-title" aria-label="Item name"></h2>
+                            <div class="item-rating" role="img" aria-label="Rating: 4.5 out of 5 stars">
+                                <div class="stars" aria-hidden="true">
                                     <i class="fas fa-star"></i>
                                     <i class="fas fa-star"></i>
                                     <i class="fas fa-star"></i>
@@ -2762,7 +3672,7 @@
                         <!-- Price Section -->
                         <div class="price-section">
                             <div class="price-container">
-                                <span class="current-price" id="modalItemPrice"></span>
+                                <span class="current-price" id="modalItemPrice" aria-label="Current price"></span>
                                 <span class="currency">EGP</span>
                             </div>
                         </div>
@@ -2770,7 +3680,7 @@
                         <!-- Description Section -->
                         <div class="description-section">
                             <h6 class="section-title">
-                                <i class="fas fa-align-left"></i>
+                                <i class="fas fa-align-left" aria-hidden="true"></i>
                                 Description
                             </h6>
                             <p id="modalItemDescription" class="description-text"></p>
@@ -2779,7 +3689,7 @@
                         <!-- Ingredients Section -->
                         <div class="ingredients-section">
                             <h6 class="section-title">
-                                <i class="fas fa-list-ul"></i>
+                                <i class="fas fa-list-ul" aria-hidden="true"></i>
                                 Ingredients
                             </h6>
                             <p id="modalItemIngredients" class="ingredients-text"></p>
@@ -2787,9 +3697,9 @@
 
                         <!-- Nutritional Info Section -->
                         <div class="nutrition-section">
-                            <div class="nutrition-grid">
-                                <div class="nutrition-item">
-                                    <div class="nutrition-icon">
+                            <div class="nutrition-grid" role="grid" aria-label="Nutritional information">
+                                <div class="nutrition-item" role="gridcell">
+                                    <div class="nutrition-icon" aria-hidden="true">
                                         <i class="fas fa-fire"></i>
                                     </div>
                                     <div class="nutrition-info">
@@ -2797,8 +3707,8 @@
                                         <span class="nutrition-label">Calories</span>
                                     </div>
                                 </div>
-                                <div class="nutrition-item">
-                                    <div class="nutrition-icon">
+                                <div class="nutrition-item" role="gridcell">
+                                    <div class="nutrition-icon" aria-hidden="true">
                                         <i class="fas fa-clock"></i>
                                     </div>
                                     <div class="nutrition-info">
@@ -2806,8 +3716,8 @@
                                         <span class="nutrition-label">Prep Time</span>
                                     </div>
                                 </div>
-                                <div class="nutrition-item">
-                                    <div class="nutrition-icon">
+                                <div class="nutrition-item" role="gridcell">
+                                    <div class="nutrition-icon" aria-hidden="true">
                                         <i class="fas fa-exclamation-triangle"></i>
                                     </div>
                                     <div class="nutrition-info">
@@ -2821,10 +3731,10 @@
                         <!-- Special Features Section -->
                         <div class="features-section" id="modalFeaturesSection" style="display: none;">
                             <h6 class="section-title">
-                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star" aria-hidden="true"></i>
                                 Special Features
                             </h6>
-                            <div class="features-badges" id="modalFeaturesBadges">
+                            <div class="features-badges" id="modalFeaturesBadges" role="list">
                                 <!-- Dynamic badges will be added here -->
                             </div>
                         </div>
@@ -2832,16 +3742,16 @@
                         <!-- Quantity Section -->
                         <div class="quantity-section">
                             <h6 class="section-title">
-                                <i class="fas fa-calculator"></i>
+                                <i class="fas fa-calculator" aria-hidden="true"></i>
                                 Quantity
                             </h6>
-                            <div class="quantity-controls">
-                                <button class="quantity-btn decrease" id="decreaseQty">
-                                    <i class="fas fa-minus"></i>
+                            <div class="quantity-controls" role="group" aria-label="Quantity selection">
+                                <button class="quantity-btn decrease" id="decreaseQty" aria-label="Decrease quantity" type="button">
+                                    <i class="fas fa-minus" aria-hidden="true"></i>
                                 </button>
-                                <span class="quantity-display" id="itemQuantity">1</span>
-                                <button class="quantity-btn increase" id="increaseQty">
-                                    <i class="fas fa-plus"></i>
+                                <span class="quantity-display" id="itemQuantity" aria-label="Current quantity">1</span>
+                                <button class="quantity-btn increase" id="increaseQty" aria-label="Increase quantity" type="button">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -2849,23 +3759,23 @@
                         <!-- Special Instructions Section -->
                         <div class="instructions-section">
                             <h6 class="section-title">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-edit" aria-hidden="true"></i>
                                 Special Instructions
                             </h6>
-                            <textarea class="enhanced-textarea" rows="3" placeholder="Any special requests or modifications..." id="specialInstructions"></textarea>
+                            <textarea class="enhanced-textarea" rows="3" placeholder="Any special requests or modifications..." id="specialInstructions" aria-label="Special instructions for this item"></textarea>
                         </div>
+                    </div>
 
-                        <!-- Action Buttons -->
-                        <div class="modal-actions">
-                            <button class="enhanced-btn primary" id="addToCartModal">
-                                <i class="fas fa-shopping-cart"></i>
-                                Add to Cart - <span id="modalTotalPrice">0.00</span> EGP
-                            </button>
-                            <button class="enhanced-btn secondary" id="continueOrder" data-bs-dismiss="modal">
-                                <i class="fas fa-arrow-left"></i>
-                                Continue Shopping
-                            </button>
-                        </div>
+                    <!-- Action Buttons - Outside of details section -->
+                    <div class="modal-actions">
+                        <button class="enhanced-btn primary" id="addToCartModal" type="button">
+                            <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                            Add to Cart - <span id="modalTotalPrice">0.00</span> EGP
+                        </button>
+                        <button class="enhanced-btn secondary" id="continueOrder" data-bs-dismiss="modal" type="button">
+                            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                            Continue Shopping
+                        </button>
                     </div>
                 </div>
             </div>

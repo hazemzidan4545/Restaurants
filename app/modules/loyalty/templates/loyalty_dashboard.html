@@ -1,0 +1,1015 @@
+{% extends "shared/base.html" %}
+
+{% block title %}Loyalty Dashboard - Restaurant Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-yellow: #f3cd21;
+        --primary-dark: #1c1d1f;
+        --text-dark: #333;
+        --success-green: #28a745;
+        --danger-red: #dc3545;
+        --light-gray: #f8f9fa;
+        --border-color: #e9ecef;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --gradient-primary: linear-gradient(135deg, var(--primary-yellow) 0%, #f4d03f 100%);
+        --gradient-dark: linear-gradient(135deg, var(--primary-dark) 0%, #2c3e50 100%);
+        --gradient-light: linear-gradient(135deg, #ffffff 0%, var(--light-gray) 100%);
+        --border-radius-lg: 16px;
+        --border-radius-xl: 24px;
+        --spacing-xs: 8px;
+        --spacing-sm: 12px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+        --spacing-xl: 32px;
+    }
+
+    /* Main Container */
+    .loyalty-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: var(--spacing-xl) var(--spacing-md);
+        background: var(--light-gray);
+        min-height: calc(100vh - 200px);
+    }
+
+    /* Page Header */
+    .page-header {
+        margin-bottom: var(--spacing-xl);
+        padding: 0;
+        background: none;
+        color: var(--text-dark);
+        box-shadow: none;
+        position: relative;
+        overflow: visible;
+        border-radius: 0;
+    }
+
+    .page-header::before {
+        display: none;
+    }
+
+    .page-header * {
+        position: static;
+        z-index: auto;
+    }
+
+    .page-header h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0 0 var(--spacing-xs) 0;
+        background: none;
+        -webkit-background-clip: unset;
+        -webkit-text-fill-color: unset;
+        background-clip: unset;
+        color: var(--primary-dark);
+        text-shadow: none;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .page-header h1 .title-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--gradient-primary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--primary-dark);
+        box-shadow: 0 4px 16px rgba(243, 205, 33, 0.4);
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header h1 .title-icon::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%, rgba(255, 255, 255, 0.2) 100%);
+        transform: translateX(-100%);
+        transition: transform 0.6s;
+    }
+
+    .page-header h1 .title-icon:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 8px 24px rgba(243, 205, 33, 0.5);
+    }
+
+    .page-header h1 .title-icon:hover::before {
+        transform: translateX(100%);
+    }
+
+    .page-header p {
+        font-size: 1rem;
+        margin: 0;
+        opacity: 0.7;
+        font-weight: 500;
+        color: #666;
+        text-align: left;
+    }
+
+    /* Welcome Card Alternative */
+    .welcome-card {
+        background: var(--gradient-primary);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+
+    .welcome-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: rotate(45deg);
+    }
+
+    .welcome-card::after {
+        content: '✨';
+        position: absolute;
+        top: var(--spacing-md);
+        right: var(--spacing-md);
+        font-size: 2rem;
+        opacity: 0.6;
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .welcome-content h2 {
+        color: var(--primary-dark);
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0 0 var(--spacing-xs) 0;
+        line-height: 1.2;
+    }
+
+    .welcome-content p {
+        color: var(--primary-dark);
+        margin: 0;
+        font-size: 0.95rem;
+        opacity: 0.8;
+        font-weight: 500;
+    }
+
+    /* Points and Vouchers Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .stats-card {
+        background: var(--gradient-light);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover);
+        border-color: var(--primary-yellow);
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--gradient-primary);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    }
+
+    .stats-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+    }
+
+    .points-icon {
+        background: var(--gradient-primary);
+        color: var(--primary-dark);
+    }
+
+    .vouchers-icon {
+        background: var(--gradient-dark);
+        color: white;
+    }
+
+    .stats-content h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0;
+        color: var(--primary-dark);
+        letter-spacing: -0.02em;
+    }
+
+    .stats-content p {
+        margin: var(--spacing-xs) 0 0 0;
+        color: #666;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .stats-content .link {
+        color: var(--primary-yellow);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        position: relative;
+    }
+
+    .stats-content .link:hover {
+        color: #e6b800;
+    }
+
+    .stats-content .link::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary-yellow);
+        transition: width 0.3s ease;
+    }
+
+    .stats-content .link:hover::after {
+        width: 100%;
+    }
+
+    /* Warning Alert */
+    .warning-alert {
+        background: var(--gradient-light);
+        border: 2px solid var(--primary-yellow);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        box-shadow: var(--card-shadow);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .warning-alert::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(243, 205, 33, 0.05) 10px,
+            rgba(243, 205, 33, 0.05) 20px
+        );
+        pointer-events: none;
+    }
+
+    .warning-alert .warning-icon {
+        color: var(--primary-yellow);
+        font-size: 1.4rem;
+        animation: pulse 2s infinite;
+        filter: drop-shadow(0 0 8px rgba(243, 205, 33, 0.3));
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .warning-alert p {
+        margin: 0;
+        color: var(--text-dark);
+        font-size: 1rem;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Section Title */
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--primary-dark);
+        margin-bottom: var(--spacing-lg);
+        position: relative;
+        padding-bottom: var(--spacing-sm);
+        letter-spacing: -0.02em;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: var(--gradient-primary);
+        border-radius: 2px;
+    }
+
+    /* Rewards Grid */
+    .rewards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .reward-item {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        border: 1px solid var(--border-color);
+    }
+
+    .reward-item:hover {
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: var(--card-shadow-hover);
+        border-color: var(--primary-yellow);
+    }
+
+    .reward-image {
+        width: 100%;
+        height: 140px;
+        background: var(--gradient-primary);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .reward-image::before {
+        content: '🧁';
+        font-size: 3.5rem;
+        opacity: 0.9;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .reward-image::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+    }
+
+    .discount-badge {
+        position: absolute;
+        top: var(--spacing-sm);
+        left: var(--spacing-sm);
+        background: var(--gradient-dark);
+        color: white;
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        backdrop-filter: blur(10px);
+    }
+
+    .reward-info {
+        padding: var(--spacing-md);
+        background: white;
+    }
+
+    .reward-category {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: var(--spacing-xs);
+        text-transform: capitalize;
+        line-height: 1.3;
+    }
+
+    .reward-points {
+        font-size: 0.95rem;
+        color: #666;
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .reward-points::before {
+        content: '✨';
+        font-size: 1rem;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .loyalty-container {
+            padding: var(--spacing-lg) var(--spacing-sm);
+        }
+
+        .page-header {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+        }
+
+        .page-header h1 .title-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+        }
+
+        .welcome-card {
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .welcome-content h2 {
+            font-size: 1.2rem;
+        }
+
+        .welcome-content p {
+            font-size: 0.9rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stats-card {
+            padding: var(--spacing-md);
+            gap: var(--spacing-sm);
+        }
+
+        .stats-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.3rem;
+        }
+
+        .stats-content h2 {
+            font-size: 1.6rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .rewards-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .reward-image {
+            height: 120px;
+        }
+
+        .warning-alert {
+            padding: var(--spacing-sm);
+            gap: var(--spacing-sm);
+        }
+
+        .warning-alert .warning-icon {
+            font-size: 1.2rem;
+        }
+
+        .warning-alert p {
+            font-size: 0.9rem;
+        }
+
+        .discount-badge {
+            padding: 6px var(--spacing-sm);
+            font-size: 0.75rem;
+        }
+
+        .reward-info {
+            padding: var(--spacing-sm);
+        }
+
+        .reward-category {
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .loyalty-container {
+            padding: var(--spacing-md) var(--spacing-xs);
+        }
+
+        .page-header h1 {
+            font-size: 1.6rem;
+        }
+
+        .page-header h1 .title-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 0.9rem;
+        }
+
+        .welcome-card {
+            padding: var(--spacing-sm);
+        }
+
+        .welcome-card::after {
+            font-size: 1.5rem;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+        }
+
+        .stats-card {
+            padding: var(--spacing-sm);
+        }
+
+        .stats-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.1rem;
+        }
+
+        .stats-content h2 {
+            font-size: 1.4rem;
+        }
+
+        .reward-image {
+            height: 100px;
+        }
+
+        .reward-image::before {
+            font-size: 2.5rem;
+        }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        .stats-card,
+        .reward-item,
+        .reward-info {
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .warning-alert {
+            background: rgba(255, 255, 255, 0.98);
+        }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+        .stats-card,
+        .reward-item,
+        .warning-alert .warning-icon {
+            transition: none;
+            animation: none;
+        }
+
+        .reward-item:hover {
+            transform: none;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+        .stats-card,
+        .reward-item {
+            border: 2px solid var(--text-dark);
+        }
+
+        .discount-badge {
+            border: 1px solid var(--text-dark);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="loyalty-container">
+    <!-- Simple Page Header -->
+    <div class="page-header">
+        <h1>
+            <span class="title-icon">
+                <i class="fas fa-crown"></i>
+            </span>
+            Loyalty Dashboard
+        </h1>
+        <p>Track your points and discover exclusive rewards</p>
+    </div>
+
+    <!-- Welcome Card -->
+    
+
+    <!-- Points and Vouchers Stats -->
+    <div class="stats-grid">
+        <!-- Points Card -->
+        <div class="stats-card">
+            <div class="stats-icon points-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="stats-content">
+                <h2>{{ '{:,}'.format(loyalty.total_points if loyalty else 7198) }}</h2>
+                <a href="#" class="link">View history</a>
+            </div>
+        </div>
+
+        <!-- Vouchers Card -->
+        <div class="stats-card">
+            <div class="stats-icon vouchers-icon">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="stats-content">
+                <h2>{{ redemptions|length if redemptions else 0 }}</h2>
+                <p>Available vouchers</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiring Points Warning -->
+    {% set expiring_points = 89 %}
+    {% set expiry_date = "18 June 2025" %}
+    {% if expiring_points > 0 %}
+    <div class="warning-alert">
+        <div class="warning-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <p><strong>{{ expiring_points }} points</strong> are expiring on {{ expiry_date }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Rewards Section -->
+    <h2 class="section-title">Available Rewards</h2>
+    
+    <div class="rewards-grid">
+        {% if rewards %}
+            {% for reward in rewards %}
+            <div class="reward-item" 
+                 onclick="redeemReward({{ reward.reward_id }}, {{ reward.points_required }}, '{{ reward.name|e }}')"
+                 data-reward-id="{{ reward.reward_id }}"
+                 data-points="{{ reward.points_required }}"
+                 data-category="{{ reward.category or 'General' }}">
+                
+                <div class="reward-image" style="background: var(--gradient-{{ 'primary' if reward.category in ['Cakes & Sweets', 'Desserts'] else 'dark' if reward.category in ['Beverages'] else 'light' }});">
+                    <!-- Dynamic discount badge based on linked menu item -->
+                    <div class="discount-badge">
+                        <i class="fas fa-gift"></i>
+                        {% if reward.item_id and reward.item %}
+                            {{ "%.0f"|format(reward.item.price * 0.1) }} EGP off
+                        {% else %}
+                            Free Item
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Category-based emoji -->
+                    {% if reward.category == 'Cakes & Sweets' or reward.category == 'Desserts' %}
+                        <!-- Cupcake emoji for sweets -->
+                    {% elif reward.category == 'Beverages' %}
+                        <!-- Coffee emoji for beverages -->
+                        <div style="position: absolute; font-size: 3.5rem; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));">☕</div>
+                    {% elif reward.category == 'Main Course' %}
+                        <!-- Plate emoji for main courses -->
+                        <div style="position: absolute; font-size: 3.5rem; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));">🍽️</div>
+                    {% elif reward.category == 'Appetizers' %}
+                        <!-- Appetizer emoji -->
+                        <div style="position: absolute; font-size: 3.5rem; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));">🥗</div>
+                    {% else %}
+                        <!-- Default gift emoji -->
+                        <div style="position: absolute; font-size: 3.5rem; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));">🎁</div>
+                    {% endif %}
+                </div>
+                
+                <div class="reward-info">
+                    <div class="reward-category">{{ reward.name }}</div>
+                    {% if reward.description %}
+                    <p style="font-size: 0.85rem; color: #888; margin: 0.25rem 0;">{{ reward.description[:60] }}{% if reward.description|length > 60 %}...{% endif %}</p>
+                    {% endif %}
+                    <p class="reward-points">{{ reward.points_required }} points</p>
+                    
+                    <!-- Availability indicator -->
+                    {% if reward.status == 'active' %}
+                        {% if not reward.expiry_date or reward.expiry_date > moment().utcnow() %}
+                            <div style="color: var(--success-green); font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem;">
+                                <i class="fas fa-check-circle"></i> Available
+                            </div>
+                        {% else %}
+                            <div style="color: var(--danger-red); font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem;">
+                                <i class="fas fa-clock"></i> Expired
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div style="color: var(--warning-orange); font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem;">
+                            <i class="fas fa-pause-circle"></i> Unavailable
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- No rewards available message -->
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; background: white; border-radius: var(--border-radius-lg); box-shadow: var(--card-shadow);">
+                <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;">🎁</div>
+                <h3 style="color: var(--primary-dark); margin: 0 0 0.5rem 0;">No Rewards Available</h3>
+                <p style="color: #666; margin: 0;">Check back later for exciting rewards to redeem with your points!</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Admin-controlled rewards count indicator -->
+    {% if rewards %}
+    <div style="text-align: center; margin-top: 2rem; padding: 1rem; background: rgba(243, 205, 33, 0.1); border-radius: var(--border-radius-lg);">
+        <p style="margin: 0; color: var(--primary-dark); font-weight: 600;">
+            <i class="fas fa-info-circle" style="color: var(--primary-yellow);"></i>
+            Showing {{ rewards|length }} available reward{{ 's' if rewards|length != 1 else '' }}
+            {% if rewards|length >= 6 %}
+            • <a href="{{ url_for('loyalty.rewards_catalog') }}" style="color: var(--primary-yellow); text-decoration: none; font-weight: 700;">View All Rewards →</a>
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function redeemReward(rewardId, pointsRequired, rewardName) {
+        const currentPoints = {{ loyalty.total_points if loyalty else 0 }};
+        
+        // Check if user has enough points
+        if (currentPoints < pointsRequired) {
+            const needed = pointsRequired - currentPoints;
+            showRewardAlert(
+                'Insufficient Points', 
+                `You need ${needed} more points to redeem "${rewardName}". Keep earning points by placing orders!`,
+                'warning'
+            );
+            return;
+        }
+        
+        // Show confirmation dialog with reward details
+        const confirmMessage = `
+            <div style="text-align: center; padding: 1rem;">
+                <h3 style="margin: 0 0 1rem 0; color: #1c1d1f;">Redeem Reward</h3>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <p style="margin: 0; font-weight: 600;">${rewardName}</p>
+                    <p style="margin: 0.5rem 0 0 0; color: #666;">${pointsRequired} points</p>
+                </div>
+                <p style="margin: 0; color: #666;">This will deduct ${pointsRequired} points from your balance.</p>
+            </div>
+        `;
+        
+        if (confirm(`Are you sure you want to redeem "${rewardName}" for ${pointsRequired} points?`)) {
+            // Show loading state
+            const rewardCard = document.querySelector(`[data-reward-id="${rewardId}"]`);
+            if (rewardCard) {
+                rewardCard.style.opacity = '0.5';
+                rewardCard.style.pointerEvents = 'none';
+            }
+            
+            // Make AJAX call to redeem reward
+            fetch('/api/loyalty/redeem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    reward_id: rewardId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showRewardAlert(
+                        'Reward Redeemed Successfully! 🎉', 
+                        `"${rewardName}" has been added to your account. ${data.redemption_code ? 'Use code: ' + data.redemption_code : 'Check your vouchers for details.'}`,
+                        'success'
+                    );
+                    
+                    // Update points display
+                    updatePointsDisplay(currentPoints - pointsRequired);
+                    
+                    // Refresh page after a delay to show the success message
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    showRewardAlert(
+                        'Redemption Failed', 
+                        data.message || 'Unable to redeem reward. Please try again.',
+                        'error'
+                    );
+                    
+                    // Restore card state
+                    if (rewardCard) {
+                        rewardCard.style.opacity = '1';
+                        rewardCard.style.pointerEvents = 'auto';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showRewardAlert(
+                    'Network Error', 
+                    'Unable to connect to server. Please check your internet connection and try again.',
+                    'error'
+                );
+                
+                // Restore card state
+                if (rewardCard) {
+                    rewardCard.style.opacity = '1';
+                    rewardCard.style.pointerEvents = 'auto';
+                }
+            });
+        }
+    }
+    
+    function showRewardAlert(title, message, type = 'info') {
+        // Create a modern alert modal
+        const alertModal = document.createElement('div');
+        alertModal.innerHTML = `
+            <div style="
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: 100%; 
+                background: rgba(0,0,0,0.5); 
+                z-index: 10000; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                padding: 1rem;
+            ">
+                <div style="
+                    background: white; 
+                    border-radius: 16px; 
+                    padding: 2rem; 
+                    max-width: 400px; 
+                    width: 100%;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    text-align: center;
+                ">
+                    <div style="
+                        width: 60px; 
+                        height: 60px; 
+                        margin: 0 auto 1rem auto; 
+                        border-radius: 50%; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center;
+                        background: ${type === 'success' ? '#28a745' : type === 'warning' ? '#fd7e14' : type === 'error' ? '#dc3545' : '#17a2b8'};
+                        color: white;
+                        font-size: 1.5rem;
+                    ">
+                        ${type === 'success' ? '✓' : type === 'warning' ? '⚠' : type === 'error' ? '✗' : 'ℹ'}
+                    </div>
+                    <h3 style="margin: 0 0 1rem 0; color: #1c1d1f;">${title}</h3>
+                    <p style="margin: 0 0 2rem 0; color: #666; line-height: 1.5;">${message}</p>
+                    <button onclick="this.closest('[style*=\"position: fixed\"]').remove()" style="
+                        background: #f3cd21; 
+                        color: #1c1d1f; 
+                        border: none; 
+                        padding: 0.75rem 2rem; 
+                        border-radius: 8px; 
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: background 0.3s;
+                    " onmouseover="this.style.background='#e6b800'" onmouseout="this.style.background='#f3cd21'">
+                        OK
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(alertModal);
+        
+        // Auto-remove after 5 seconds for success messages
+        if (type === 'success') {
+            setTimeout(() => {
+                if (alertModal.parentNode) {
+                    alertModal.remove();
+                }
+            }, 5000);
+        }
+    }
+    
+    function updatePointsDisplay(newPoints) {
+        // Update points display in the stats grid
+        const pointsElements = document.querySelectorAll('.stats-content h2');
+        pointsElements.forEach(el => {
+            if (el.textContent.includes(',') || !isNaN(el.textContent.replace(/,/g, ''))) {
+                el.textContent = newPoints.toLocaleString();
+            }
+        });
+    }
+    
+    // Add visual feedback for reward cards on hover
+    document.addEventListener('DOMContentLoaded', function() {
+        const rewardCards = document.querySelectorAll('.reward-item');
+        
+        rewardCards.forEach(card => {
+            const points = parseInt(card.dataset.points);
+            const currentPoints = {{ loyalty.total_points if loyalty else 0 }};
+            
+            // Add affordability indicators
+            if (points > currentPoints) {
+                card.style.opacity = '0.7';
+                card.style.cursor = 'not-allowed';
+                
+                // Add "need more points" overlay
+                const overlay = document.createElement('div');
+                overlay.innerHTML = `
+                    <div style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0,0,0,0.1);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: inherit;
+                        z-index: 5;
+                    ">
+                        <div style="
+                            background: rgba(220, 53, 69, 0.9);
+                            color: white;
+                            padding: 0.5rem 1rem;
+                            border-radius: 20px;
+                            font-size: 0.8rem;
+                            font-weight: 600;
+                        ">
+                            Need ${points - currentPoints} more points
+                        </div>
+                    </div>
+                `;
+                card.style.position = 'relative';
+                card.appendChild(overlay);
+            } else {
+                // Add "can afford" indicator
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.03)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(-6px) scale(1.02)';
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

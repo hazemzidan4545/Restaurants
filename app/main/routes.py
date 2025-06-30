@@ -13,7 +13,7 @@ def index():
         elif current_user.is_waiter():
             return redirect(url_for('waiter.dashboard'))
         else:
-            return redirect(url_for('customer.menu'))
+            return redirect(url_for('customer.home'))
 
     # Load popular menu items based on order frequency for the landing page
     popular_items = MenuItem.get_popular_items(limit=4)
@@ -34,3 +34,8 @@ def uploaded_file(filename):
     """Serve uploaded files"""
     upload_folder = os.path.join(current_app.root_path, current_app.config['UPLOAD_FOLDER'])
     return send_from_directory(upload_folder, filename)
+
+@bp.route('/customer-service-test')
+def customer_service_test():
+    """Customer service test page"""
+    return send_from_directory('.', 'customer_service_test.html')
