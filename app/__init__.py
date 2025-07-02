@@ -13,6 +13,9 @@ def create_app(config_name='default'):
     # Import models to ensure they are registered with SQLAlchemy
     from app import models
     
+    # Import WebSocket handlers
+    from app import websocket_handlers
+    
     # Register blueprints
     from app.modules.auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -38,6 +41,12 @@ def create_app(config_name='default'):
     from app.modules.loyalty import bp as loyalty_bp
     app.register_blueprint(loyalty_bp, url_prefix='/loyalty')
     
+    from app.modules.payment import bp as payment_bp
+    app.register_blueprint(payment_bp, url_prefix='/payment')
+    
+    from app.modules.qr import bp as qr_bp
+    app.register_blueprint(qr_bp, url_prefix='/qr')
+    
     from app.api import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
     
@@ -48,6 +57,10 @@ def create_app(config_name='default'):
     # Register loyalty API blueprint
     from app.modules.loyalty.api import bp as loyalty_api_bp
     app.register_blueprint(loyalty_api_bp)
+    
+    # Register payment API blueprint
+    from app.modules.payment.api.payment_api import bp as payment_api_bp
+    app.register_blueprint(payment_api_bp)
     
     # Register main routes
     from app.main import bp as main_bp

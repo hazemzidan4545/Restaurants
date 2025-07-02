@@ -1,0 +1,666 @@
+{% extends "shared/base.html" %}
+
+{% block title %}Leave Review - Restaurant Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-yellow: #f3cd21;
+        --primary-dark: #1c1d1f;
+        --text-dark: #333;
+        --light-gray: #f8f9fa;
+        --border-color: #e9ecef;
+        --success-green: #28a745;
+        --warning-orange: #fd7e14;
+        --info-blue: #17a2b8;
+        --danger-red: #dc3545;
+    }
+
+    .review-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px 15px;
+        background: var(--light-gray);
+        min-height: calc(100vh - 200px);
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 30px 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-header h1 {
+        color: var(--primary-dark);
+        margin-bottom: 10px;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(243, 205, 33, 0.4);
+        text-decoration: none;
+        color: var(--primary-dark);
+    }
+
+    .order-summary {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        border-left: 5px solid var(--primary-yellow);
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .order-info h3 {
+        color: var(--primary-dark);
+        margin: 0;
+        font-size: 1.3rem;
+    }
+
+    .order-date {
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .order-total {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--primary-yellow);
+    }
+
+    .review-form {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .review-form h3 {
+        color: var(--primary-dark);
+        margin-bottom: 25px;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .rating-section {
+        margin-bottom: 35px;
+        padding-bottom: 25px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .rating-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .rating-section h4 {
+        color: var(--primary-dark);
+        margin-bottom: 15px;
+        font-size: 1.2rem;
+    }
+
+    .section-description {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        font-style: italic;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .rating-container {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .star-rating {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+    }
+
+    .star {
+        font-size: 1.8rem;
+        color: #ddd;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .star.active,
+    .star:hover {
+        color: var(--primary-yellow);
+        transform: scale(1.1);
+    }
+
+    .rating-text {
+        margin-left: 15px;
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 0.9rem;
+    }
+
+    .comment-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 15px;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        resize: vertical;
+        transition: border-color 0.3s ease;
+    }
+
+    .comment-textarea:focus {
+        outline: none;
+        border-color: var(--primary-yellow);
+    }
+
+    /* Item Rating Cards */
+    .item-rating-card {
+        background: var(--light-gray);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .item-rating-card:hover {
+        border-color: var(--primary-yellow);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .item-header {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .item-info {
+        flex: 1;
+    }
+
+    .item-info h5 {
+        color: var(--primary-dark);
+        margin: 0 0 8px 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .item-description {
+        color: #666;
+        font-size: 0.9rem;
+        margin: 0 0 8px 0;
+        line-height: 1.4;
+    }
+
+    .item-quantity {
+        color: var(--primary-yellow);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .item-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .item-rating-controls {
+        margin-bottom: 15px;
+    }
+
+    .item-rating-controls label {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        color: var(--text-dark);
+    }
+
+    .item-stars .star {
+        font-size: 1.5rem;
+    }
+
+    .item-comment-textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        resize: vertical;
+        transition: border-color 0.3s ease;
+    }
+
+    .item-comment-textarea:focus {
+        outline: none;
+        border-color: var(--primary-yellow);
+    }
+
+    .items-preview {
+        background: var(--light-gray);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+
+    .item-preview {
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .item-preview:last-child {
+        border-bottom: none;
+    }
+
+    .item-preview .item-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .item-preview .item-name {
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .item-preview .item-price {
+        color: var(--primary-yellow);
+        font-weight: 600;
+    }
+
+    .item-notes {
+        color: #666;
+        font-size: 0.85rem;
+        font-style: italic;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    .existing-review {
+        background: #e7f3ff;
+        border: 1px solid var(--info-blue);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .existing-review h4 {
+        color: var(--info-blue);
+        margin-bottom: 10px;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .review-container {
+            padding: 15px 10px;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+        }
+
+        .order-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .star {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-container">
+    <a href="{{ url_for('customer.my_orders') }}" class="back-button">
+        <i class="fas fa-arrow-left"></i> Back to My Orders
+    </a>
+
+    <div class="page-header">
+        <h1><i class="fas fa-star"></i> Leave a Review</h1>
+        <p class="profile-subtitle">Share your experience with this order</p>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary">
+        <div class="order-header">
+            <div class="order-info">
+                <h3>Order #{{ order.order_id }}</h3>
+                <div class="order-date">
+                    <i class="fas fa-calendar"></i>
+                    {{ order.order_time.strftime('%B %d, %Y at %I:%M %p') }}
+                </div>
+            </div>
+            <div class="order-total">${{ "%.2f"|format(order.total_amount) }}</div>
+        </div>
+
+        {% set order_items = order.order_items.all() %}
+        {% if order_items %}
+        <div class="order-items">
+            <h4><i class="fas fa-utensils"></i> Items in this order:</h4>
+            <div class="items-preview">
+                {% for item in order_items %}
+                <div class="item-preview">
+                    <div class="item-info">
+                        <span class="item-name">{{ item.quantity }}x {{ item.menu_item.name }}</span>
+                        <span class="item-price">${{ "%.2f"|format(item.unit_price * item.quantity) }}</span>
+                    </div>
+                    {% if item.special_requests %}
+                    <div class="item-notes">Special requests: {{ item.special_requests }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if existing_review %}
+    <div class="existing-review">
+        <h4><i class="fas fa-info-circle"></i> You have already reviewed this order</h4>
+        <p><strong>Your Rating:</strong> 
+            {% for i in range(1, 6) %}
+                <i class="fas fa-star" style="color: {{ 'var(--primary-yellow)' if i <= existing_review.rating else '#ddd' }};"></i>
+            {% endfor %}
+            ({{ existing_review.rating }}/5)
+        </p>
+        {% if existing_review.comment %}
+        <p><strong>Your Comment:</strong> {{ existing_review.comment }}</p>
+        {% endif %}
+        <p><em>You can update your review using the form below.</em></p>
+    </div>
+    {% endif %}
+
+    <!-- Review Form -->
+    <div class="review-form">
+        <form method="POST">
+            <h3><i class="fas fa-star"></i> Rate Your Experience</h3>
+            
+            <!-- Overall Order Rating -->
+            <div class="rating-section">
+                <h4>Overall Order Rating</h4>
+                <div class="form-group">
+                    <label for="overall_rating">How was your overall experience? *</label>
+                    <div class="rating-container">
+                        <div class="star-rating" id="overallRating">
+                            {% for i in range(1, 6) %}
+                            <i class="fas fa-star star" data-rating="{{ i }}" data-type="overall"></i>
+                            {% endfor %}
+                        </div>
+                        <span class="rating-text" id="overallRatingText">Click to rate</span>
+                    </div>
+                    <input type="hidden" name="overall_rating" id="overallRatingInput" value="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="overall_comment">Overall Experience Comments (Optional)</label>
+                    <textarea name="overall_comment" id="overall_comment" class="comment-textarea" 
+                              placeholder="Tell us about your overall experience with this order..."></textarea>
+                </div>
+            </div>
+
+            <!-- Individual Item Ratings -->
+            {% set order_items = order.order_items.all() %}
+            {% if order_items %}
+            <div class="rating-section">
+                <h4>Rate Individual Items</h4>
+                <p class="section-description">Help other customers by rating each item separately (optional)</p>
+                
+                {% for item in order_items %}
+                <div class="item-rating-card" data-item-id="{{ item.item_id }}">
+                    <div class="item-header">
+                        <div class="item-info">
+                            <h5>{{ item.menu_item.name }}</h5>
+                            <p class="item-description">{{ item.menu_item.description[:100] }}{% if item.menu_item.description|length > 100 %}...{% endif %}</p>
+                            <span class="item-quantity">Quantity: {{ item.quantity }}</span>
+                        </div>
+                        {% if item.menu_item.image_url %}
+                        <div class="item-image">
+                            <img src="{{ item.menu_item.image_url }}" alt="{{ item.menu_item.name }}">
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="item-rating-controls">
+                        <label>Rate this item:</label>
+                        <div class="rating-container">
+                            <div class="star-rating item-stars" data-item-id="{{ item.item_id }}">
+                                {% for i in range(1, 6) %}
+                                <i class="fas fa-star star" data-rating="{{ i }}" data-type="item" data-item-id="{{ item.item_id }}"></i>
+                                {% endfor %}
+                            </div>
+                            <span class="rating-text" id="itemRatingText{{ item.item_id }}">Optional</span>
+                        </div>
+                        <input type="hidden" name="item_rating_{{ item.item_id }}" id="itemRatingInput{{ item.item_id }}" value="0">
+                    </div>
+                    
+                    <div class="item-comment">
+                        <textarea name="item_comment_{{ item.item_id }}" 
+                                  placeholder="Comments about {{ item.menu_item.name }} (optional)..."
+                                  class="item-comment-textarea"></textarea>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{{ url_for('customer.my_orders') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Submit Reviews
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ratingTexts = {
+            1: '1 out of 5 stars - Poor',
+            2: '2 out of 5 stars - Fair',
+            3: '3 out of 5 stars - Good',
+            4: '4 out of 5 stars - Very Good',
+            5: '5 out of 5 stars - Excellent'
+        };
+        
+        // Handle overall rating
+        setupRatingSystem('overall', 'overallRating', 'overallRatingInput', 'overallRatingText', true);
+        
+        // Handle individual item ratings
+        const itemRatingContainers = document.querySelectorAll('.item-stars');
+        itemRatingContainers.forEach(container => {
+            const itemId = container.dataset.itemId;
+            setupRatingSystem('item', `itemStars${itemId}`, `itemRatingInput${itemId}`, `itemRatingText${itemId}`, false, itemId);
+        });
+        
+        function setupRatingSystem(type, containerId, inputId, textId, required, itemId = null) {
+            let container, stars, ratingInput, ratingText;
+            
+            if (type === 'overall') {
+                container = document.getElementById('overallRating');
+                stars = container.querySelectorAll('.star');
+                ratingInput = document.getElementById('overallRatingInput');
+                ratingText = document.getElementById('overallRatingText');
+            } else {
+                container = document.querySelector(`.item-stars[data-item-id="${itemId}"]`);
+                if (!container) return;
+                stars = container.querySelectorAll('.star');
+                ratingInput = document.getElementById(`itemRatingInput${itemId}`);
+                ratingText = document.getElementById(`itemRatingText${itemId}`);
+            }
+            
+            if (!container || !stars || !ratingInput || !ratingText) return;
+            
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = parseInt(this.dataset.rating);
+                    ratingInput.value = rating;
+                    ratingText.textContent = ratingTexts[rating];
+                    
+                    // Update star display
+                    updateStarDisplay(stars, rating);
+                });
+                
+                star.addEventListener('mouseover', function() {
+                    const rating = parseInt(this.dataset.rating);
+                    updateStarDisplay(stars, rating);
+                });
+            });
+            
+            // Reset to actual rating on mouse leave
+            container.addEventListener('mouseleave', function() {
+                const currentRating = parseInt(ratingInput.value);
+                updateStarDisplay(stars, currentRating);
+            });
+        }
+        
+        function updateStarDisplay(stars, rating) {
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.style.color = 'var(--primary-yellow)';
+                    star.classList.add('active');
+                } else {
+                    star.style.color = '#ddd';
+                    star.classList.remove('active');
+                }
+            });
+        }
+        
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const overallRating = document.getElementById('overallRatingInput').value;
+            if (parseInt(overallRating) === 0) {
+                e.preventDefault();
+                alert('Please provide an overall rating for your order.');
+                return false;
+            }
+        });
+        
+        // Add visual feedback for item rating cards
+        const itemCards = document.querySelectorAll('.item-rating-card');
+        itemCards.forEach(card => {
+            const textarea = card.querySelector('.item-comment-textarea');
+            const ratingContainer = card.querySelector('.item-stars');
+            
+            // Highlight card when rating is given
+            ratingContainer.addEventListener('click', function() {
+                card.style.background = '#f8f9fa';
+                card.style.borderColor = 'var(--primary-yellow)';
+            });
+            
+            // Highlight card when comment is added
+            textarea.addEventListener('focus', function() {
+                card.style.background = '#f8f9fa';
+                card.style.borderColor = 'var(--primary-yellow)';
+            });
+            
+            textarea.addEventListener('blur', function() {
+                if (!textarea.value.trim()) {
+                    const ratingInput = card.querySelector('input[type="hidden"]');
+                    if (parseInt(ratingInput.value) === 0) {
+                        card.style.background = '';
+                        card.style.borderColor = '';
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

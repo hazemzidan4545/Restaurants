@@ -1,7 +1,7 @@
-from flask import render_template, redirect, url_for, request, flash, jsonify
+from flask import render_template, redirect, url_for, request, flash, jsonify, session
 from flask_login import login_required, current_user
 from app.modules.customer import bp
-from app.models import MenuItem, Category, Order, CustomerPreferences, db
+from app.models import MenuItem, Category, Order, OrderItem, Payment, CustomerPreferences, Feedback, db, Table
 from sqlalchemy.orm import joinedload
 from datetime import datetime
 import os
@@ -9,14 +9,24 @@ from werkzeug.utils import secure_filename
 
 @bp.route('/menu')
 def menu():
-    """Customer menu view"""
+    """Customer menu view with ratings"""
     # Load categories and menu items from database
     categories = Category.query.filter_by(is_active=True).order_by(Category.display_order).all()
     menu_items = MenuItem.query.options(joinedload(MenuItem.category)).filter_by(status='available').join(Category).order_by(
         Category.display_order, MenuItem.name
     ).all()
 
-    return render_template('menu.html', categories=categories, menu_items=menu_items)
+    # Calculate ratings for each menu item
+    items_with_ratings = []
+    for item in menu_items:
+        rating_data = item.get_average_rating()
+        item_data = {
+            'item': item,
+            'rating': rating_data
+        }
+        items_with_ratings.append(item_data)
+
+    return render_template('menu.html', categories=categories, menu_items=menu_items, items_with_ratings=items_with_ratings)
 
 @bp.route('/profile')
 @login_required
@@ -178,9 +188,20 @@ def order_confirmation(order_id):
     return render_template('order_confirmation.html', order_id=order_id)
 
 @bp.route('/track-order/<int:order_id>')
+@login_required
 def track_order(order_id):
     """Order tracking page"""
-    return render_template('track_order.html', order_id=order_id)
+    if not current_user.is_customer():
+        flash('Access denied. Customer account required.', 'error')
+        return redirect(url_for('main.index'))
+    
+    # Verify the order belongs to the current user
+    order = Order.query.filter_by(order_id=order_id, user_id=current_user.user_id).first()
+    if not order:
+        flash('Order not found or access denied.', 'error')
+        return redirect(url_for('customer.my_orders'))
+    
+    return render_template('track_order.html', order_id=order_id, order=order)
 
 @bp.route('/home')
 @bp.route('/')
@@ -200,12 +221,45 @@ def home():
 def my_orders():
     """Customer orders page"""
     if not current_user.is_customer():
+        flash('Access denied. Customer account required.', 'error')
         return redirect(url_for('main.index'))
     
-    # Get orders for the current user
-    orders = Order.query.filter_by(user_id=current_user.user_id).order_by(Order.order_time.desc()).all()
-    
-    return render_template('customer_orders.html', orders=orders)
+    try:
+        # Get orders for the current user with simple query first
+        orders = Order.query.filter_by(user_id=current_user.user_id).order_by(Order.order_time.desc()).all()
+        
+        print(f"DEBUG: Loading orders for user {current_user.user_id} ({current_user.email})")
+        print(f"DEBUG: Found {len(orders)} orders")
+        
+        # Load relationships manually to avoid lazy loading issues
+        for order in orders:
+            try:
+                # Force load order items
+                order_items = order.order_items.all()
+                order._order_items = order_items
+                print(f"DEBUG: Order {order.order_id} has {len(order_items)} items")
+                
+                # Force load payments
+                payments = order.payments.all()
+                order._payments = payments
+                print(f"DEBUG: Order {order.order_id} has {len(payments)} payments")
+                
+            except Exception as item_error:
+                print(f"DEBUG: Error loading items/payments for order {order.order_id}: {item_error}")
+                order._order_items = []
+                order._payments = []
+        
+        if not orders:
+            flash('No orders found. Place your first order from our menu!', 'info')
+        
+        return render_template('customer_orders.html', orders=orders)
+        
+    except Exception as e:
+        print(f"ERROR loading orders: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Error loading orders. Please try again.', 'error')
+        return render_template('customer_orders.html', orders=[])
 
 @bp.route('/loyalty')
 @login_required
@@ -215,3 +269,334 @@ def loyalty():
         return redirect(url_for('main.index'))
     
     return redirect(url_for('loyalty.index'))
+
+@bp.route('/order/<int:order_id>/reorder', methods=['POST'])
+@login_required
+def reorder(order_id):
+    """Reorder items from a previous order"""
+    if not current_user.is_customer():
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        # Verify the order belongs to the current user
+        order = Order.query.filter_by(order_id=order_id, user_id=current_user.user_id).first()
+        if not order:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+        
+        # Check if order is in a reorderable state
+        if order.status not in ['delivered', 'completed']:
+            return jsonify({'success': False, 'message': 'Can only reorder completed orders'}), 400
+        
+        # Get all items from the original order
+        order_items = order.order_items.all()
+        if not order_items:
+            return jsonify({'success': False, 'message': 'No items found in original order'}), 400
+        
+        # Create a new order
+        new_order = Order(
+            user_id=current_user.user_id,
+            status='new',
+            total_amount=0,  # Will be calculated after adding items
+            notes=f'Reorder from Order #{order_id}',
+            order_time=datetime.utcnow()
+        )
+        db.session.add(new_order)
+        db.session.flush()  # Get the new order ID
+        
+        total_amount = 0
+        reordered_items = []
+        
+        # Add each item from the original order
+        for original_item in order_items:
+            # Check if the menu item is still available
+            menu_item = MenuItem.query.get(original_item.item_id)
+            if menu_item and menu_item.status == 'available':
+                new_item = OrderItem(
+                    order_id=new_order.order_id,
+                    item_id=original_item.item_id,
+                    quantity=original_item.quantity,
+                    unit_price=menu_item.price,  # Use current price
+                    special_requests=original_item.special_requests
+                )
+                db.session.add(new_item)
+                total_amount += menu_item.price * original_item.quantity
+                reordered_items.append(menu_item.name)
+            
+        # Update the new order total
+        new_order.total_amount = total_amount
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Successfully reordered {len(reordered_items)} items',
+            'new_order_id': new_order.order_id,
+            'items': reordered_items
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to reorder items'}), 500
+
+@bp.route('/order/<int:order_id>/cancel', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    """Cancel an order"""
+    if not current_user.is_customer():
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        # Verify the order belongs to the current user
+        order = Order.query.filter_by(order_id=order_id, user_id=current_user.user_id).first()
+        if not order:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+        
+        # Check if order can be cancelled
+        if order.status not in ['new', 'confirmed', 'processing']:
+            return jsonify({'success': False, 'message': 'Order cannot be cancelled at this stage'}), 400
+        
+        # Check if order has been paid
+        payments = order.payments.filter_by(status='completed').all()
+        if payments:
+            return jsonify({'success': False, 'message': 'Paid orders cannot be cancelled. Please contact support for refund.'}), 400
+        
+        # Cancel the order
+        order.status = 'cancelled'
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Order #{order_id} has been cancelled successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to cancel order'}), 500
+
+@bp.route('/order/<int:order_id>/review', methods=['GET', 'POST'])
+@login_required
+def review_order(order_id):
+    """Leave a review for an order and its items"""
+    if not current_user.is_customer():
+        return redirect(url_for('main.index'))
+    
+    # Verify the order belongs to the current user
+    order = Order.query.filter_by(order_id=order_id, user_id=current_user.user_id).first()
+    if not order:
+        flash('Order not found or access denied.', 'error')
+        return redirect(url_for('customer.my_orders'))
+    
+    # Check if order is reviewable
+    if order.status not in ['delivered', 'completed']:
+        flash('Can only review completed orders.', 'error')
+        return redirect(url_for('customer.my_orders'))
+    
+    # Check if overall review already exists
+    existing_order_review = Feedback.query.filter_by(order_id=order_id, user_id=current_user.user_id, item_id=None).first()
+    
+    # Get existing item reviews
+    existing_item_reviews = {}
+    item_reviews = Feedback.query.filter_by(order_id=order_id, user_id=current_user.user_id).filter(Feedback.item_id.isnot(None)).all()
+    for review in item_reviews:
+        existing_item_reviews[review.item_id] = review
+    
+    if request.method == 'POST':
+        try:
+            # Get overall rating
+            overall_rating = int(request.form.get('overall_rating', 0))
+            overall_comment = request.form.get('overall_comment', '').strip()
+            
+            if overall_rating < 1 or overall_rating > 5:
+                flash('Please provide an overall rating between 1 and 5 stars.', 'error')
+                return redirect(request.url)
+            
+            # Save or update overall order review
+            if existing_order_review:
+                existing_order_review.rating = overall_rating
+                existing_order_review.comment = overall_comment
+                existing_order_review.timestamp = datetime.utcnow()
+            else:
+                order_review = Feedback(
+                    user_id=current_user.user_id,
+                    order_id=order_id,
+                    item_id=None,  # Overall order review
+                    rating=overall_rating,
+                    comment=overall_comment,
+                    timestamp=datetime.utcnow()
+                )
+                db.session.add(order_review)
+            
+            # Process individual item reviews
+            order_items = order.order_items.all()
+            for item in order_items:
+                item_rating_key = f'item_rating_{item.item_id}'
+                item_comment_key = f'item_comment_{item.item_id}'
+                
+                item_rating = request.form.get(item_rating_key, '0')
+                item_comment = request.form.get(item_comment_key, '').strip()
+                
+                # Only process if rating is provided (optional)
+                if item_rating and int(item_rating) > 0:
+                    item_rating = int(item_rating)
+                    
+                    if item_rating < 1 or item_rating > 5:
+                        continue  # Skip invalid ratings
+                    
+                    if item.item_id in existing_item_reviews:
+                        # Update existing item review
+                        existing_review = existing_item_reviews[item.item_id]
+                        existing_review.rating = item_rating
+                        existing_review.comment = item_comment
+                        existing_review.timestamp = datetime.utcnow()
+                    else:
+                        # Create new item review
+                        item_review = Feedback(
+                            user_id=current_user.user_id,
+                            order_id=order_id,
+                            item_id=item.item_id,
+                            rating=item_rating,
+                            comment=item_comment,
+                            timestamp=datetime.utcnow()
+                        )
+                        db.session.add(item_review)
+            
+            db.session.commit()
+            flash('Thank you for your detailed reviews!', 'success')
+            return redirect(url_for('customer.my_orders'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to save reviews. Please try again.', 'error')
+    
+    return render_template('review_order.html', 
+                         order=order, 
+                         existing_order_review=existing_order_review,
+                         existing_item_reviews=existing_item_reviews)
+
+@bp.route('/order/<int:order_id>/reorder-to-cart', methods=['POST'])
+@login_required
+def reorder_to_cart(order_id):
+    """Add items from a previous order to the user's cart (session-based)"""
+    if not current_user.is_customer():
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        # Verify the order belongs to the current user
+        order = Order.query.filter_by(order_id=order_id, user_id=current_user.user_id).first()
+        if not order:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+        
+        # Check if order is in a reorderable state
+        if order.status not in ['delivered', 'completed']:
+            return jsonify({'success': False, 'message': 'Can only reorder completed orders'}), 400
+        
+        # Get all items from the original order
+        order_items = order.order_items.all()
+        if not order_items:
+            return jsonify({'success': False, 'message': 'No items found in original order'}), 400
+        
+        # Initialize cart in session if it doesn't exist
+        if 'cart' not in session:
+            session['cart'] = []
+        
+        unique_items_added = 0
+        total_quantity_added = 0
+        unavailable_items = []
+        processed_items = []
+        
+        # Add each item from the original order to the cart
+        for original_item in order_items:
+            # Check if the menu item is still available
+            menu_item = MenuItem.query.get(original_item.item_id)
+            if menu_item and menu_item.status == 'available':
+                # Check if item already exists in cart
+                existing_item = None
+                for cart_item in session['cart']:
+                    if cart_item['id'] == menu_item.item_id:
+                        existing_item = cart_item
+                        break
+                
+                if existing_item:
+                    # Update quantity of existing item
+                    existing_item['quantity'] += original_item.quantity
+                    total_quantity_added += original_item.quantity
+                else:
+                    # Add new item to cart
+                    cart_item = {
+                        'id': menu_item.item_id,
+                        'name': menu_item.name,
+                        'price': float(menu_item.price),
+                        'quantity': original_item.quantity,
+                        'image': menu_item.image_url or 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300&h=200&fit=crop',
+                        'specialInstructions': original_item.note or '',
+                        'category': 'Reordered Item'
+                    }
+                    session['cart'].append(cart_item)
+                    total_quantity_added += original_item.quantity
+                    unique_items_added += 1
+                
+                processed_items.append(menu_item.name)
+            else:
+                unavailable_items.append(original_item.item_id)
+        
+        # Mark session as modified to ensure it's saved
+        session.modified = True
+        
+        message = f'Successfully added {total_quantity_added} items ({unique_items_added} unique items) to your cart'
+        if unavailable_items:
+            message += f'. {len(unavailable_items)} items were unavailable and skipped.'
+        
+        return jsonify({
+            'success': True, 
+            'message': message,
+            'items_added': unique_items_added,
+            'total_quantity_added': total_quantity_added,
+            'unavailable_items': len(unavailable_items),
+            'cart_items': session['cart']  # Include the cart items for frontend sync
+        })
+        
+    except Exception as e:
+        # Log the actual error for debugging
+        print(f"Error in reorder_to_cart: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Failed to add items to cart: {str(e)}'}), 500
+
+@bp.route('/order/<int:order_id>/delete', methods=['DELETE'])
+@login_required
+def delete_order(order_id):
+    """Delete an order from customer's history (customer only)"""
+    if not current_user.is_customer():
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        # Verify the order belongs to the current user
+        order = Order.query.filter_by(order_id=order_id, user_id=current_user.user_id).first()
+        if not order:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+        
+        # Only allow deletion of completed, cancelled, or delivered orders
+        if order.status not in ['delivered', 'completed', 'cancelled']:
+            return jsonify({'success': False, 'message': 'Can only delete completed, delivered, or cancelled orders'}), 400
+        
+        # Delete related order items first (due to foreign key constraints)
+        OrderItem.query.filter_by(order_id=order_id).delete()
+        
+        # Delete related payments
+        Payment.query.filter_by(order_id=order_id).delete()
+        
+        # Delete the order
+        db.session.delete(order)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Order #{order_id} has been deleted from your history'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        # Log the actual error for debugging
+        print(f"Error in delete_order: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Failed to delete order: {str(e)}'}), 500

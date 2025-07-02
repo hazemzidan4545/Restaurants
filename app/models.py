@@ -263,7 +263,7 @@ class MenuItem(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    order_items = db.relationship('OrderItem', backref='menu_item', lazy='dynamic')
+    order_items = db.relationship('OrderItem', backref='menu_item', lazy='dynamic', foreign_keys='OrderItem.item_id')
     images = db.relationship('MenuItemImage', backref='menu_item', lazy='dynamic')
     feedback = db.relationship('Feedback', backref='menu_item', lazy='dynamic')
     reward_items = db.relationship('RewardItem', backref='menu_item', lazy='dynamic')
@@ -313,6 +313,50 @@ class MenuItem(db.Model):
         return query.group_by(cls.item_id).order_by(
             func.sum(OrderItem.quantity).desc()
         ).limit(limit).all()
+
+    def get_average_rating(self):
+        """Get the average rating for this menu item"""
+        from sqlalchemy import func
+        
+        result = db.session.query(
+            func.avg(Feedback.rating).label('avg_rating'),
+            func.count(Feedback.feedback_id).label('review_count')
+        ).filter(
+            Feedback.item_id == self.item_id,
+            Feedback.is_approved == True
+        ).first()
+        
+        if result.review_count > 0:
+            return {
+                'average': round(float(result.avg_rating), 1),
+                'count': result.review_count
+            }
+        else:
+            return {
+                'average': 0.0,
+                'count': 0
+            }
+
+    def get_rating_distribution(self):
+        """Get the distribution of ratings (1-5 stars) for this menu item"""
+        from sqlalchemy import func
+        
+        ratings = db.session.query(
+            Feedback.rating,
+            func.count(Feedback.feedback_id).label('count')
+        ).filter(
+            Feedback.item_id == self.item_id,
+            Feedback.is_approved == True
+        ).group_by(Feedback.rating).all()
+        
+        # Initialize distribution with zeros
+        distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        
+        # Fill in actual counts
+        for rating, count in ratings:
+            distribution[rating] = count
+            
+        return distribution
 
     def __repr__(self):
         return f'<MenuItem {self.name}>'

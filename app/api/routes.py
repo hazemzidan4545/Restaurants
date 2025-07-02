@@ -124,6 +124,7 @@ def get_suggested_items():
         }), 500
 
 @bp.route('/orders', methods=['POST'])
+@login_required
 def create_order():
     """Process checkout and create new order"""
     try:
@@ -142,9 +143,9 @@ def create_order():
                 'message': 'Cart is empty'
             }), 400
 
-        # Create new order
+        # Create new order using the logged-in user
         order = Order(
-            user_id=data.get('user_id', 1),  # Use provided user_id or default to 1
+            user_id=current_user.user_id,  # Use the authenticated user's ID
             status='new',
             total_amount=0,  # Will be calculated
             notes=data.get('notes', ''),

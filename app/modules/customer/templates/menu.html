@@ -269,15 +269,57 @@
 
 .menu-item-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-top: auto;
+    padding: 0 15px 15px;
+}
+
+.menu-item-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 15px 5px;
+    font-size: 0.85rem;
+}
+
+.menu-item-rating .stars {
+    display: flex;
+    gap: 2px;
+}
+
+.menu-item-rating .stars i {
+    color: var(--primary-yellow);
+    font-size: 0.8rem;
+}
+
+.menu-item-rating .stars i.star-empty {
+    color: #ddd;
+}
+
+.menu-item-rating .rating-text {
+    color: #666;
+    font-size: 0.75rem;
+}
+
+.menu-item-rating .stars i {
+    color: var(--primary-yellow);
+    font-size: 0.8rem;
+}
+
+.menu-item-rating .stars i.star-empty {
+    color: #ddd;
+}
+
+.menu-item-rating .rating-text {
+    color: #666;
+    font-size: 0.75rem;
 }
 
 .price-section {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .menu-item-price {
@@ -1378,8 +1420,11 @@
 
     <!-- Menu Items List -->
     <div class="menu-items-list" id="menuItems">
-        {% for item in menu_items %}
+        {% for item_data in items_with_ratings %}
+        {% set item = item_data.item %}
+        {% set rating = item_data.rating %}
         <div class="menu-item-card" data-category="{{ item.category_id }}"
+             data-item-id="{{ item.item_id }}"
              data-item-name="{{ item.name }}"
              data-item-description="{{ item.description }}"
              data-item-price="{{ item.price }}"
@@ -1391,6 +1436,8 @@
              data-item-allergens="{{ item.allergens or '' }}"
              data-item-serving-size="{{ item.serving_size or '' }}"
              data-item-dietary-info="{{ item.dietary_info or '' }}"
+             data-rating-average="{{ rating.average }}"
+             data-rating-count="{{ rating.count }}"
              onclick="showItemDetailFromCard(this)">
             {% if item.image_url %}
             <img src="{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}"
@@ -1402,6 +1449,18 @@
             <div class="menu-item-content">
                 <div class="menu-item-title">{{ item.name }}</div>
                 <div class="menu-item-description">{{ item.description }}</div>
+                
+                {% if rating.count > 0 %}
+                <div class="menu-item-rating">
+                    <div class="stars">
+                        {% for i in range(1, 6) %}
+                        <i class="fas fa-star{% if i > rating.average %} star-empty{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                    <span class="rating-text">{{ rating.average }} ({{ rating.count }} review{{ 's' if rating.count != 1 else '' }})</span>
+                </div>
+                {% endif %}
+                
                 <div class="menu-item-footer">
                     <div class="price-section">
                         <div class="menu-item-price">{{ item.price }} EGP</div>
@@ -1468,6 +1527,8 @@ function showItemDetailFromCard(card) {
     const allergens = card.dataset.itemAllergens;
     const servingSize = card.dataset.itemServingSize;
     const dietaryInfo = card.dataset.itemDietaryInfo;
+    const ratingAverage = parseFloat(card.dataset.ratingAverage) || 0;
+    const ratingCount = parseInt(card.dataset.ratingCount) || 0;
 
     showItemDetail(name, ingredients, price, image, {
         description: description,
@@ -1477,6 +1538,10 @@ function showItemDetailFromCard(card) {
         allergens: allergens,
         servingSize: servingSize,
         dietaryInfo: dietaryInfo,
+        rating: {
+            average: ratingAverage,
+            count: ratingCount
+        },
         features: {featured: false, spicy: false, vegetarian: false, vegan: false}
     });
 }
@@ -1496,6 +1561,7 @@ function showItemDetail(name, ingredients, price, image, options = {}) {
         prepTime: options.prepTime || null,
         allergens: options.allergens || '',
         category: options.category || '',
+        rating: options.rating || {average: 0, count: 0},
         features: options.features || {}
     };
 
@@ -1505,11 +1571,15 @@ function showItemDetail(name, ingredients, price, image, options = {}) {
     document.getElementById('modalItemPrice').textContent = price;
     document.getElementById('modalTotalPrice').textContent = price;
     document.getElementById('itemQuantity').textContent = '1';
+    
     // Remove old price element from DOM if present
     const oldPriceElem = document.getElementById('modalItemOldPrice');
     if (oldPriceElem) {
         oldPriceElem.parentNode.removeChild(oldPriceElem);
     }
+
+    // Update rating display
+    updateModalRating(currentItem.rating);
 
     // Set description
     const descriptionElement = document.getElementById('modalItemDescription');
@@ -1568,34 +1638,58 @@ function showItemDetail(name, ingredients, price, image, options = {}) {
     modalImage.onerror = function() {
         console.log('Image failed to load, using fallback:', image);
         // Fallback image if the original fails to load
-        this.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop';
+        this.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop';
     };
 
-    // Set category badge
-    const categoryBadge = document.getElementById('modalItemCategory');
-    if (currentItem.category) {
-        categoryBadge.textContent = currentItem.category;
-    } else {
-        // Fallback category detection based on item name
-        if (name.toLowerCase().includes('pasta') || name.toLowerCase().includes('spaghetti') || name.toLowerCase().includes('alfredo') || name.toLowerCase().includes('fettuccine')) {
-            categoryBadge.textContent = 'Pasta';
-        } else if (name.toLowerCase().includes('chicken') || name.toLowerCase().includes('grilled') || name.toLowerCase().includes('bbq') || name.toLowerCase().includes('ribs')) {
-            categoryBadge.textContent = 'Grills';
-        } else {
-            categoryBadge.textContent = 'Special';
-        }
-    }
-
-    // Clear special instructions
-    document.getElementById('specialInstructions').value = '';
-
+    // Show modal
     const modal = new bootstrap.Modal(document.getElementById('itemDetailModal'));
     modal.show();
 }
 
-// Backward compatibility function for existing calls
-function showItemDetailSimple(name, ingredients, price, image) {
-    showItemDetail(name, ingredients, price, image);
+// Function to update modal rating display
+function updateModalRating(rating) {
+    const modalRatingSection = document.querySelector('.item-rating');
+    const starsContainer = modalRatingSection.querySelector('.stars');
+    const ratingText = modalRatingSection.querySelector('.rating-text');
+    
+    if (!modalRatingSection || !starsContainer || !ratingText) {
+        console.warn('Modal rating elements not found');
+        return;
+    }
+    
+    // Clear existing stars
+    starsContainer.innerHTML = '';
+    
+    if (rating.count > 0) {
+        // Show rating display
+        modalRatingSection.style.display = 'flex';
+        modalRatingSection.setAttribute('aria-label', `Rating: ${rating.average} out of 5 stars`);
+        
+        // Create stars based on average rating
+        for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('i');
+            
+            if (i <= Math.floor(rating.average)) {
+                // Full star
+                star.className = 'fas fa-star';
+            } else if (i <= rating.average) {
+                // Half star
+                star.className = 'fas fa-star-half-alt';
+            } else {
+                // Empty star
+                star.className = 'far fa-star';
+            }
+            
+            starsContainer.appendChild(star);
+        }
+        
+        // Update rating text
+        const reviewText = rating.count === 1 ? 'review' : 'reviews';
+        ratingText.textContent = `${rating.average} (${rating.count} ${reviewText})`;
+    } else {
+        // Hide rating display if no reviews
+        modalRatingSection.style.display = 'none';
+    }
 }
 
 // Enhanced function for menu items with full data

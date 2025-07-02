@@ -1,0 +1,898 @@
+{% extends "shared/base.html" %}
+
+{% block title %}Checkout - Order #{{ order.order_id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-yellow: #f3cd21;
+        --primary-dark: #1c1d1f;
+        --success-green: #28a745;
+        --info-blue: #17a2b8;
+        --light-gray: #f8f9fa;
+        --border-color: #e9ecef;
+    }
+
+    .checkout-container {
+        background: var(--light-gray);
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+
+    .checkout-header {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .checkout-header h1 {
+        color: var(--primary-dark);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .checkout-progress {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+    }
+
+    .progress-step {
+        display: flex;
+        align-items: center;
+        color: #6c757d;
+    }
+
+    .progress-step.active {
+        color: var(--primary-yellow);
+        font-weight: 600;
+    }
+
+    .progress-step.completed {
+        color: var(--success-green);
+    }
+
+    .step-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-weight: 600;
+    }
+
+    .progress-step.active .step-number {
+        background: var(--primary-yellow);
+        color: var(--primary-dark);
+    }
+
+    .progress-step.completed .step-number {
+        background: var(--success-green);
+        color: white;
+    }
+
+    .progress-connector {
+        width: 80px;
+        height: 2px;
+        background: #e9ecef;
+        margin: 0 15px;
+    }
+
+    .progress-step.completed + .progress-connector {
+        background: var(--success-green);
+    }
+
+    .order-summary-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .card-header-custom {
+        background: linear-gradient(135deg, var(--primary-yellow), #ffd700);
+        color: var(--primary-dark);
+        padding: 20px;
+        border: none;
+    }
+
+    .card-header-custom h4 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .order-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 25px;
+    }
+
+    .info-item {
+        text-align: center;
+    }
+
+    .info-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .total-amount {
+        font-size: 1.8rem;
+        color: var(--success-green);
+    }
+
+    .order-items-table {
+        background: white;
+    }
+
+    .table th {
+        border-top: none;
+        background: var(--light-gray);
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .payment-methods-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .payment-method-option {
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .payment-method-option:hover {
+        border-color: var(--primary-yellow);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(243, 205, 33, 0.3);
+    }
+
+    .payment-method-option.selected {
+        border-color: var(--primary-yellow);
+        background: rgba(243, 205, 33, 0.1);
+    }
+
+    .payment-method-option.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .payment-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        color: var(--info-blue);
+    }
+
+    .payment-method-option.selected .payment-icon {
+        color: var(--primary-yellow);
+    }
+
+    .method-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 5px;
+    }
+
+    .method-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .payment-summary-card {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .summary-row.total {
+        border-top: 2px solid var(--border-color);
+        padding-top: 10px;
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--success-green);
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .btn-back {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .btn-pay {
+        background: var(--success-green);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+
+    .btn-pay:hover:not(:disabled) {
+        background: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-pay:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+    }
+
+    .security-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--success-green);
+        font-size: 0.9rem;
+        margin-top: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .checkout-header h1 {
+            font-size: 2rem;
+        }
+        
+        .order-info-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .action-buttons {
+            grid-template-columns: 1fr;
+        }
+        
+        .progress-connector {
+            width: 40px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Checkout Header -->
+                <div class="checkout-header">
+                    <h1><i class="fas fa-credit-card"></i> Secure Checkout</h1>
+                    <p>Complete your order payment securely</p>
+                    
+                    <!-- Checkout Progress -->
+                    <div class="checkout-progress">
+                        <div class="progress-step completed">
+                            <div class="step-number"><i class="fas fa-check"></i></div>
+                            <span>Order Placed</span>
+                        </div>
+                        <div class="progress-connector"></div>
+                        <div class="progress-step active">
+                            <div class="step-number">2</div>
+                            <span>Payment</span>
+                        </div>
+                        <div class="progress-connector"></div>
+                        <div class="progress-step">
+                            <div class="step-number">3</div>
+                            <span>Confirmation</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Order Summary Section -->
+                    <div class="col-lg-5 mb-4">
+                        <div class="order-summary-card">
+                            <div class="card-header-custom">
+                                <h4><i class="fas fa-shopping-cart"></i> Order Summary #{{ order.order_id }}</h4>
+                            </div>
+                            
+                            <div class="order-info-grid">
+                                <div class="info-item">
+                                    <div class="info-label">Order Date</div>
+                                    <div class="info-value">{{ order.order_time.strftime('%b %d, %Y') }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Order Time</div>
+                                    <div class="info-value">{{ order.order_time.strftime('%I:%M %p') }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Table</div>
+                                    <div class="info-value">{{ order.table.table_number if order.table else 'Takeaway' }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Status</div>
+                                    <div class="info-value">
+                                        <span class="badge status-{{ order.status.lower() }}">{{ order.status.title() }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive order-items-table">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-right">Price</th>
+                                            <th class="text-right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in order.order_items %}
+                                        <tr>
+                                            <td><strong>{{ item.menu_item.name }}</strong></td>
+                                            <td class="text-center">{{ item.quantity }}</td>
+                                            <td class="text-right">${{ "%.2f"|format(item.unit_price) }}</td>
+                                            <td class="text-right">${{ "%.2f"|format(item.unit_price * item.quantity) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="payment-summary-card">
+                                <div class="summary-row">
+                                    <span>Subtotal</span>
+                                    <span>${{ "%.2f"|format(order.total_amount) }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Tax</span>
+                                    <span>$0.00</span>
+                                </div>
+                                <div class="summary-row total">
+                                    <span>Total</span>
+                                    <span class="total-amount">${{ "%.2f"|format(order.total_amount) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Methods Section -->
+                    <div class="col-lg-7">
+                        <div class="payment-methods-card">
+                            <div class="card-header-custom">
+                                <h4><i class="fas fa-credit-card"></i> Select Payment Method</h4>
+                            </div>
+                            
+                            <form id="payment-form" class="p-4">
+                                <input type="hidden" id="order-id" value="{{ order.order_id }}">
+                                <input type="hidden" id="order-amount" value="{{ order.total_amount }}">
+                                
+                                <div class="row">
+                                    {% for method in payment_methods %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="payment-method-card" data-method="{{ method.id }}">
+                                            <div class="payment-method-option {{ 'disabled' if not method.enabled }}">
+                                                <div class="payment-icon">
+                                                    <i class="{{ method.icon }}"></i>
+                                                </div>
+                                                <div class="method-name">{{ method.name }}</div>
+                                                <div class="method-description">{{ method.description }}</div>
+                                                {% if not method.enabled %}
+                                                <span class="badge bg-secondary mt-2">Coming Soon</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <!-- Payment Details -->
+                                <div id="payment-details" class="mt-4" style="display: none;">
+                                    <h5 class="mb-3"><i class="fas fa-file-invoice"></i> Payment Details</h5>
+                                    <div id="payment-form-fields" class="payment-form-fields">
+                                        <!-- Dynamic payment fields will be inserted here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Security Badge -->
+                                <div class="security-badge">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Your payment information is secure and encrypted</span>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('customer.orders') }}" class="btn-back">
+                                        <i class="fas fa-arrow-left"></i> Back to Orders
+                                    </a>
+                                    <button type="submit" id="process-payment-btn" class="btn-pay" disabled>
+                                        <i class="fas fa-lock"></i> Complete Payment
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Processing Modal -->
+<div class="modal fade" id="payment-processing-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <div class="spinner-grow text-warning" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <h4>Processing Your Payment</h4>
+                <p class="text-muted">Please wait while we securely process your payment.</p>
+                <div class="progress mt-4" style="height: 10px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 100%"></div>
+                </div>
+                <div class="mt-3 small text-muted">This may take a few moments. Please don't close this window.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="payment-success-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                </div>
+                <h4>Payment Successful!</h4>
+                <p class="text-muted">Your order has been paid successfully.</p>
+                <div class="d-grid gap-2 col-8 mx-auto mt-4">
+                    <button id="view-receipt-btn" class="btn btn-success">
+                        <i class="fas fa-receipt me-2"></i> View Receipt
+                    </button>
+                    <button id="return-to-orders-btn" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i> Return to Orders
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="payment-error-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="fas fa-exclamation-circle text-danger" style="font-size: 5rem;"></i>
+                </div>
+                <h4>Payment Failed</h4>
+                <p id="payment-error-message" class="text-muted">There was an issue processing your payment.</p>
+                <div class="d-grid gap-2 col-8 mx-auto mt-4">
+                    <button id="try-again-btn" class="btn btn-primary">
+                        <i class="fas fa-redo me-2"></i> Try Again
+                    </button>
+                    <button id="contact-support-btn" class="btn btn-outline-secondary">
+                        <i class="fas fa-headset me-2"></i> Contact Support
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Extra styles for payment-related elements -->
+<style>
+    /* Payment form fields styling */
+    .payment-form-fields input {
+        padding: 12px 15px;
+        border-radius: 8px;
+        border: 2px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+    
+    .payment-form-fields input:focus {
+        border-color: var(--primary-yellow);
+        box-shadow: 0 0 0 3px rgba(243, 205, 33, 0.2);
+    }
+    
+    .payment-form-fields label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 8px;
+    }
+    
+    /* Card information styling */
+    .card-icon {
+        position: absolute;
+        right: 15px;
+        top: 12px;
+        color: #6c757d;
+    }
+    
+    /* For credit card input fields */
+    .card-element {
+        position: relative;
+    }
+    
+    /* Enhanced security indicators */
+    .security-indicators {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        justify-content: center;
+    }
+    
+    .security-indicator {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .security-indicator i {
+        margin-right: 5px;
+        color: var(--success-green);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentOptions = document.querySelectorAll('.payment-method-option');
+    const paymentDetails = document.getElementById('payment-details');
+    const paymentFormFields = document.getElementById('payment-form-fields');
+    const processPaymentBtn = document.getElementById('process-payment-btn');
+    const paymentForm = document.getElementById('payment-form');
+    let selectedPaymentMethod = null;
+    let receiptUrl = null;
+
+    // Add animations on page load
+    gsapPageAnimation();
+
+    // Payment option selection
+    paymentOptions.forEach(option => {
+        if(!option.classList.contains('disabled')) {
+            option.addEventListener('click', function() {
+                const methodCard = this.closest('.payment-method-card');
+                const method = methodCard.dataset.method;
+                
+                // Remove previous selections
+                paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Select current option with animation
+                this.classList.add('selected');
+                animateSelection(this);
+                selectedPaymentMethod = method;
+
+                // Show payment details
+                showPaymentDetails(method);
+                processPaymentBtn.disabled = false;
+                
+                // Scroll to payment details if on mobile
+                if(window.innerWidth < 768) {
+                    setTimeout(() => {
+                        paymentDetails.scrollIntoView({ behavior: 'smooth' });
+                    }, 200);
+                }
+            });
+        }
+    });
+
+    function animateSelection(element) {
+        // Simple pulse animation
+        element.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            element.style.transform = 'scale(1)';
+        }, 200);
+    }
+    
+    function gsapPageAnimation() {
+        // If GSAP is available, use it for animations
+        if(typeof gsap !== 'undefined') {
+            gsap.from('.checkout-header', {opacity: 0, y: -30, duration: 0.8, ease: 'power3.out'});
+            gsap.from('.order-summary-card', {opacity: 0, x: -30, duration: 0.8, delay: 0.3, ease: 'power3.out'});
+            gsap.from('.payment-methods-card', {opacity: 0, x: 30, duration: 0.8, delay: 0.5, ease: 'power3.out'});
+            gsap.from('.payment-method-option', {opacity: 0, y: 20, duration: 0.8, stagger: 0.1, delay: 0.7, ease: 'power3.out'});
+        }
+    }
+
+    function showPaymentDetails(method) {
+        // Show payment details section with slide down animation
+        if(paymentDetails.style.display === 'none') {
+            paymentDetails.style.display = 'block';
+            paymentDetails.style.opacity = '0';
+            paymentDetails.style.maxHeight = '0';
+            setTimeout(() => {
+                paymentDetails.style.transition = 'all 0.5s ease';
+                paymentDetails.style.opacity = '1';
+                paymentDetails.style.maxHeight = '1000px';
+            }, 10);
+        }
+        
+        // Generate payment form fields based on method
+        let fields = '';
+        switch(method) {
+            case 'card':
+                fields = `
+                    <div class="row mb-3">
+                        <div class="col-12 mb-3">
+                            <label>Card Holder Name</label>
+                            <input type="text" class="form-control" placeholder="John Doe" required>
+                        </div>
+                        <div class="col-12 mb-3 card-element">
+                            <label>Card Number</label>
+                            <input type="text" class="form-control" placeholder="•••• •••• •••• ••••" maxlength="19" required>
+                            <div class="card-icon">
+                                <i class="fab fa-cc-visa"></i>
+                                <i class="fab fa-cc-mastercard"></i>
+                                <i class="fab fa-cc-amex"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Expiration Date</label>
+                            <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>CVV</label>
+                            <input type="password" class="form-control" placeholder="•••" maxlength="4" required>
+                        </div>
+                    </div>
+                    <div class="security-indicators mb-3">
+                        <div class="security-indicator">
+                            <i class="fas fa-lock"></i> Secure
+                        </div>
+                        <div class="security-indicator">
+                            <i class="fas fa-shield-alt"></i> Encrypted
+                        </div>
+                        <div class="security-indicator">
+                            <i class="fas fa-check-circle"></i> PCI Compliant
+                        </div>
+                    </div>
+                `;
+                break;
+            case 'cash':
+                fields = `
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-info-circle me-2 text-primary" style="font-size: 1.5rem;"></i>
+                            <strong>Cash Payment Instructions</strong>
+                        </div>
+                        <p class="mb-0">Please have the exact amount of <strong>${{ "%.2f"|format(order.total_amount) }}</strong> ready for payment.</p>
+                        <p class="mb-0">You can pay at the counter or to your server when your order is delivered.</p>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmCash" required>
+                        <label class="form-check-label" for="confirmCash">
+                            I confirm that I will pay the full amount in cash.
+                        </label>
+                    </div>
+                `;
+                break;
+            case 'digital_wallet':
+                fields = `
+                    <div class="text-center mb-4">
+                        <div class="d-flex justify-content-center gap-4 mb-4">
+                            <div class="wallet-option">
+                                <i class="fab fa-apple-pay fa-3x"></i>
+                            </div>
+                            <div class="wallet-option">
+                                <i class="fab fa-google-pay fa-3x"></i>
+                            </div>
+                            <div class="wallet-option">
+                                <i class="fab fa-paypal fa-3x"></i>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Mobile Number / Wallet ID</label>
+                            <input type="text" class="form-control" placeholder="Enter your registered number" required>
+                        </div>
+                        <div class="alert alert-light border">
+                            <small>You'll receive a verification code on your registered device.</small>
+                        </div>
+                    </div>
+                `;
+                break;
+            default:
+                fields = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-terminal fa-3x mb-3 text-secondary"></i>
+                        <h5>Terminal Payment</h5>
+                        <p class="text-muted">Follow the instructions on the payment terminal to complete your payment.</p>
+                        <div class="alert alert-light border mt-3">
+                            <small>Your server will bring the payment terminal to your table.</small>
+                        </div>
+                    </div>
+                `;
+        }
+        
+        // Update payment fields with animation
+        paymentFormFields.style.opacity = '0';
+        setTimeout(() => {
+            paymentFormFields.innerHTML = fields;
+            paymentFormFields.style.transition = 'opacity 0.5s ease';
+            paymentFormFields.style.opacity = '1';
+            
+            // Add listeners for card formatting if credit card selected
+            if(method === 'card') {
+                setupCardFormatting();
+            }
+        }, 300);
+    }
+    
+    function setupCardFormatting() {
+        // Add card number formatting
+        const cardInput = paymentFormFields.querySelector('input[placeholder*="••••"]');
+        if(cardInput) {
+            cardInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 0) {
+                    value = value.match(new RegExp('.{1,4}', 'g')).join(' ');
+                }
+                e.target.value = value;
+            });
+        }
+        
+        // Add expiration date formatting
+        const expInput = paymentFormFields.querySelector('input[placeholder="MM/YY"]');
+        if(expInput) {
+            expInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value;
+            });
+        }
+    }
+
+    // Process payment
+    paymentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!selectedPaymentMethod) {
+            showNotification('Error', 'Please select a payment method', 'danger');
+            return;
+        }
+
+        // Show processing modal
+        const processingModal = new bootstrap.Modal(document.getElementById('payment-processing-modal'));
+        processingModal.show();
+
+        // Prepare payment data
+        const paymentData = {
+            order_id: document.getElementById('order-id').value,
+            payment_method: selectedPaymentMethod,
+            amount: document.getElementById('order-amount').value
+        };
+
+        // Process payment with simulated delay for better UX
+        setTimeout(() => {
+            // Process payment
+            fetch('{{ url_for("payment.process_payment") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify(paymentData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                processingModal.hide();
+                
+                if (data.success) {
+                    // Payment successful
+                    receiptUrl = data.receipt_url;
+                    showSuccessModal();
+                } else {
+                    // Payment failed
+                    showErrorModal(data.message);
+                }
+            })
+            .catch(error => {
+                processingModal.hide();
+                console.error('Payment error:', error);
+                showErrorModal('An error occurred while processing your payment');
+            });
+        }, 1500);
+    });
+    
+    // Success modal handling
+    function showSuccessModal() {
+        const successModal = new bootstrap.Modal(document.getElementById('payment-success-modal'));
+        successModal.show();
+        
+        // Setup receipt button
+        document.getElementById('view-receipt-btn').addEventListener('click', function() {
+            if (receiptUrl) {
+                window.location.href = receiptUrl;
+            } else {
+                window.location.href = "{{ url_for('customer.orders') }}";
+            }
+        });
+        
+        // Setup return button
+        document.getElementById('return-to-orders-btn').addEventListener('click', function() {
+            window.location.href = "{{ url_for('customer.orders') }}";
+        });
+    }
+    
+    // Error modal handling
+    function showErrorModal(message) {
+        const errorModal = new bootstrap.Modal(document.getElementById('payment-error-modal'));
+        document.getElementById('payment-error-message').textContent = message || 'There was a problem processing your payment.';
+        errorModal.show();
+        
+        // Setup try again button
+        document.getElementById('try-again-btn').addEventListener('click', function() {
+            errorModal.hide();
+        });
+        
+        // Setup support button
+        document.getElementById('contact-support-btn').addEventListener('click', function() {
+            window.location.href = "{{ url_for('main.contact') }}";
+        });
+    }
+});
+</script>
+{% endblock %}
+});
+</script>
+{% endblock %}

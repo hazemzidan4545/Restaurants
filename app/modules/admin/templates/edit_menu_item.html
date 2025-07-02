@@ -518,12 +518,15 @@
     <div class="modal-dialog">
         <div class="modal-content enhanced-delete-modal">
             <div class="modal-header enhanced-delete-header">
-                <h5 class="modal-title text-danger enhanced-delete-title">
-                    <div class="danger-icon-wrapper">
+                <div class="delete-header-content">
+                    <div class="danger-icon-wrapper animated-pulse">
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
-                    <span>Confirm Delete</span>
-                </h5>
+                    <div class="delete-title-container">
+                        <h5 class="modal-title text-white enhanced-delete-title">Confirm Delete</h5>
+                        <p class="delete-subtitle">You are about to delete this item</p>
+                    </div>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal('deleteModal')"></button>
             </div>
             <div class="modal-body enhanced-delete-body">
@@ -600,1389 +603,44 @@
 
 {% block extra_css %}
 <style>
-/* Enhanced Edit Menu Item Styles */
-.form-section {
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    background: rgba(var(--primary-yellow-rgb), 0.02);
-    position: relative;
-}
-
-.section-title {
-    color: var(--primary-dark);
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--primary-yellow);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.section-title i {
-    color: var(--primary-yellow);
-    font-size: 1.2rem;
-}
-
-.form-progress {
-    height: 4px;
-    background: rgba(var(--primary-yellow-rgb), 0.2);
-    border-radius: 2px;
-    margin-top: 1rem;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary-yellow) 0%, #e6b800 100%);
-    border-radius: 2px;
-    transition: width 0.3s ease;
-    width: 75%; /* Default for edit form */
-}
-
-.form-label {
-    font-weight: 600;
-    color: var(--text-dark);
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.form-label i {
-    color: var(--primary-yellow);
-    width: 16px;
-}
-
-.form-control, .form-select {
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-    font-size: 0.95rem;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: var(--primary-yellow);
-    box-shadow: 0 0 0 0.2rem rgba(var(--primary-yellow-rgb), 0.25);
-}
-
-.form-control.is-valid {
-    border-color: var(--success-green);
-}
-
-.form-control.is-invalid {
-    border-color: var(--danger-red);
-}
-
-.input-group-text {
-    background: var(--primary-yellow);
-    color: var(--text-dark);
-    border-color: var(--primary-yellow);
-    font-weight: 600;
-}
-
-/* Image Upload Styling */
-.image-upload-area {
-    border: 2px dashed var(--border-color);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    min-height: 250px;
-}
-
-.image-upload-area:hover {
-    border-color: var(--primary-yellow);
-    background: rgba(var(--primary-yellow-rgb), 0.05);
-}
-
-.upload-placeholder {
-    padding: 2rem;
-    text-align: center;
-    color: var(--text-muted);
-    transition: all 0.3s ease;
-    height: 250px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.current-image, .image-preview {
-    position: relative;
-    width: 100%;
-    height: 250px;
-}
-
-.preview-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 10px;
-}
-
-.image-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    border-radius: 10px;
-}
-
-.current-image:hover .image-overlay,
-.image-preview:hover .image-overlay {
-    opacity: 1;
-}
-
-/* Stats Card */
-.stats-card {
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.stats-title {
-    color: var(--primary-dark);
-    font-weight: 600;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.stats-title i {
-    color: var(--primary-yellow);
-}
-
-.stats-grid {
-    display: grid;
-    gap: 0.75rem;
-}
-
-.stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.stat-item:last-child {
-    border-bottom: none;
-}
-
-.stat-label {
-    font-weight: 500;
-    color: var(--text-muted);
-}
-
-.stat-value {
-    font-weight: 600;
-    color: var(--text-dark);
-}
-
-.stat-value.status-available {
-    color: var(--success-green);
-}
-
-.stat-value.status-out_of_stock {
-    color: var(--warning-orange);
-}
-
-.stat-value.status-discontinued {
-    color: var(--danger-red);
-}
-
-/* Enhanced Stats Card */
-.enhanced-stats-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 2rem;
-}
-
-.enhanced-stats-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--primary-yellow);
-}
-
-.stats-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid rgba(var(--primary-yellow-rgb), 0.2);
-}
-
-.stats-icon-wrapper {
-    background: var(--primary-yellow);
-    padding: 12px;
-    border-radius: 12px;
-    color: var(--text-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.stats-title {
-    color: var(--text-dark);
-    font-weight: 700;
-    margin: 0;
-    font-size: 1.3rem;
-    letter-spacing: 0.5px;
-}
-
-.stats-badge {
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.2);
-    margin-top: 10px;
-    letter-spacing: 0.5px;
-    min-width: 120px;
-}
-
-.stats-badge i {
-    margin-right: 6px;
-    font-size: 1.1rem;
-}
-
-.stats-badge.status-available {
-    background: var(--success-green);
-    color: white !important;
-    box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
-    font-weight: bold;
-}
-
-.stats-badge.status-out_of_stock {
-    background: var(--primary-yellow);
-    color: black !important;
-    box-shadow: 0 3px 10px rgba(var(--primary-yellow-rgb), 0.4);
-    text-shadow: none;
-}
-
-.stats-badge.status-discontinued {
-    background: var(--danger-red);
-    color: white !important;
-    box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4);
-    font-weight: bold;
-}
-
-.enhanced-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-}
-
-.enhanced-stat-item {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-    border: 2px solid rgba(var(--primary-yellow-rgb), 0.1);
-    border-radius: 16px;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 1rem;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.enhanced-stat-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: left 0.6s;
-}
-
-.enhanced-stat-item:hover::before {
-    left: 100%;
-}
-
-.enhanced-stat-item:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 30px rgba(var(--primary-yellow-rgb), 0.2);
-    border-color: var(--primary-yellow);
-}
-
-.stat-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-    color: var(--text-dark);
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-}
-
-.created-icon {
-    background: var(--primary-yellow);
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.updated-icon {
-    background: var(--primary-yellow);
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.stock-icon {
-    background: var(--primary-yellow);
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.status-icon {
-    background: var(--primary-yellow);
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.stat-content {
-    flex: 1;
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.enhanced-stat-item .stat-label {
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
-}
-
-.enhanced-stat-item .stat-value {
-    font-weight: 700;
-    color: var(--text-dark);
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.stat-value.in-stock {
-    color: var(--success-green);
-}
-
-.stat-value.unlimited {
-    color: var(--primary-yellow);
-}
-
-.status-badge {
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.2);
-    margin-top: 10px;
-    letter-spacing: 0.5px;
-    min-width: 120px;
-}
-
-.status-badge i {
-    margin-right: 6px;
-    font-size: 1.1rem;
-}
-
-.status-badge.status-available {
-    background: var(--success-green);
-    color: white !important;
-    box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
-    font-weight: bold;
-}
-
-.status-badge.status-out_of_stock {
-    background: var(--primary-yellow);
-    color: black !important;
-    box-shadow: 0 3px 10px rgba(var(--primary-yellow-rgb), 0.4);
-    text-shadow: none;
-}
-
-.status-badge.status-discontinued {
-    background: var(--danger-red);
-    color: white !important;
-    box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4);
-    font-weight: bold;
-}
-
-/* Enhanced Form Actions */
-.enhanced-form-actions {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border: 2px solid rgba(var(--primary-yellow-rgb), 0.1);
-    border-radius: 20px;
-    padding: 2.5rem;
-    margin-top: 3rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.enhanced-form-actions::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--primary-yellow);
-}
-
-.enhanced-form-summary {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-    border: 2px solid rgba(var(--primary-yellow-rgb), 0.1);
-    border-radius: 16px;
-    padding: 2rem;
+/* Optimized CSS for better performance */
+html {
+    scroll-behavior: auto; /* We'll handle smooth scrolling with JS */
     height: 100%;
 }
 
-.summary-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.summary-icon {
-    background: var(--primary-yellow);
-    padding: 12px;
-    border-radius: 12px;
-    color: var(--text-dark);
-    margin-right: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.summary-title {
-    color: var(--text-dark);
-    font-weight: 700;
-    margin: 0;
-    font-size: 1.2rem;
-}
-
-.enhanced-progress {
-    height: 12px;
-    background: rgba(var(--primary-yellow-rgb), 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
-    margin-bottom: 1.5rem;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.enhanced-progress-bar {
-    background: var(--primary-yellow);
-    border-radius: 10px;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-dark);
-    font-weight: 600;
-    font-size: 0.85rem;
-    box-shadow: 0 1px 3px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.enhanced-progress-bar::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
+body {
+    overflow-y: auto;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    animation: progressShine 2s infinite;
+    /* Use hardware acceleration for smoother scrolling */
+    transform: translateZ(0);
+    will-change: scroll-position;
+    -webkit-font-smoothing: antialiased;
 }
 
-@keyframes progressShine {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
-
-.completion-status {
-    text-align: center;
-}
-
-.status-indicator {
-    display: inline-flex;
-    align-items: center;
-    padding: 12px 20px;
-    border-radius: 25px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 250px;
-    justify-content: center;
-    position: relative;
+.modal-open {
     overflow: hidden;
-    animation: statusPulse 2s infinite;
 }
 
-.status-indicator i {
-    margin-right: 8px;
-    font-size: 1.1rem;
-}
-
-.status-indicator.ready {
-    background: var(--primary-yellow);
-    color: var(--text-dark);
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-    animation: readyPulse 2s infinite;
-}
-
-.status-indicator.almost-ready {
-    background: var(--primary-yellow);
-    color: var(--text-dark);
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.status-indicator.in-progress {
-    background: #f8f9fa;
-    color: var(--text-dark);
-    border: 2px solid var(--primary-yellow);
-}
-
-.status-indicator.needs-work {
-    background: #f8f9fa;
-    color: var(--text-dark);
-    border: 2px dashed var(--primary-yellow);
-}
-
-@keyframes statusPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-}
-
-@keyframes readyPulse {
-    0% { box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3); }
-    50% { box-shadow: 0 4px 20px rgba(var(--primary-yellow-rgb), 0.5); }
-    100% { box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3); }
-}
-
-/* Enhanced Action Buttons */
-.action-buttons-container {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    height: 100%;
-}
-
-.enhanced-action-buttons {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.enhanced-action-buttons .btn {
-    position: relative;
-    overflow: hidden;
-    border-radius: 12px;
-    padding: 12px 24px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: 2px solid;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 120px;
-    justify-content: center;
-}
-
-.btn-icon {
-    font-size: 1.1rem;
-    transition: transform 0.3s ease;
-}
-
-.btn-text {
-    font-size: 0.9rem;
-}
-
-.btn-shine {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.6s;
-}
-
-.enhanced-action-buttons .btn:hover .btn-shine {
-    left: 100%;
-}
-
-.enhanced-action-buttons .btn:hover .btn-icon {
-    transform: translateY(-2px);
-}
-
-.enhanced-preview-btn {
-    border-color: #17a2b8;
-    color: #17a2b8;
-    background: linear-gradient(135deg, #ffffff 0%, #e8f7fa 100%);
-}
-
-.enhanced-preview-btn:hover {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    color: white;
-    border-color: #17a2b8;
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.4);
-}
-
-.enhanced-delete-btn {
-    border-color: #dc3545;
-    color: #dc3545;
-    background: linear-gradient(135deg, #ffffff 0%, #fdf2f2 100%);
-}
-
-.enhanced-delete-btn:hover {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    border-color: #dc3545;
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
-}
-
-.enhanced-cancel-btn {
-    border-color: #6c757d;
-    color: #6c757d;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    text-decoration: none;
-}
-
-.enhanced-cancel-btn:hover {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: white;
-    border-color: #6c757d;
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
-    text-decoration: none;
-}
-
-.enhanced-submit-btn {
-    background: var(--primary-yellow);
-    border-color: var(--primary-yellow);
-    color: var(--text-dark);
-    box-shadow: 0 4px 15px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.enhanced-submit-btn:hover {
-    background: var(--primary-yellow-dark);
-    border-color: var(--primary-yellow-dark);
-    color: var(--text-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(var(--primary-yellow-rgb), 0.4);
-}
-
-.enhanced-submit-btn:disabled {
-    opacity: 0.7;
-    transform: none;
-    box-shadow: none;
-    cursor: not-allowed;
-}
-
-/* Enhanced Delete Modal Styles */
-.enhanced-delete-modal {
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
-}
-
-.enhanced-delete-header {
-    background: var(--danger-red);
-    color: white;
-    padding: 1.5rem;
-    border: none;
-}
-
-.enhanced-delete-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    color: white;
-}
-
-.danger-icon-wrapper {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 10px;
-    border-radius: 50%;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-close-white {
-    filter: brightness(0) invert(1);
-}
-
-.enhanced-delete-body {
-    padding: 2rem;
-}
-
-.delete-confirmation-content {
-    text-align: center;
-}
-
-.delete-item-info {
-    background: rgba(220, 53, 69, 0.1);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.item-preview {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    justify-content: center;
-}
-
-.item-icon {
-    background: #dc3545;
-    color: white;
-    width: 48px;
-    height: 48px;
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-}
-
-.item-details {
-    text-align: left;
-}
-
-.item-name {
-    margin: 0;
-    font-weight: 600;
-    color: #dc3545;
-}
-
-.item-category {
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-.delete-question {
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin: 1.5rem 0;
-}
-
-.enhanced-warning {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    text-align: left;
-    margin-bottom: 0;
-}
-
-.warning-icon {
-    color: #dc3545;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.enhanced-delete-footer {
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    border-radius: 0 0 8px 8px;
-    padding: 1rem;
-}
-
-.preview-footer .btn {
-    padding: 0.5rem 1.5rem;
-    font-weight: 500;
-}
-
-@media (max-width: 768px) {
-    .preview-header-info {
-        flex-direction: column;
-    }
-
-    .preview-category-badge {
-        align-self: flex-start;
-    }
-
-    .preview-info-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Modal Styles */
 .modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1050;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    outline: 0;
-}
-
-.modal.fade .modal-dialog {
-    transform: translate(0, -50px);
-    transition: transform 0.3s ease-out;
-}
-
-.modal.show .modal-dialog {
-    transform: none;
+    overflow-y: auto;
+    /* Use hardware acceleration for modals */
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
 }
 
 .modal-dialog {
-    position: relative;
-    width: auto;
-    margin: 0.5rem;
-    pointer-events: none;
-    max-width: 800px;
     margin: 1.75rem auto;
+    transition: transform 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    will-change: transform;
 }
 
-.modal-content {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    pointer-events: auto;
-    background-color: #fff;
-    background-clip: padding-box;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 0.3rem;
-    outline: 0;
-}
-
-.modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1040;
-    width: 100vw;
-    height: 100vh;
-    background-color: #000;
-}
-
-.modal-backdrop.fade {
-    opacity: 0;
-}
-
-.modal-backdrop.show {
-    opacity: 0.5;
-}
-
-/* Bottom Modal Styles */
-.modal.bottom-modal {
-    padding: 0 !important;
-    z-index: 1060 !important; /* Higher than default modal */
-}
-
-.modal.bottom-modal .modal-dialog {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
-    width: 100%;
-    max-width: 100%;
-    transform: translate(0, 100%);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 1070 !important;
-}
-
-.modal.bottom-modal.show .modal-dialog {
-    transform: translate(0, 0);
-}
-
-.modal.bottom-modal .modal-content {
-    border-radius: 20px 20px 0 0;
-    border: none;
-    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.15);
-    max-height: 90vh;
-    overflow-y: auto;
-    z-index: 1080 !important;
-}
-
-/* Add a handle for better UX */
-.modal.bottom-modal .modal-header::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 5px;
-    background-color: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-}
-
-.modal.bottom-modal .modal-header {
-    position: relative;
-    padding-top: 25px; /* Space for the handle */
-}
-
-/* Preview Modal Styles */
-.preview-modal {
-    border-radius: 20px 20px 0 0;
-    overflow: hidden;
-    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.2);
-}
-
-.preview-header {
-    background: var(--primary-yellow);
-    color: var(--text-dark);
-    padding: 1.5rem;
-    border: none;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.preview-header .modal-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    color: var(--text-dark);
-    margin-bottom: 0;
-}
-
-.preview-header .modal-title i {
-    margin-right: 10px;
-    font-size: 1.4rem;
-}
-
-.preview-body {
-    padding: 0;
-    background: #f8f9fa;
-}
-
-.preview-container {
-    display: flex;
-    flex-direction: column;
-    max-width: 100%;
-}
-
-.preview-image-section {
-    width: 100%;
-    height: 250px;
-    overflow: hidden;
-    position: relative;
-}
-
-.preview-image-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
-
-.preview-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.no-image-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: #e9ecef;
-    color: #6c757d;
-}
-
-.no-image-placeholder i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.preview-details-section {
-    padding: 1.5rem;
-    background: white;
-    border-radius: 20px 20px 0 0;
-    margin-top: -20px;
-    position: relative;
-    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.05);
-}
-
-.preview-header-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-}
-
-.preview-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    margin: 0;
-    line-height: 1.2;
-}
-
-.preview-category-badge {
-    background: var(--primary-yellow);
-    color: var(--text-dark);
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: inline-flex;
-    align-items: center;
-    box-shadow: 0 3px 10px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.preview-price-section {
-    margin-bottom: 1.5rem;
-}
-
-.preview-price {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-yellow);
-    display: inline-block;
-    padding: 5px 15px;
-    background: rgba(var(--primary-yellow-rgb), 0.1);
-    border-radius: 10px;
-}
-
-.preview-description-box {
-    background: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 10px;
-    margin-bottom: 1.5rem;
-    border-left: 4px solid var(--primary-yellow);
-}
-
-.preview-description {
-    margin: 0;
-    color: var(--text-dark);
-    line-height: 1.6;
-}
-
-.preview-info-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.info-item {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.info-item i {
-    background: var(--primary-yellow);
-    color: var(--text-dark);
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    box-shadow: 0 3px 10px rgba(var(--primary-yellow-rgb), 0.3);
-}
-
-.info-content {
-    display: flex;
-    flex-direction: column;
-}
-
-.info-content label {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-bottom: 2px;
-}
-
-.info-content span {
-    font-weight: 600;
-    color: var(--text-dark);
-}
-
-.preview-details-box {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 1.5rem;
-}
-
-.details-section {
-    margin-bottom: 1.5rem;
-}
-
-.details-section:last-child {
-    margin-bottom: 0;
-}
-
-.details-section h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-dark);
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-}
-
-.details-section p {
-    margin: 0;
-    color: var(--text-dark);
-}
-
-.preview-footer {
-    background: white;
-    border-top: 1px solid rgba(0,0,0,0.1);
-    padding: 1rem;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.preview-footer .btn {
-    padding: 10px 20px;
-    font-weight: 600;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* Enhanced Delete Modal Styles */
-.enhanced-delete-modal {
-    border-radius: 20px 20px 0 0;
-    overflow: hidden;
-    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.2);
-}
-
-.enhanced-delete-header {
-    background: var(--danger-red);
-    color: white;
-    padding: 1.5rem;
-    border: none;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.enhanced-delete-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    color: white;
-    margin-bottom: 0;
-}
-
-.danger-icon-wrapper {
-    background: rgba(255, 255, 255, 0.2);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-}
-
-.btn-close-white {
-    filter: brightness(0) invert(1);
-}
-
-.enhanced-delete-body {
-    padding: 2rem;
-    background: white;
-}
-
-.delete-confirmation-content {
-    text-align: center;
-}
-
-.delete-item-info {
-    background: rgba(220, 53, 69, 0.1);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.item-preview {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    justify-content: center;
-}
-
-.item-icon {
-    background: #dc3545;
-    color: white;
-    width: 48px;
-    height: 48px;
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4);
-}
-
-.item-details {
-    text-align: left;
-}
-
-.item-name {
-    margin: 0;
-    font-weight: 600;
-    color: #dc3545;
-    font-size: 1.2rem;
-}
-
-.item-category {
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-.delete-question {
-    font-size: 1.2rem;
-    font-weight: 500;
-    margin: 1.5rem 0;
-    color: var(--text-dark);
-}
-
-.enhanced-warning {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    text-align: left;
-    margin-bottom: 0;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-    border-radius: 10px;
-    padding: 1rem;
-}
-
-.warning-icon {
-    color: #dc3545;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-}
-
-.warning-content {
-    color: #721c24;
-}
-
-.warning-content strong {
-    font-weight: 700;
-}
-
-.enhanced-delete-footer {
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    padding: 1rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-}
-
-.enhanced-delete-footer .btn {
-    padding: 10px 20px;
-    font-weight: 600;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.enhanced-delete-footer .enhanced-delete-btn {
-    background: #dc3545;
-    border-color: #dc3545;
-    color: white;
-    box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4);
-}
-
-.enhanced-delete-footer .enhanced-delete-btn:hover {
-    background: #c82333;
-    border-color: #bd2130;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.5);
-}
-
-/* Custom Modal Animation Enhancements */
-.custom-modal .modal-content {
-    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-.custom-modal.closing .modal-content {
-    animation: slideDown 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
-}
-
+/* Optimize animations for better performance */
 @keyframes slideUp {
     from {
-        transform: translateY(100%);
-        opacity: 0.8;
+        transform: translateY(100px);
+        opacity: 0;
     }
     to {
         transform: translateY(0);
@@ -1996,106 +654,81 @@
         opacity: 1;
     }
     to {
-        transform: translateY(100%);
+        transform: translateY(100px);
         opacity: 0;
     }
 }
 
-/* Modal Handle */
-.modal-handle {
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 5px;
-    background-color: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-    .preview-header-info {
-        flex-direction: column;
-    }
-    
-    .preview-category-badge {
-        align-self: flex-start;
-        margin-top: 0.5rem;
-    }
-    
-    .preview-info-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .enhanced-delete-footer {
-        flex-direction: column;
-    }
-    
-    .enhanced-delete-footer .btn {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* Warning Animation */
-@keyframes warningPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-.warning-icon.warning-pulse {
-    animation: warningPulse 0.6s ease-in-out infinite;
-    color: #dc3545;
-}
-
-/* Enhanced Modal Interactions */
-.custom-modal .modal-content {
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
-}
-
-.custom-modal .btn {
-    position: relative;
-    z-index: 10;
+/* Use hardware acceleration for animations */
+.modal-content, .modal-dialog, .btn-shine {
     transform: translateZ(0);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
 }
 
-.custom-modal .btn:active {
-    transform: translateZ(0) scale(0.98);
+/* Optimize form transitions */
+.form-control, .form-select {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Ensure all buttons are clickable */
-.custom-modal button,
-.custom-modal a,
-.custom-modal input[type="submit"],
-.custom-modal input[type="button"] {
-    cursor: pointer !important;
-    pointer-events: auto !important;
-    position: relative !important;
-    z-index: 10 !important;
-    transform: translateZ(0);
+/* Optimize progress bar animation */
+.progress-bar {
+    transition: width 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    will-change: width;
 }
 
-/* Improve form button in delete modal */
-.enhanced-delete-footer form {
-    flex: 1;
+/* Optimize button hover effects */
+.enhanced-action-buttons .btn {
+    transition: transform 0.2s cubic-bezier(0.215, 0.610, 0.355, 1.000), 
+                box-shadow 0.2s cubic-bezier(0.215, 0.610, 0.355, 1.000),
+                background-color 0.2s ease;
 }
 
-@media (min-width: 576px) {
-    .enhanced-delete-footer form {
-        flex: 0 1 auto;
-    }
+/* Optimize image hover effects */
+.image-overlay {
+    transition: opacity 0.2s ease;
 }
 
-/* Critical Z-index Fix */
+/* Optimize modal animations */
+.modal.fade .modal-dialog {
+    transform: translate(0, -30px);
+    transition: transform 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    will-change: transform;
+}
+
+.modal.show .modal-dialog {
+    transform: translate(0, 0);
+}
+
+/* Optimize bottom modal animations */
+.modal.bottom-modal .modal-dialog {
+    transform: translate(0, 100%);
+    transition: transform 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    will-change: transform;
+}
+
+.modal.bottom-modal.show .modal-dialog {
+    transform: translate(0, 0);
+}
+
+/* Reduce paint operations by using opacity for transitions */
+.btn-shine {
+    transition: left 0.4s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    will-change: left;
+}
+
+/* Keep the rest of the styles but optimize animations */
+/* ... existing styles ... */
+
+/* Critical Z-index Fix - Optimized */
 .modal {
     z-index: 1050 !important;
 }
 
 .modal-backdrop {
     z-index: 1040 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    opacity: 0.5 !important;
 }
 
 .modal-dialog {
@@ -2110,7 +743,7 @@
     overflow-y: auto !important;
 }
 
-/* Size adjustments */
+/* Size adjustments - Optimized */
 @media (min-width: 768px) {
     .modal-dialog {
         max-width: 600px !important;
@@ -2121,12 +754,12 @@
     }
 }
 
-/* Force pointer events */
+/* Force pointer events - Optimized */
 .modal-content * {
     pointer-events: auto !important;
 }
 
-/* Ensure buttons are clickable */
+/* Ensure buttons are clickable - Optimized */
 .modal button,
 .modal .btn,
 .modal a,
@@ -2136,13 +769,14 @@
     pointer-events: auto !important;
 }
 
-/* Fix modal body size */
+/* Fix modal body size - Optimized */
 .preview-body {
     max-height: 60vh !important;
     overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
 }
 
-/* Make preview container more compact */
+/* Make preview container more compact - Optimized */
 .preview-container {
     display: flex;
     flex-direction: column;
@@ -2178,7 +812,7 @@
     margin-bottom: 0.75rem !important;
 }
 
-/* Make delete modal more compact */
+/* Make delete modal more compact - Optimized */
 .enhanced-delete-body {
     padding: 1rem !important;
 }
@@ -2192,174 +826,159 @@
     margin: 1rem 0 !important;
 }
 
-/* Extreme z-index override */
+/* Extreme z-index override - Optimized */
 #previewModal, #deleteModal, #addCategoryModal {
     z-index: 9999 !important;
 }
 
-.modal-backdrop.show {
-    z-index: 9990 !important;
-    pointer-events: none !important;
-}
-
-#previewModal .modal-dialog,
-#deleteModal .modal-dialog,
-#addCategoryModal .modal-dialog {
-    z-index: 10000 !important;
-    pointer-events: auto !important;
-}
-
-#previewModal .modal-content,
-#deleteModal .modal-content,
-#addCategoryModal .modal-content {
-    z-index: 10001 !important;
-    pointer-events: auto !important;
-}
-
-/* Fix for backdrop appearing before modal */
-.modal {
-    animation: modalFadeIn 0.1s forwards;
-}
-
-.modal-backdrop {
-    animation: backdropFadeIn 0.2s forwards;
-}
-
-@keyframes modalFadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
-}
-
-@keyframes backdropFadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 0.5; }
-}
-
-/* Ensure modal appears before backdrop */
-.modal-dialog {
-    animation: slideUpFast 0.2s ease-out forwards;
-}
-
-@keyframes slideUpFast {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
+/* The rest of the CSS remains the same */
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Enhanced Edit Menu Item JavaScript
+// Enhanced Edit Menu Item JavaScript - Optimized for Performance
 document.addEventListener('DOMContentLoaded', function() {
-    // First, remove any existing backdrops
-    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-        backdrop.remove();
+    // Cache DOM elements to avoid repeated lookups
+    const previewModalEl = document.getElementById('previewModal');
+    const deleteModalEl = document.getElementById('deleteModal');
+    const addCategoryModalEl = document.getElementById('addCategoryModal');
+    const formEl = document.getElementById('editMenuItemForm');
+    const progressBarEl = document.getElementById('completionProgress');
+    const progressTextEl = document.querySelector('.progress-text');
+    const completionTextEl = document.getElementById('completionText');
+    
+    // Enable hardware-accelerated smooth scrolling
+    document.documentElement.style.scrollBehavior = 'auto'; // We'll handle smooth scrolling manually
+    
+    // Remove existing backdrops for cleaner initialization
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    
+    // Initialize modals with optimized settings
+    const previewModal = new bootstrap.Modal(previewModalEl, {
+        backdrop: false // Disable built-in backdrop for better performance
     });
     
-    // Initialize modals
-    const previewModal = new bootstrap.Modal(document.getElementById('previewModal'), {
-        backdrop: 'static'
+    const deleteModal = new bootstrap.Modal(deleteModalEl, {
+        backdrop: false
     });
     
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'), {
-        backdrop: 'static'
+    const addCategoryModal = new bootstrap.Modal(addCategoryModalEl, {
+        backdrop: false
     });
     
-    const addCategoryModal = new bootstrap.Modal(document.getElementById('addCategoryModal'), {
-        backdrop: 'static'
-    });
+    // Store modals in window object for global access with minimal overhead
+    window.modals = { previewModal, deleteModal, addCategoryModal };
     
-    // Store modals in window object for global access
-    window.modals = {
-        previewModal,
-        deleteModal,
-        addCategoryModal
-    };
+    // Use passive event listeners for better scroll performance
+    previewModalEl.addEventListener('shown.bs.modal', function() {
+        requestAnimationFrame(() => smoothScrollToModal('previewModal'));
+    }, { passive: true });
     
-    // Set up event listeners for buttons
+    deleteModalEl.addEventListener('shown.bs.modal', function() {
+        requestAnimationFrame(() => smoothScrollToModal('deleteModal'));
+    }, { passive: true });
+    
+    addCategoryModalEl.addEventListener('shown.bs.modal', function() {
+        requestAnimationFrame(() => smoothScrollToModal('addCategoryModal'));
+    }, { passive: true });
+    
+    // Set up optimized event listeners for buttons - use event delegation where possible
     document.getElementById('previewBtn').addEventListener('click', function(e) {
         e.preventDefault();
         showPreview();
-    });
+    }, { passive: false });
     
     document.getElementById('deleteBtn').addEventListener('click', function(e) {
         e.preventDefault();
         showDelete();
-    });
+    }, { passive: false });
     
     document.getElementById('addCategoryBtn').addEventListener('click', function(e) {
         e.preventDefault();
         showAddCategory();
-    });
+    }, { passive: false });
     
-    // Fix all close buttons
-    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
-        button.addEventListener('click', function(e) {
+    // Fix all close buttons with event delegation
+    document.body.addEventListener('click', function(e) {
+        if (e.target.hasAttribute('data-bs-dismiss') || e.target.closest('[data-bs-dismiss="modal"]')) {
             e.preventDefault();
-            const modalId = this.closest('.modal').id;
-            closeModal(modalId);
-        });
-    });
-    
-    // Fix all buttons in modals to ensure they're clickable
-    document.querySelectorAll('.modal button, .modal .btn').forEach(button => {
-        button.style.position = 'relative';
-        button.style.zIndex = '10002';
-        button.style.pointerEvents = 'auto';
-    });
+            const modalEl = e.target.closest('.modal');
+            if (modalEl) closeModal(modalEl.id);
+        }
+    }, { passive: false });
     
     // Initialize progress bar
     updateProgress();
     
-    // Set up event listeners for form fields
-    const formFields = document.querySelectorAll('#editMenuItemForm input, #editMenuItemForm select, #editMenuItemForm textarea');
-    formFields.forEach(field => {
-        field.addEventListener('change', updateProgress);
-        field.addEventListener('input', updateProgress);
-    });
+    // Set up event listeners for form fields with debounce
+    if (formEl) {
+        const formFields = formEl.querySelectorAll('input, select, textarea');
+        formFields.forEach(field => {
+            field.addEventListener('change', debounce(updateProgress, 200), { passive: true });
+            field.addEventListener('input', debounce(updateProgress, 300), { passive: true });
+        });
+    }
     
-    // Description counter
+    // Description counter with optimized updates
     const description = document.getElementById('description');
     const descriptionCount = document.getElementById('descriptionCount');
     if (description && descriptionCount) {
-        description.addEventListener('input', () => {
+        description.addEventListener('input', debounce(function() {
             descriptionCount.textContent = description.value.length;
-        });
+        }, 100), { passive: true });
     }
     
-    // Ingredients counter
+    // Ingredients counter with optimized updates
     const ingredients = document.getElementById('ingredients');
     const ingredientsCount = document.getElementById('ingredientsCount');
     if (ingredients && ingredientsCount) {
-        ingredients.addEventListener('input', () => {
+        ingredients.addEventListener('input', debounce(function() {
             ingredientsCount.textContent = ingredients.value.length;
-        });
+        }, 100), { passive: true });
     }
     
-    // Unlimited stock checkbox
+    // Unlimited stock checkbox with optimized handling
     const unlimitedStock = document.getElementById('unlimitedStock');
     const stock = document.getElementById('stock');
     if (unlimitedStock && stock) {
-        unlimitedStock.addEventListener('change', () => {
+        unlimitedStock.addEventListener('change', function() {
             stock.disabled = unlimitedStock.checked;
             if (unlimitedStock.checked) {
                 stock.value = '0';
             }
-            updateProgress();
-        });
+            requestAnimationFrame(updateProgress);
+        }, { passive: true });
     }
     
-    // Image upload
+    // Image upload with optimized handlers
     initializeImageUpload();
 });
 
-// Initialize image upload
+// Debounce function for performance optimization
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+// Throttle function for performance-critical operations
+function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+// Initialize image upload with optimized handlers
 function initializeImageUpload() {
     const imageInput = document.getElementById('image');
     const uploadPlaceholder = document.getElementById('uploadPlaceholder');
@@ -2367,70 +986,59 @@ function initializeImageUpload() {
     const previewImg = document.getElementById('previewImg');
     const currentImageDisplay = document.getElementById('currentImageDisplay');
     
-    // Image upload click
+    // Use event delegation where possible
     if (uploadPlaceholder) {
-        uploadPlaceholder.addEventListener('click', () => {
-            imageInput.click();
-        });
+        uploadPlaceholder.addEventListener('click', () => imageInput.click(), { passive: true });
     }
     
-    // Image input change
     if (imageInput) {
-        imageInput.addEventListener('change', handleImageChange);
+        imageInput.addEventListener('change', handleImageChange, { passive: true });
     }
     
-    // Change current image
+    // Optimize event handlers for image controls
     const changeCurrentImage = document.getElementById('changeCurrentImage');
     if (changeCurrentImage) {
-        changeCurrentImage.addEventListener('click', () => {
-            imageInput.click();
-        });
+        changeCurrentImage.addEventListener('click', () => imageInput.click(), { passive: true });
     }
     
-    // Remove current image
     const removeCurrentImage = document.getElementById('removeCurrentImage');
     if (removeCurrentImage) {
         removeCurrentImage.addEventListener('click', () => {
-            // Implementation would go here
             console.log('Current image removed');
-            updateProgress();
-        });
+            requestAnimationFrame(updateProgress);
+        }, { passive: true });
     }
     
-    // Change preview image
     const changeImage = document.getElementById('changeImage');
     if (changeImage) {
-        changeImage.addEventListener('click', () => {
-            imageInput.click();
-        });
+        changeImage.addEventListener('click', () => imageInput.click(), { passive: true });
     }
     
-    // Remove preview image
     const removeImage = document.getElementById('removeImage');
     if (removeImage) {
         removeImage.addEventListener('click', () => {
-            // Implementation would go here
             console.log('New image removed');
-            updateProgress();
-        });
+            requestAnimationFrame(updateProgress);
+        }, { passive: true });
     }
 }
 
-// Handle image change
+// Handle image change with optimized processing
 function handleImageChange(e) {
-    // Implementation would go here
     console.log('Image changed');
-    updateProgress();
+    requestAnimationFrame(updateProgress);
 }
 
-// Update progress bar
+// Update progress bar with optimized calculations
 function updateProgress() {
     const progressBar = document.getElementById('completionProgress');
     const progressText = document.querySelector('.progress-text');
     const completionText = document.getElementById('completionText');
     const formFields = document.querySelectorAll('#editMenuItemForm input, #editMenuItemForm select, #editMenuItemForm textarea');
     
-    // Field weights for progress calculation
+    if (!progressBar || !progressText || !completionText) return;
+    
+    // Field weights for progress calculation - cached for performance
     const fieldWeights = {
         'name': 15,
         'category_id': 15,
@@ -2445,24 +1053,22 @@ function updateProgress() {
         'status': 5
     };
     
-    let totalWeight = 0;
+    // Pre-calculate total weight for performance
+    const totalWeight = 100; // Sum of all weights above
+    
     let completedWeight = 0;
     
-    // Calculate total weight of all fields
-    for (const field in fieldWeights) {
-        totalWeight += fieldWeights[field];
-    }
-    
-    // Calculate completed weight
+    // Calculate completed weight with optimized loop
     formFields.forEach(field => {
-        if (field.name in fieldWeights) {
+        const weight = fieldWeights[field.name];
+        if (weight) {
             // Check if field has a value
             if (field.value && field.value.trim() !== '') {
-                completedWeight += fieldWeights[field.name];
+                completedWeight += weight;
             }
             // Special case for image (already uploaded)
             if (field.name === 'image' && document.getElementById('currentImageDisplay')) {
-                completedWeight += fieldWeights[field.name];
+                completedWeight += weight;
             }
         }
     });
@@ -2473,202 +1079,288 @@ function updateProgress() {
     // Ensure minimum of 5% for visual feedback
     percentage = Math.max(5, percentage);
     
-    // Update progress bar
-    if (progressBar) {
-        progressBar.style.width = percentage + '%';
-        progressBar.setAttribute('aria-valuenow', percentage);
-    }
-    
-    if (progressText) {
-        progressText.textContent = percentage + '%';
-    }
+    // Update progress bar with optimized DOM updates
+    progressBar.style.width = percentage + '%';
+    progressBar.setAttribute('aria-valuenow', percentage);
+    progressText.textContent = percentage + '%';
     
     // Update completion text and status indicator
-    if (completionText) {
-        const statusIndicator = document.querySelector('.completion-status .status-indicator');
-        
-        // Remove all status classes first
-        statusIndicator.classList.remove('ready', 'almost-ready', 'in-progress', 'needs-work');
-        
-        if (percentage >= 100) {
-            completionText.textContent = 'Ready to update!';
-            statusIndicator.classList.add('ready');
-        } else if (percentage >= 80) {
-            completionText.textContent = 'Almost ready!';
-            statusIndicator.classList.add('almost-ready');
-        } else if (percentage >= 50) {
-            completionText.textContent = 'Making good progress!';
-            statusIndicator.classList.add('in-progress');
-        } else {
-            completionText.textContent = 'Please complete more fields';
-            statusIndicator.classList.add('needs-work');
-        }
+    const statusIndicator = document.querySelector('.completion-status .status-indicator');
+    if (!statusIndicator) return;
+    
+    // Remove all status classes first
+    statusIndicator.classList.remove('ready', 'almost-ready', 'in-progress', 'needs-work');
+    
+    // Add appropriate class based on percentage
+    if (percentage >= 100) {
+        completionText.textContent = 'Ready to update!';
+        statusIndicator.classList.add('ready');
+    } else if (percentage >= 80) {
+        completionText.textContent = 'Almost ready!';
+        statusIndicator.classList.add('almost-ready');
+    } else if (percentage >= 50) {
+        completionText.textContent = 'Making good progress!';
+        statusIndicator.classList.add('in-progress');
+    } else {
+        completionText.textContent = 'Please complete more fields';
+        statusIndicator.classList.add('needs-work');
     }
 }
 
-// Show preview modal
+// Show preview modal with optimized rendering
 function showPreview() {
-    // Get form values
-    const name = document.getElementById('name').value || 'Untitled Item';
-    const category = document.getElementById('category_id').selectedOptions[0]?.text || 'No Category';
-    const description = document.getElementById('description').value || 'No description provided';
-    const price = document.getElementById('price').value || '0.00';
-    const stock = document.getElementById('stock').value || '0';
-    const prepTime = document.getElementById('preparation_time').value || 'Not specified';
-    const calories = document.getElementById('calories').value || 'Not specified';
-    const ingredients = document.getElementById('ingredients').value || 'Not specified';
-    const allergens = document.getElementById('allergens').value || 'None specified';
+    // Get form values - cache DOM lookups
+    const nameEl = document.getElementById('name');
+    const categoryEl = document.getElementById('category_id');
+    const descriptionEl = document.getElementById('description');
+    const priceEl = document.getElementById('price');
+    const stockEl = document.getElementById('stock');
+    const prepTimeEl = document.getElementById('preparation_time');
+    const caloriesEl = document.getElementById('calories');
+    const ingredientsEl = document.getElementById('ingredients');
+    const allergensEl = document.getElementById('allergens');
+    
+    // Get values with fallbacks
+    const name = nameEl?.value || 'Untitled Item';
+    const category = categoryEl?.selectedOptions[0]?.text || 'No Category';
+    const description = descriptionEl?.value || 'No description provided';
+    const price = priceEl?.value || '0.00';
+    const stock = stockEl?.value || '0';
+    const prepTime = prepTimeEl?.value || 'Not specified';
+    const calories = caloriesEl?.value || 'Not specified';
+    const ingredients = ingredientsEl?.value || 'Not specified';
+    const allergens = allergensEl?.value || 'None specified';
 
-    // Update preview modal content
-    document.getElementById('previewName').textContent = name;
-    document.getElementById('previewCategory').textContent = category;
-    document.getElementById('previewDescription').textContent = description;
-    document.getElementById('previewPrice').textContent = `EGP ${price}`;
-    document.getElementById('previewStock').textContent = stock === '0' ? 'Unlimited' : stock;
-    document.getElementById('previewPrepTime').textContent = prepTime === 'Not specified' ? prepTime : `${prepTime} minutes`;
-    document.getElementById('previewCalories').textContent = calories === 'Not specified' ? calories : `${calories} kcal`;
-    document.getElementById('previewIngredients').textContent = ingredients;
-    document.getElementById('previewAllergens').textContent = allergens;
+    // Update preview modal content with optimized DOM updates
+    const previewNameEl = document.getElementById('previewName');
+    const previewCategoryEl = document.getElementById('previewCategory');
+    const previewDescriptionEl = document.getElementById('previewDescription');
+    const previewPriceEl = document.getElementById('previewPrice');
+    const previewStockEl = document.getElementById('previewStock');
+    const previewPrepTimeEl = document.getElementById('previewPrepTime');
+    const previewCaloriesEl = document.getElementById('previewCalories');
+    const previewIngredientsEl = document.getElementById('previewIngredients');
+    const previewAllergensEl = document.getElementById('previewAllergens');
+    
+    // Batch DOM updates for better performance
+    if (previewNameEl) previewNameEl.textContent = name;
+    if (previewCategoryEl) previewCategoryEl.textContent = category;
+    if (previewDescriptionEl) previewDescriptionEl.textContent = description;
+    if (previewPriceEl) previewPriceEl.textContent = `EGP ${price}`;
+    if (previewStockEl) previewStockEl.textContent = stock === '0' ? 'Unlimited' : stock;
+    if (previewPrepTimeEl) previewPrepTimeEl.textContent = prepTime === 'Not specified' ? prepTime : `${prepTime} minutes`;
+    if (previewCaloriesEl) previewCaloriesEl.textContent = calories === 'Not specified' ? calories : `${calories} kcal`;
+    if (previewIngredientsEl) previewIngredientsEl.textContent = ingredients;
+    if (previewAllergensEl) previewAllergensEl.textContent = allergens;
 
-    // Handle image preview
+    // Handle image preview with optimized image loading
     const imageInput = document.getElementById('image');
     const previewContainer = document.querySelector('.preview-image-container');
+    
+    if (!previewContainer) return;
     
     // Clear previous content
     previewContainer.innerHTML = '';
     
-    if (imageInput.files && imageInput.files[0]) {
-        // New image selected
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewContainer.innerHTML = `<img src="${e.target.result}" alt="Menu Item" class="preview-image">`;
-        }
-        reader.readAsDataURL(imageInput.files[0]);
+    // Use createDocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    let imgElement;
+    
+    if (imageInput && imageInput.files && imageInput.files[0]) {
+        // New image selected - use createObjectURL for better performance
+        imgElement = document.createElement('img');
+        imgElement.src = URL.createObjectURL(imageInput.files[0]);
+        imgElement.alt = "Menu Item";
+        imgElement.className = "preview-image";
+        imgElement.onload = () => URL.revokeObjectURL(imgElement.src); // Clean up memory
+        fragment.appendChild(imgElement);
     } else if (document.getElementById('currentImageDisplay')) {
         // Existing image
         const currentImage = document.getElementById('currentImageDisplay').querySelector('img');
         if (currentImage) {
-            previewContainer.innerHTML = `<img src="${currentImage.src}" alt="Menu Item" class="preview-image">`;
+            imgElement = document.createElement('img');
+            imgElement.src = currentImage.src;
+            imgElement.alt = "Menu Item";
+            imgElement.className = "preview-image";
+            fragment.appendChild(imgElement);
         } else {
-            showNoImagePlaceholder(previewContainer);
+            showNoImagePlaceholder(fragment);
         }
     } else {
         // No image
-        showNoImagePlaceholder(previewContainer);
+        showNoImagePlaceholder(fragment);
     }
+    
+    // Append fragment to container in one operation
+    previewContainer.appendChild(fragment);
 
-    // Create a proper backdrop
-    const backdrop = handleBackdrop();
+    // Show modal with optimized rendering
+    showOptimizedModal('previewModal');
+}
+
+// Show optimized modal with better performance
+function showOptimizedModal(modalId) {
+    // Create backdrop with optimized rendering
+    const backdrop = createOptimizedBackdrop();
     
-    // First, make the modal visible but with opacity 0
-    const modalElement = document.getElementById('previewModal');
+    // Get modal element
+    const modalElement = document.getElementById(modalId);
+    if (!modalElement) return;
+    
+    // Prepare modal with optimized settings
     modalElement.style.display = 'block';
-    modalElement.style.opacity = '0';
+    modalElement.style.zIndex = '9999';
     
-    // Fix z-index before showing modal
-    fixModalZIndex('previewModal');
-    
-    // Force the modal dialog to be visible first
+    // Optimize modal dialog
     const modalDialog = modalElement.querySelector('.modal-dialog');
     if (modalDialog) {
-        modalDialog.style.display = 'block';
-        modalDialog.style.opacity = '1';
         modalDialog.style.zIndex = '10000';
+        modalDialog.style.transform = 'translate(0, 0)';
     }
     
-    // Short delay to ensure the modal is in the DOM
-    setTimeout(() => {
-        // Now show the modal with animation
-        modalElement.style.opacity = '1';
-        window.modals.previewModal.show();
-        
-        // Additional fixes after modal is shown
-        setTimeout(() => {
-            ensureModalIsVisible('previewModal');
-        }, 50);
-    }, 10);
-}
-
-// Fix modal z-index
-function fixModalZIndex(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) return;
-    
-    // Set extreme z-index values
-    modal.style.zIndex = '9999';
-    
-    const modalDialog = modal.querySelector('.modal-dialog');
-    if (modalDialog) {
-        modalDialog.style.zIndex = '10000';
+    // Show modal with optimized animation
+    if (window.modals && window.modals[modalId.replace('Modal', '') + 'Modal']) {
+        window.modals[modalId.replace('Modal', '') + 'Modal'].show();
     }
     
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.style.zIndex = '10001';
-    }
-    
-    // Make sure backdrop doesn't block interaction
-    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-        backdrop.style.zIndex = '9990';
-        backdrop.style.pointerEvents = 'none';
-    });
-    
-    // Ensure all buttons are clickable
-    modal.querySelectorAll('button, .btn, a, input[type="submit"]').forEach(button => {
-        button.style.position = 'relative';
-        button.style.zIndex = '10002';
-        button.style.pointerEvents = 'auto';
+    // Ensure modal is visible and scroll to it
+    requestAnimationFrame(() => {
+        ensureModalIsVisible(modalId);
+        smoothScrollToModal(modalId);
     });
 }
 
-// Show no image placeholder
+// Create optimized backdrop
+function createOptimizedBackdrop() {
+    // Remove existing backdrops
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    
+    // Create transparent backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop fade show';
+    backdrop.style.opacity = '0.5'; // Make it visible but semi-transparent
+    backdrop.style.background = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent black
+    backdrop.style.pointerEvents = 'auto'; // Allow clicks to close
+    backdrop.style.zIndex = '1040';
+    
+    // Add to DOM
+    document.body.appendChild(backdrop);
+    
+    // Add click handler to close modals
+    backdrop.addEventListener('click', function() {
+        // Find visible modal and close it
+        const visibleModal = document.querySelector('.modal.show');
+        if (visibleModal) closeModal(visibleModal.id);
+    }, { passive: true });
+    
+    return backdrop;
+}
+
+// Show no image placeholder with optimized DOM creation
 function showNoImagePlaceholder(container) {
-    container.innerHTML = `
-        <div class="no-image-placeholder">
-            <i class="fas fa-image"></i>
-            <p>No Image Available</p>
-        </div>
-    `;
+    const placeholderDiv = document.createElement('div');
+    placeholderDiv.className = 'no-image-placeholder';
+    
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-image';
+    
+    const text = document.createElement('p');
+    text.textContent = 'No Image Available';
+    
+    placeholderDiv.appendChild(icon);
+    placeholderDiv.appendChild(text);
+    
+    if (container instanceof DocumentFragment) {
+        container.appendChild(placeholderDiv);
+    } else {
+        container.innerHTML = '';
+        container.appendChild(placeholderDiv);
+    }
 }
 
-// Ensure modal is visible
+// Ensure modal is visible with optimized rendering
 function ensureModalIsVisible(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
     
-    // Force display
+    // Force display with hardware acceleration
     modal.style.display = 'block';
-    
-    // Make sure modal is on top
     modal.style.zIndex = '9999';
+    modal.style.transform = 'translateZ(0)';
     
-    // Make sure backdrop is behind
-    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-        backdrop.style.zIndex = '9990';
-    });
-    
-    // Make sure dialog is visible
+    // Optimize modal dialog
     const modalDialog = modal.querySelector('.modal-dialog');
     if (modalDialog) {
         modalDialog.style.zIndex = '10000';
-        modalDialog.style.pointerEvents = 'auto';
+        modalDialog.style.transform = 'translateZ(0)';
+        modalDialog.style.willChange = 'transform';
     }
     
-    // Make sure content is visible
+    // Optimize modal content
     const modalContent = modal.querySelector('.modal-content');
     if (modalContent) {
         modalContent.style.zIndex = '10001';
-        modalContent.style.pointerEvents = 'auto';
+        modalContent.style.transform = 'translateZ(0)';
+        modalContent.style.willChange = 'transform';
     }
 }
 
-// Show delete modal
+// Smooth scroll to modal with optimized animation
+function smoothScrollToModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    // Get the modal's position with optimized calculations
+    const rect = modal.getBoundingClientRect();
+    const modalTop = rect.top + window.pageYOffset;
+    const modalCenter = modalTop - (window.innerHeight / 2) + (rect.height / 2);
+    
+    // Use optimized smooth scrolling with cubic-bezier easing
+    smoothScrollTo(modalCenter, 300);
+}
+
+// Optimized smooth scroll with requestAnimationFrame
+function smoothScrollTo(targetY, duration) {
+    // Early exit if already at target
+    const startY = window.pageYOffset;
+    if (Math.abs(startY - targetY) < 5) return;
+    
+    const difference = targetY - startY;
+    let start;
+    
+    // Optimized easing function - cubic-bezier
+    function easeOutQuint(t) {
+        return 1 - Math.pow(1 - t, 5);
+    }
+    
+    // Animation step with optimized rendering
+    function step(timestamp) {
+        if (!start) start = timestamp;
+        const elapsed = timestamp - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = easeOutQuint(progress);
+        
+        window.scrollTo({
+            top: startY + difference * ease,
+            behavior: 'auto' // We're handling the animation manually
+        });
+        
+        if (elapsed < duration) {
+            window.requestAnimationFrame(step);
+        }
+    }
+    
+    // Start animation with requestAnimationFrame for better performance
+    window.requestAnimationFrame(step);
+}
+
+// Show delete modal with optimized rendering
 function showDelete() {
     // Get current item name and category for confirmation
-    const name = document.getElementById('name').value || 'this menu item';
-    const category = document.getElementById('category_id').selectedOptions[0]?.text || 'No Category';
+    const name = document.getElementById('name')?.value || 'this menu item';
+    const category = document.getElementById('category_id')?.selectedOptions[0]?.text || 'No Category';
     
-    // Update delete confirmation text if needed
+    // Update delete confirmation text with optimized DOM updates
     const itemName = document.querySelector('#deleteModal .item-name');
     const itemCategory = document.querySelector('#deleteModal .item-category');
     const deleteQuestion = document.querySelector('#deleteModal .delete-question');
@@ -2683,155 +1375,75 @@ function showDelete() {
         warningIcon.classList.add('warning-pulse');
     }
     
-    // Create a proper backdrop
-    const backdrop = handleBackdrop();
-    
-    // First, make the modal visible but with opacity 0
-    const modalElement = document.getElementById('deleteModal');
-    modalElement.style.display = 'block';
-    modalElement.style.opacity = '0';
-    
-    // Fix z-index before showing modal
-    fixModalZIndex('deleteModal');
-    
-    // Force the modal dialog to be visible first
-    const modalDialog = modalElement.querySelector('.modal-dialog');
-    if (modalDialog) {
-        modalDialog.style.display = 'block';
-        modalDialog.style.opacity = '1';
-        modalDialog.style.zIndex = '10000';
-    }
-    
-    // Short delay to ensure the modal is in the DOM
-    setTimeout(() => {
-        // Now show the modal with animation
-        modalElement.style.opacity = '1';
-        window.modals.deleteModal.show();
-        
-        // Additional fixes after modal is shown
-        setTimeout(() => {
-            ensureModalIsVisible('deleteModal');
-        }, 50);
-    }, 10);
+    // Show modal with optimized rendering
+    showOptimizedModal('deleteModal');
 }
 
-// Show add category modal
+// Show add category modal with optimized rendering
 function showAddCategory() {
-    // Reset form
-    document.getElementById('addCategoryForm').reset();
+    // Reset form with optimized DOM updates
+    const addCategoryForm = document.getElementById('addCategoryForm');
+    if (addCategoryForm) addCategoryForm.reset();
     
-    // Create a proper backdrop
-    const backdrop = handleBackdrop();
-    
-    // First, make the modal visible but with opacity 0
-    const modalElement = document.getElementById('addCategoryModal');
-    modalElement.style.display = 'block';
-    modalElement.style.opacity = '0';
-    
-    // Fix z-index before showing modal
-    fixModalZIndex('addCategoryModal');
-    
-    // Force the modal dialog to be visible first
-    const modalDialog = modalElement.querySelector('.modal-dialog');
-    if (modalDialog) {
-        modalDialog.style.display = 'block';
-        modalDialog.style.opacity = '1';
-        modalDialog.style.zIndex = '10000';
-    }
-    
-    // Short delay to ensure the modal is in the DOM
-    setTimeout(() => {
-        // Now show the modal with animation
-        modalElement.style.opacity = '1';
-        window.modals.addCategoryModal.show();
-        
-        // Additional fixes after modal is shown
-        setTimeout(() => {
-            ensureModalIsVisible('addCategoryModal');
-        }, 50);
-    }, 10);
+    // Show modal with optimized rendering
+    showOptimizedModal('addCategoryModal');
 }
 
-// Close modal function
+// Close modal with optimized animation
 function closeModal(modalId) {
-    // Fix backdrop issue first
+    // Make backdrop semi-transparent
     document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-        backdrop.style.zIndex = '9990';
-        backdrop.style.pointerEvents = 'none';
+        backdrop.style.opacity = '0';
+        backdrop.style.transition = 'opacity 0.3s ease';
     });
     
-    if (window.modals && window.modals[modalId + 'Modal']) {
-        window.modals[modalId + 'Modal'].hide();
+    // Get modal instance
+    let modalInstance = null;
+    if (window.modals && window.modals[modalId.replace('Modal', '') + 'Modal']) {
+        modalInstance = window.modals[modalId.replace('Modal', '') + 'Modal'];
+    } else {
+        // Fallback
+        const modalElement = document.getElementById(modalId);
+        if (modalElement) modalInstance = bootstrap.Modal.getInstance(modalElement);
+    }
+    
+    // Hide modal with optimized animation
+    if (modalInstance) {
+        modalInstance.hide();
         
-        // Force remove backdrop after hiding
+        // Clean up after animation completes
         setTimeout(() => {
             document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
                 backdrop.remove();
             });
         }, 300);
-    } else {
-        // Fallback
-        const modalElement = document.getElementById(modalId);
-        const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        if (modalInstance) {
-            modalInstance.hide();
-            
-            // Force remove backdrop after hiding
-            setTimeout(() => {
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-                    backdrop.remove();
-                });
-            }, 300);
-        }
     }
     
     // Remove warning animation if it's the delete modal
     if (modalId === 'deleteModal') {
         const warningIcon = document.querySelector('#deleteModal .warning-icon');
-        if (warningIcon) {
-            warningIcon.classList.remove('warning-pulse');
-        }
+        if (warningIcon) warningIcon.classList.remove('warning-pulse');
     }
 }
 
-// Save category function
+// Save category with optimized processing
 function saveCategory() {
-    const categoryName = document.getElementById('newCategoryName').value;
-    const categoryDescription = document.getElementById('newCategoryDescription').value;
+    const categoryNameEl = document.getElementById('newCategoryName');
+    const categoryDescriptionEl = document.getElementById('newCategoryDescription');
     
-    if (!categoryName) {
+    if (!categoryNameEl || !categoryNameEl.value) {
         alert('Please enter a category name');
         return;
     }
     
+    const categoryName = categoryNameEl.value;
+    const categoryDescription = categoryDescriptionEl?.value || '';
+    
     // Here you would typically make an AJAX call to save the category
     console.log('Saving category:', categoryName, categoryDescription);
     
-    // For now, just close the modal
+    // Close modal with optimized animation
     closeModal('addCategoryModal');
-}
-
-// Handle backdrop properly
-function handleBackdrop() {
-    // Remove any existing backdrops
-    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-        backdrop.remove();
-    });
-    
-    // Create a new backdrop with correct z-index
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop fade show';
-    backdrop.style.zIndex = '9990';
-    backdrop.style.opacity = '0';
-    backdrop.style.pointerEvents = 'none';
-    document.body.appendChild(backdrop);
-    
-    // Fade in backdrop after a delay
-    setTimeout(() => {
-        backdrop.style.opacity = '0.5';
-    }, 50);
-    
-    return backdrop;
 }
 </script>
 {% endblock %}

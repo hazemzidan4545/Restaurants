@@ -335,6 +335,42 @@
         color: white;
     }
 
+    .btn-pay {
+        background: var(--success-green);
+        color: white;
+        border: 2px solid var(--success-green);
+        font-weight: 600;
+    }
+
+    .btn-pay:hover {
+        background: #218838;
+        border-color: #218838;
+        color: white;
+    }
+
+    .btn-receipt {
+        background: var(--secondary-gray);
+        color: var(--primary-dark);
+        border: 2px solid var(--secondary-gray);
+    }
+
+    .btn-receipt:hover {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-delete {
+        background: #6c757d;
+        color: white;
+        border: 2px solid #6c757d;
+    }
+
+    .btn-delete:hover {
+        background: #5a6268;
+        border-color: #5a6268;
+        color: white;
+    }
+
     .action-btn:hover {
         transform: translateY(-1px);
         text-decoration: none;
@@ -477,7 +513,7 @@
                 <div class="stat-icon completed">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <div class="stat-number">{{ orders|selectattr('status', 'equalto', 'delivered')|list|length }}</div>
+                <div class="stat-number">{{ orders|selectattr('status', 'equalto', 'delivered')|list|length + orders|selectattr('status', 'equalto', 'completed')|list|length }}</div>
                 <div class="stat-label">Completed</div>
             </div>
             <div class="stat-card">
@@ -491,7 +527,7 @@
                 <div class="stat-icon spent">
                     <i class="fas fa-dollar-sign"></i>
                 </div>
-                <div class="stat-number">${{ "%.0f"|format(orders|sum(attribute='total_amount')) }}</div>
+                <div class="stat-number">${{ "%.0f"|format(orders|selectattr('status', 'in', ['delivered', 'completed'])|sum(attribute='total_amount')) }}</div>
                 <div class="stat-label">Total Spent</div>
             </div>
         </div>
@@ -533,11 +569,12 @@
                     </div>
                 </div>
 
-                {% if order.order_items %}
+                {% set order_items = order._order_items if order._order_items is defined else order.order_items.all() %}
+                {% if order_items %}
                 <div class="order-items">
-                    <h4><i class="fas fa-utensils"></i> Items Ordered ({{ order.order_items|length }} items)</h4>
+                    <h4><i class="fas fa-utensils"></i> Items Ordered ({{ order_items|length }} items)</h4>
                     <div class="items-grid">
-                        {% for item in order.order_items %}
+                        {% for item in order_items %}
                         <div class="item-card">
                             <div class="item-header">
                                 <span class="item-name">{{ item.menu_item.name }}</span>
@@ -561,6 +598,15 @@
 
                 <!-- Order Actions -->
                 <div class="order-actions">
+                    {% set payments = order._payments if order._payments is defined else (order.payments.all() if order.payments else []) %}
+                    {% set has_payments = payments and payments|length > 0 %}
+                    
+                    {% if order.status in ['new', 'confirmed'] and not has_payments %}
+                        <a href="{{ url_for('payment.checkout', order_id=order.order_id) }}" class="action-btn btn-pay">
+                            <i class="fas fa-credit-card"></i> Pay Now
+                        </a>
+                    {% endif %}
+                    
                     {% if order.status in ['new', 'processing', 'preparing'] %}
                         <a href="{{ url_for('customer.track_order', order_id=order.order_id) }}" class="action-btn btn-track">
                             <i class="fas fa-map-marker-alt"></i> Track Order
@@ -576,6 +622,18 @@
                         </button>
                         <button onclick="leaveReview('{{ order.order_id }}')" class="action-btn btn-track">
                             <i class="fas fa-star"></i> Leave Review
+                        </button>
+                    {% endif %}
+                    
+                    {% if has_payments and payments|length > 0 %}
+                        <a href="{{ url_for('payment.receipt', payment_id=payments[0].payment_id) }}" class="action-btn btn-receipt">
+                            <i class="fas fa-receipt"></i> Receipt
+                        </a>
+                    {% endif %}
+                    
+                    {% if order.status in ['cancelled', 'delivered', 'completed'] %}
+                        <button onclick="deleteOrder('{{ order.order_id }}')" class="action-btn btn-delete">
+                            <i class="fas fa-trash"></i> Delete
                         </button>
                     {% endif %}
                 </div>
@@ -621,20 +679,243 @@
     }
 
     function cancelOrder(orderId) {
-        if (confirm('Are you sure you want to cancel this order?')) {
-            // Implementation for order cancellation
-            alert('Order #' + orderId + ' has been cancelled.');
-        }
+        // Create and show confirmation modal
+        showConfirmModal('Cancel Order', 'Are you sure you want to cancel this order? This action cannot be undone.', () => {
+            // Show loading state
+            const cancelBtn = event.target;
+            const originalText = cancelBtn.textContent;
+            cancelBtn.textContent = 'Cancelling...';
+            cancelBtn.disabled = true;
+
+            fetch(`/customer/order/${orderId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Success', data.message, 'success');
+                    // Update the order card status instead of full page reload
+                    updateOrderCardStatus(orderId, 'cancelled');
+                } else {
+                    showNotification('Error', data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error', 'An error occurred while cancelling the order.', 'danger');
+            })
+            .finally(() => {
+                // Restore button state
+                cancelBtn.textContent = originalText;
+                cancelBtn.disabled = false;
+            });
+        });
     }
 
     function reorderItems(orderId) {
-        // Implementation for reordering
-        alert('Reordering items from Order #' + orderId);
+        console.log('🔍 Reorder button clicked for order:', orderId);
+        
+        // Show loading state
+        const reorderBtn = event.target;
+        const originalText = reorderBtn.textContent;
+        reorderBtn.textContent = 'Adding to Cart...';
+        reorderBtn.disabled = true;
+
+        console.log('📡 Making request to:', `/customer/order/${orderId}/reorder-to-cart`);
+
+        fetch(`/customer/order/${orderId}/reorder-to-cart`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            console.log('📥 Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('📋 Response data:', data);
+            
+            if (data.success) {
+                const totalItems = data.total_quantity_added || 0;
+                const uniqueItems = data.items_added || 0;
+                
+                let message;
+                if (uniqueItems === 1) {
+                    message = `Added ${totalItems} ${totalItems === 1 ? 'item' : 'items'} to your cart!`;
+                } else {
+                    message = `Added ${totalItems} items (${uniqueItems} unique items) to your cart!`;
+                }
+                
+                showNotification('Success', message, 'success');
+                
+                // Update both session and localStorage cart
+                if (data.cart_items && Array.isArray(data.cart_items)) {
+                    // Update localStorage cart for frontend consistency
+                    try {
+                        localStorage.setItem('restaurant_cart', JSON.stringify(data.cart_items));
+                        console.log('✅ Cart updated in localStorage');
+                    } catch (error) {
+                        console.error('❌ Failed to update localStorage cart:', error);
+                    }
+                }
+                
+                // Update cart count if the function exists
+                if (typeof updateCartCount === 'function') {
+                    updateCartCount();
+                }
+                
+                // Update cart display if the function exists
+                if (typeof updateCartDisplay === 'function') {
+                    updateCartDisplay();
+                }
+                
+                // Show cart modal if it exists
+                setTimeout(() => {
+                    if (typeof openCartModal === 'function') {
+                        openCartModal();
+                    } else {
+                        console.log('⚠️ openCartModal function not found');
+                    }
+                }, 500);
+            } else {
+                console.error('❌ Reorder failed:', data.message);
+                showNotification('Error', data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Request error:', error);
+            showNotification('Error', 'An error occurred while adding items to cart.', 'danger');
+        })
+        .finally(() => {
+            // Restore button state
+            reorderBtn.textContent = originalText;
+            reorderBtn.disabled = false;
+            console.log('✅ Button state restored');
+        });
+    }
+
+    function deleteOrder(orderId) {
+        // Create and show confirmation modal
+        showConfirmModal('Delete Order', 'Are you sure you want to permanently delete this order from your history? This action cannot be undone.', () => {
+            // Show loading state
+            const deleteBtn = event.target;
+            const originalText = deleteBtn.textContent;
+            deleteBtn.textContent = 'Deleting...';
+            deleteBtn.disabled = true;
+
+            fetch(`/customer/order/${orderId}/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Success', data.message, 'success');
+                    // Remove the order card from the page
+                    const orderCard = document.querySelector(`[data-order-id="${orderId}"]`) || 
+                                    deleteBtn.closest('.order-card');
+                    if (orderCard) {
+                        orderCard.style.transition = 'all 0.3s ease';
+                        orderCard.style.opacity = '0';
+                        orderCard.style.transform = 'translateX(-100%)';
+                        setTimeout(() => orderCard.remove(), 300);
+                    }
+                } else {
+                    showNotification('Error', data.message, 'danger');
+                    // Restore button state
+                    deleteBtn.textContent = originalText;
+                    deleteBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error', 'An error occurred while deleting the order.', 'danger');
+                // Restore button state
+                deleteBtn.textContent = originalText;
+                deleteBtn.disabled = false;
+            });
+        });
+    }
+
+    // Helper function to show confirmation modal
+    function showConfirmModal(title, message, onConfirm) {
+        // Create a modern confirmation modal
+        const modalHtml = `
+            <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">${title}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>${message}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmAction">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('confirmModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        
+        // Handle confirm button
+        document.getElementById('confirmAction').onclick = () => {
+            modal.hide();
+            if (onConfirm) onConfirm();
+        };
+        
+        // Handle modal close - cleanup
+        document.getElementById('confirmModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('confirmModal').remove();
+        });
+        
+        modal.show();
+    }
+
+    // Helper function to update order card status without page reload
+    function updateOrderCardStatus(orderId, newStatus) {
+        const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+        if (orderCard) {
+            const statusBadge = orderCard.querySelector('.status-badge');
+            const actionButtons = orderCard.querySelector('.order-actions');
+            
+            if (statusBadge) {
+                statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                statusBadge.className = `status-badge status-${newStatus}`;
+            }
+            
+            // Hide action buttons for cancelled orders
+            if (newStatus === 'cancelled' && actionButtons) {
+                actionButtons.style.display = 'none';
+            }
+            
+            // Update the order card's data attribute
+            orderCard.dataset.status = newStatus;
+        }
     }
 
     function leaveReview(orderId) {
-        // Implementation for leaving review
-        alert('Leave a review for Order #' + orderId);
+        // Redirect to the review page
+        window.location.href = `/customer/order/${orderId}/review`;
     }
 
     // Add smooth animations
@@ -652,4 +933,8 @@
         });
     });
 </script>
+
+<!-- Include necessary JavaScript files -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 {% endblock %}

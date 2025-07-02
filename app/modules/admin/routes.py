@@ -320,7 +320,7 @@ def orders():
     per_page = 20  # Configurable items per page
 
     # Performance: Use join to get customer names and table info in single query
-    orders_query = Order.query.join(User).outerjoin(Table).order_by(Order.order_time.desc())
+    orders_query = Order.query.join(User, Order.user_id == User.user_id).outerjoin(Table).order_by(Order.order_time.desc())
 
     # Performance: Paginate results to avoid loading all orders
     orders_pagination = orders_query.paginate(
@@ -330,9 +330,19 @@ def orders():
     # Format orders for template
     formatted_orders = []
     for order in orders_pagination.items:
+        # Debug: Let's see what we're getting
+        customer_name = "Unknown"
+        if hasattr(order, 'customer') and order.customer:
+            customer_name = order.customer.name
+        else:
+            # Fallback: try to get the user directly
+            user = User.query.get(order.user_id)
+            if user:
+                customer_name = user.name
+        
         formatted_orders.append({
             'id': order.order_id,  # Keep as integer for JS to handle correctly
-            'name': order.customer.name if hasattr(order, 'customer') and order.customer else "Unknown",
+            'name': customer_name,
             'qr_number': f"#{order.table.table_number}" if order.table else "N/A",
             'date': order.order_time.strftime('%d %b %Y'),
             'type': 'Order',  # Could be enhanced based on order items
