@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block page_title %}Customer Details - {{ customer.user.name if customer.user else 'Unknown' }}{% endblock %}
+
+{% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-user"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Customer Loyalty Details</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Complete loyalty profile and transaction history for {{ customer.user.name if customer.user else 'Unknown Customer' }}
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.loyalty_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Management</span>
+            </a>
+            <a href="{{ url_for('admin.loyalty_adjust_points', customer_id=customer.loyalty_id) }}" class="header-btn header-btn-primary">
+                <i class="fas fa-coins"></i>
+                <span>Adjust Points</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Customer Profile -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white text-center pb-0">
+                <div class="avatar-xl bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3">
+                    {{ (customer.user.name[0] if customer.user and customer.user.name else 'U').upper() }}
+                </div>
+                <h5 class="mb-1">{{ customer.user.name if customer.user and customer.user.name else 'Unknown User' }}</h5>
+                <p class="text-muted mb-3">{{ customer.user.email if customer.user and customer.user.email else 'No email provided' }}</p>
+            </div>
+            <div class="card-body">
+                <div class="loyalty-info">
+                    <div class="info-item">
+                        <label>Customer ID</label>
+                        <span>#{{ customer.loyalty_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Phone Number</label>
+                        <span>{{ customer.user.phone if customer.user and customer.user.phone else 'Not provided' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Join Date</label>
+                        <span>{{ customer.join_date.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Last Activity</label>
+                        <span>{{ customer.last_activity.strftime('%B %d, %Y') if customer.last_activity else 'Never' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Account Status</label>
+                        <span class="badge bg-{{ 'success' if customer.total_points > 0 else 'secondary' }}">
+                            {{ 'Active' if customer.total_points > 0 else 'Inactive' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.loyalty_adjust_points', customer_id=customer.loyalty_id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-coins"></i> Adjust Points
+                    </a>
+                    <a href="{{ url_for('admin.loyalty_transactions', customer_id=customer.loyalty_id) }}" class="btn btn-outline-info">
+                        <i class="fas fa-history"></i> View All Transactions
+                    </a>
+                    <button class="btn btn-outline-warning" onclick="sendNotification()">
+                        <i class="fas fa-bell"></i> Send Notification
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loyalty Status and Statistics -->
+    <div class="col-lg-8">
+        <!-- Points Overview -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-2">
+                            <i class="fas fa-coins fa-2x"></i>
+                        </div>
+                        <h3 class="mb-0">{{ customer.total_points }}</h3>
+                        <p class="text-muted mb-0">Available Points</p>
+                        <small class="text-success">≈ ${{ "%.2f"|format((customer.total_points / 100.0) * 1.0) }}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-2">
+                            <i class="fas fa-star fa-2x"></i>
+                        </div>
+                        <h3 class="mb-0">{{ customer.lifetime_points }}</h3>
+                        <p class="text-muted mb-0">Lifetime Points</p>
+                        <small class="text-info">Total earned</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-2">
+                            <i class="fas fa-crown fa-2x"></i>
+                        </div>
+                        <span class="badge bg-{{ 'warning' if customer.tier_level == 'gold' else 'secondary' if customer.tier_level == 'silver' else 'info' if customer.tier_level == 'platinum' else 'primary' }} fs-6 mb-2">
+                            {{ customer.tier_level.title() }}
+                        </span>
+                        <p class="text-muted mb-0">Current Tier</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier Progress -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Tier Progress</h6>
+            </div>
+            <div class="card-body">
+                {% set next_tier_points = 2000 if customer.tier_level == 'bronze' else 5000 if customer.tier_level == 'silver' else 10000 if customer.tier_level == 'gold' else 10000 %}
+                {% set progress = (customer.lifetime_points / next_tier_points * 100) if customer.tier_level != 'platinum' else 100 %}
+                {% set progress_capped = progress if progress <= 100 else 100 %}
+                
+                <div class="tier-progress-container">
+                    <div class="tier-step {{ 'active' if customer.tier_level in ['bronze', 'silver', 'gold', 'platinum'] else '' }}">
+                        <div class="tier-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="tier-info">
+                            <span class="tier-name">Bronze</span>
+                            <span class="tier-requirement">0+ points</span>
+                        </div>
+                    </div>
+                    <div class="tier-step {{ 'active' if customer.tier_level in ['silver', 'gold', 'platinum'] else '' }}">
+                        <div class="tier-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="tier-info">
+                            <span class="tier-name">Silver</span>
+                            <span class="tier-requirement">500+ points</span>
+                        </div>
+                    </div>
+                    <div class="tier-step {{ 'active' if customer.tier_level in ['gold', 'platinum'] else '' }}">
+                        <div class="tier-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="tier-info">
+                            <span class="tier-name">Gold</span>
+                            <span class="tier-requirement">1000+ points</span>
+                        </div>
+                    </div>
+                    <div class="tier-step {{ 'active' if customer.tier_level == 'platinum' else '' }}">
+                        <div class="tier-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="tier-info">
+                            <span class="tier-name">Platinum</span>
+                            <span class="tier-requirement">2000+ points</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% if customer.tier_level != 'platinum' %}
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Progress to next tier</span>
+                        <span class="text-muted">{{ customer.lifetime_points }}/{{ next_tier_points }}</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: {{ progress_capped }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ next_tier_points - customer.lifetime_points }} points to next tier</small>
+                </div>
+                {% else %}
+                <div class="mt-3">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-crown me-2"></i>
+                        Customer has reached the highest tier level!
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Recent Transactions</h6>
+                <a href="{{ url_for('admin.loyalty_transactions', customer_id=customer.loyalty_id) }}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Points</th>
+                                <th>Order</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_transactions %}
+                            <tr>
+                                <td>{{ transaction.timestamp.strftime('%b %d, %Y') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if transaction.transaction_type == 'earned' else 'warning' if transaction.transaction_type == 'redeemed' else 'info' }}">
+                                        {{ transaction.transaction_type.title() }}
+                                    </span>
+                                </td>
+                                <td>{{ transaction.description or '-' }}</td>
+                                <td>
+                                    {% if transaction.points_earned > 0 %}
+                                        <span class="text-success">+{{ transaction.points_earned }}</span>
+                                    {% elif transaction.points_redeemed > 0 %}
+                                        <span class="text-warning">-{{ transaction.points_redeemed }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if transaction.order_id %}
+                                        <a href="{{ url_for('admin.orders') }}" class="text-decoration-none">#{{ transaction.order_id }}</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No transactions found for this customer.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+.avatar-xl {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+}
+
+.loyalty-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.info-item span {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.tier-progress-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.tier-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.tier-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    right: -50%;
+    width: 100%;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 1;
+}
+
+.tier-step.active:not(:last-child)::after {
+    background: #28a745;
+}
+
+.tier-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+.tier-step.active .tier-icon {
+    background: #28a745;
+    color: white;
+}
+
+.tier-info {
+    text-align: center;
+}
+
+.tier-name {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.tier-requirement {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+</style>
+{% endblock %}
+
+<script>
+function sendNotification() {
+    // Placeholder for notification functionality
+    alert('Notification feature will be implemented in future updates');
+}
+</script>
+{% endblock %}

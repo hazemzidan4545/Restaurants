@@ -125,6 +125,155 @@
             background-clip: text;
         }
 
+        .table-info {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .table-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-status.available {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .table-status.occupied {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .table-status.reserved {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .table-capacity {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Modal z-index fix - no backdrop */
+        .modal {
+            z-index: 10060 !important;
+        }
+
+        .modal-backdrop {
+            display: none !important;
+        }
+
+        .modal-dialog {
+            z-index: 10070 !important;
+            position: relative;
+        }
+
+        .modal-content {
+            background: white;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+            color: var(--primary-dark);
+            border-bottom: none;
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .btn-close {
+            filter: brightness(0) saturate(100%) invert(20%) sepia(8%) saturate(1009%) hue-rotate(181deg) brightness(93%) contrast(87%);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 1rem 2rem 2rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-yellow);
+            box-shadow: 0 0 0 3px rgba(243, 205, 33, 0.1);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+            color: var(--primary-dark);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243, 205, 33, 0.3);
+            color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-yellow);
+            border-color: var(--primary-yellow);
+        }
+
+        .form-check-input:focus {
+            border-color: var(--primary-yellow);
+            box-shadow: 0 0 0 0.25rem rgba(243, 205, 33, 0.25);
+        }
+
         .qr-actions {
             position: absolute;
             top: 15px;
@@ -318,237 +467,607 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #e6b800;
         }
+
+        /* Additional modal fixes */
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .modal.show {
+            display: block !important;
+        }
+
+        .modal.fade.show {
+            opacity: 1 !important;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.5 !important;
+        }
+
+        /* Ensure modal is always on top */
+        .modal,
+        .modal-backdrop {
+            position: fixed !important;
+        }
+
+        .modal {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            outline: 0 !important;
+        }
+
+        /* QR Loading and Error States */
+        .qr-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--primary-yellow);
+            font-size: 20px;
+        }
+
+        .qr-loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        .qr-error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #dc2626;
+            font-size: 12px;
+            text-align: center;
+            padding: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ...existing code...
     </style>
 {% endblock %}
 
 {% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-qrcode"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">QR Codes Management</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Generate and manage QR codes for tables, services, and promotional materials
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ qr_codes|length if qr_codes else 0 }}</span>
+                    <span class="stat-label">Total QR Codes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ active_qr_codes if active_qr_codes else 0 }}</span>
+                    <span class="stat-label">Active</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ table_qr_codes if table_qr_codes else 0 }}</span>
+                    <span class="stat-label">Table QRs</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn header-btn-secondary" onclick="downloadAllQR()">
+                <i class="fas fa-download"></i>
+                <span>Download All</span>
+            </button>
+            <button class="header-btn header-btn-primary" onclick="generateNewQR()">
+                <i class="fas fa-plus"></i>
+                <span>Generate QR</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- QR Codes Grid -->
 <div class="qr-grid">
-    {% for qr_code in qr_codes %}
-    <div class="qr-card" data-qr-id="{{ qr_code.id }}">
+    {% for table in tables %}
+    <div class="qr-card" data-table-id="{{ table.table_id }}">
         <div class="qr-actions">
-            <button class="action-btn download" title="Download QR">
+            <button class="action-btn download" title="Download QR" onclick="downloadTableQR('{{ table.table_id }}')">
                 <i class="fas fa-download"></i>
             </button>
-            <button class="action-btn" title="Edit">
+            <button class="action-btn" title="Edit Table" onclick="editTable('{{ table.table_id }}')">
                 <i class="fas fa-edit"></i>
             </button>
-            <button class="action-btn" title="Delete">
-                <i class="fas fa-trash"></i>
+            <button class="action-btn" title="Regenerate QR" onclick="regenerateQR('{{ table.table_id }}')">
+                <i class="fas fa-sync"></i>
             </button>
         </div>
-        <div class="qr-code-image">
-            <svg class="qr-code-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <!-- QR Code Pattern -->
-                <rect width="100" height="100" fill="white"/>
-                <!-- Corner squares -->
-                <rect x="5" y="5" width="20" height="20" fill="black"/>
-                <rect x="75" y="5" width="20" height="20" fill="black"/>
-                <rect x="5" y="75" width="20" height="20" fill="black"/>
-                <rect x="8" y="8" width="14" height="14" fill="white"/>
-                <rect x="78" y="8" width="14" height="14" fill="white"/>
-                <rect x="8" y="78" width="14" height="14" fill="white"/>
-                <rect x="11" y="11" width="8" height="8" fill="black"/>
-                <rect x="81" y="11" width="8" height="8" fill="black"/>
-                <rect x="11" y="81" width="8" height="8" fill="black"/>
-
-                <!-- Data pattern (simplified) -->
-                <rect x="30" y="10" width="3" height="3" fill="black"/>
-                <rect x="35" y="10" width="3" height="3" fill="black"/>
-                <rect x="40" y="10" width="3" height="3" fill="black"/>
-                <rect x="50" y="10" width="3" height="3" fill="black"/>
-                <rect x="55" y="10" width="3" height="3" fill="black"/>
-                <rect x="65" y="10" width="3" height="3" fill="black"/>
-
-                <rect x="30" y="15" width="3" height="3" fill="black"/>
-                <rect x="40" y="15" width="3" height="3" fill="black"/>
-                <rect x="45" y="15" width="3" height="3" fill="black"/>
-                <rect x="55" y="15" width="3" height="3" fill="black"/>
-                <rect x="60" y="15" width="3" height="3" fill="black"/>
-
-                <rect x="35" y="20" width="3" height="3" fill="black"/>
-                <rect x="40" y="20" width="3" height="3" fill="black"/>
-                <rect x="50" y="20" width="3" height="3" fill="black"/>
-                <rect x="60" y="20" width="3" height="3" fill="black"/>
-                <rect x="65" y="20" width="3" height="3" fill="black"/>
-
-                <!-- More data pattern -->
-                <rect x="10" y="30" width="3" height="3" fill="black"/>
-                <rect x="15" y="30" width="3" height="3" fill="black"/>
-                <rect x="25" y="30" width="3" height="3" fill="black"/>
-                <rect x="30" y="30" width="3" height="3" fill="black"/>
-                <rect x="40" y="30" width="3" height="3" fill="black"/>
-                <rect x="50" y="30" width="3" height="3" fill="black"/>
-                <rect x="60" y="30" width="3" height="3" fill="black"/>
-                <rect x="70" y="30" width="3" height="3" fill="black"/>
-                <rect x="80" y="30" width="3" height="3" fill="black"/>
-                <rect x="85" y="30" width="3" height="3" fill="black"/>
-
-                <rect x="10" y="35" width="3" height="3" fill="black"/>
-                <rect x="20" y="35" width="3" height="3" fill="black"/>
-                <rect x="35" y="35" width="3" height="3" fill="black"/>
-                <rect x="45" y="35" width="3" height="3" fill="black"/>
-                <rect x="55" y="35" width="3" height="3" fill="black"/>
-                <rect x="65" y="35" width="3" height="3" fill="black"/>
-                <rect x="75" y="35" width="3" height="3" fill="black"/>
-                <rect x="90" y="35" width="3" height="3" fill="black"/>
-
-                <!-- Center alignment pattern -->
-                <rect x="45" y="45" width="10" height="10" fill="black"/>
-                <rect x="47" y="47" width="6" height="6" fill="white"/>
-                <rect x="49" y="49" width="2" height="2" fill="black"/>
-
-                <!-- More data patterns -->
-                <rect x="15" y="60" width="3" height="3" fill="black"/>
-                <rect x="25" y="60" width="3" height="3" fill="black"/>
-                <rect x="35" y="60" width="3" height="3" fill="black"/>
-                <rect x="45" y="60" width="3" height="3" fill="black"/>
-                <rect x="55" y="60" width="3" height="3" fill="black"/>
-                <rect x="65" y="60" width="3" height="3" fill="black"/>
-                <rect x="75" y="60" width="3" height="3" fill="black"/>
-                <rect x="85" y="60" width="3" height="3" fill="black"/>
-
-                <rect x="30" y="85" width="3" height="3" fill="black"/>
-                <rect x="35" y="85" width="3" height="3" fill="black"/>
-                <rect x="40" y="85" width="3" height="3" fill="black"/>
-                <rect x="50" y="85" width="3" height="3" fill="black"/>
-                <rect x="55" y="85" width="3" height="3" fill="black"/>
-                <rect x="65" y="85" width="3" height="3" fill="black"/>
-                <rect x="70" y="85" width="3" height="3" fill="black"/>
-                <rect x="80" y="85" width="3" height="3" fill="black"/>
-                <rect x="90" y="85" width="3" height="3" fill="black"/>
-            </svg>
+        <div class="qr-code-image" id="qr-code-{{ table.table_id }}">
+            <!-- QR Code will be generated here -->
         </div>
-        <h3 class="qr-title">{{ qr_code.name }}</h3>
+        <h3 class="qr-title">Table {{ table.table_number }}</h3>
+        <div class="table-info">
+            <span class="table-status {{ table.status }}">
+                {{ table.status|title }}
+            </span>
+            <span class="table-capacity">{{ table.capacity }} seats</span>
+        </div>
     </div>
     {% endfor %}
 
-    <!-- Empty slots to match the grid layout -->
-    <div class="qr-card empty">
+    <!-- Add new table card -->
+    <div class="qr-card empty" onclick="addNewTable()">
         <div class="qr-icon">
             <i class="fas fa-plus"></i>
         </div>
-        <h3 class="qr-title">Add QR Code</h3>
+        <h3 class="qr-title">Add New Table</h3>
     </div>
+</div>
 
-    <div class="qr-card empty">
-        <div class="qr-icon">
-            <i class="fas fa-plus"></i>
+<!-- Table Management Modal -->
+<div class="modal fade" id="tableModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Table Management</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tableForm">
+                    <input type="hidden" id="table_id" name="table_id">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="table_number" class="form-label">Table Number</label>
+                                <input type="number" class="form-control" id="table_number" name="table_number" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="capacity" class="form-label">Capacity (seats)</label>
+                                <input type="number" class="form-control" id="capacity" name="capacity" min="1" max="20" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location" placeholder="e.g., Window side, Near bar">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="table_type" class="form-label">Table Type</label>
+                                <select class="form-control" id="table_type" name="table_type">
+                                    <option value="regular">Regular</option>
+                                    <option value="vip">VIP</option>
+                                    <option value="outdoor">Outdoor</option>
+                                    <option value="private">Private Dining</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                            <label class="form-check-label" for="is_active">
+                                Table is active and available for booking
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveTable()">Save Table</button>
+            </div>
         </div>
-        <h3 class="qr-title">Add QR Code</h3>
-    </div>
-
-    <div class="qr-card empty">
-        <div class="qr-icon">
-            <i class="fas fa-plus"></i>
-        </div>
-        <h3 class="qr-title">Add QR Code</h3>
-    </div>
-
-    <div class="qr-card empty">
-        <div class="qr-icon">
-            <i class="fas fa-plus"></i>
-        </div>
-        <h3 class="qr-title">Add QR Code</h3>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-    // Performance optimizations
-    const searchInput = document.querySelector('.search-input');
-    const qrCards = document.querySelectorAll('.qr-card:not(.empty)');
+    // QR Code generation and table management functionality
+    let currentTableId = null;
 
-    // Debounced search for better performance
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+    // Generate QR code for a table - now using backend
+    function generateQRCode(tableId, tableNumber) {
+        const qrContainer = document.getElementById(`qr-code-${tableId}`);
+        if (!qrContainer) return;
+
+        // Show loading state
+        qrContainer.innerHTML = '<div class="qr-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        
+        // Fetch QR code from backend
+        fetch(`/admin/api/qr-codes/${tableId}/image`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.qr_image) {
+                    // Display the QR code image
+                    qrContainer.innerHTML = `<img src="${data.qr_image}" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;">`;
+                } else {
+                    // Generate new QR code if not found
+                    generateNewQRForTable(tableId, tableNumber);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching QR code:', error);
+                generateNewQRForTable(tableId, tableNumber);
+            });
     }
 
-    // Search functionality
-    function searchQRCodes() {
-        const searchTerm = searchInput.value.toLowerCase();
+    // Generate new QR code using backend
+    function generateNewQRForTable(tableId, tableNumber) {
+        const qrContainer = document.getElementById(`qr-code-${tableId}`);
+        if (!qrContainer) return;
 
-        qrCards.forEach(card => {
-            const text = card.textContent.toLowerCase();
-            const shouldShow = text.includes(searchTerm);
-
-            requestAnimationFrame(() => {
-                card.style.display = shouldShow ? '' : 'none';
-                card.style.opacity = shouldShow ? '1' : '0.3';
-            });
+        fetch(`/admin/api/qr-codes/generate/${tableId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.qr_image) {
+                qrContainer.innerHTML = `<img src="${data.qr_image}" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;">`;
+            } else {
+                qrContainer.innerHTML = '<div class="qr-error">Failed to generate QR</div>';
+                console.error('QR Code generation failed:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error generating QR code:', error);
+            qrContainer.innerHTML = '<div class="qr-error">Failed to generate QR</div>';
         });
     }
 
-    // Optimized search functionality with requestAnimationFrame
-    const performSearch = debounce(searchQRCodes, 150);
+    // Download QR code for a table - now using backend generated QR
+    function downloadTableQR(tableId) {
+        // Fetch QR code from backend
+        fetch(`/admin/api/qr-codes/${tableId}/image`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.qr_image) {
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = data.qr_image;
+                    const tableNumber = document.querySelector(`[data-table-id="${tableId}"] .qr-title`).textContent.replace('Table ', '');
+                    link.download = `table-${tableNumber}-qr.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    alert('QR code not found. Please generate it first.');
+                }
+            })
+            .catch(error => {
+                console.error('Error downloading QR code:', error);
+                alert('Error downloading QR code');
+            });
+    }
 
-    // Event listeners
-    document.addEventListener('DOMContentLoaded', function() {
-        // Search input listener
-        if (searchInput) {
-            searchInput.addEventListener('input', performSearch, { passive: true });
+    // Download all QR codes - using backend generated QR codes
+    function downloadAllQR() {
+        const tables = document.querySelectorAll('[data-table-id]');
+        if (tables.length === 0) {
+            alert('No tables found to generate QR codes for');
+            return;
         }
 
-        // Action button listeners
-        document.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const action = this.title;
-                const card = this.closest('.qr-card');
-                const qrId = card.dataset.qrId;
+        // Show loading state
+        const button = event.target.closest('.header-btn');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Generating...</span>';
+        button.disabled = true;
 
-                if (action === 'Download QR') {
-                    // Handle download QR action
-                    console.log('Download QR code:', qrId);
-                    // Here you would implement QR code generation and download
-                } else if (action === 'Edit') {
-                    // Handle edit action
-                    console.log('Edit QR code:', qrId);
-                } else if (action === 'Delete') {
-                    // Handle delete action
-                    console.log('Delete QR code:', qrId);
+        let completed = 0;
+        const zip = new JSZip();
+        let hasErrors = false;
+
+        tables.forEach((tableCard) => {
+            const tableId = tableCard.dataset.tableId;
+            const tableNumber = tableCard.querySelector('.qr-title').textContent.replace('Table ', '');
+
+            fetch(`/admin/api/qr-codes/${tableId}/image`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.qr_image) {
+                        const base64Data = data.qr_image.split(',')[1];
+                        zip.file(`table-${tableNumber}-qr.png`, base64Data, {base64: true});
+                    } else {
+                        hasErrors = true;
+                        console.error(`QR code not found for table ${tableNumber}`);
+                    }
+                    
+                    completed++;
+                    if (completed === tables.length) {
+                        if (Object.keys(zip.files).length > 0) {
+                            zip.generateAsync({type: 'blob'}).then(function(content) {
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(content);
+                                link.download = 'all-table-qr-codes.zip';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                
+                                // Reset button
+                                button.innerHTML = originalText;
+                                button.disabled = false;
+                                
+                                if (hasErrors) {
+                                    alert('Some QR codes were missing. Please generate missing QR codes first.');
+                                }
+                            });
+                        } else {
+                            alert('No QR codes found. Please generate QR codes first.');
+                            button.innerHTML = originalText;
+                            button.disabled = false;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching QR code:', error);
+                    hasErrors = true;
+                    completed++;
+                    
+                    if (completed === tables.length) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        alert('Error downloading QR codes. Please try again.');
+                    }
+                });
+        });
+    }
+
+    // Edit table
+    function editTable(tableId) {
+        currentTableId = tableId;
+        
+        // Fetch table data and populate form
+        fetch(`/admin/api/tables/${tableId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const table = data.table;
+                    document.getElementById('table_id').value = table.table_id;
+                    document.getElementById('table_number').value = table.table_number;
+                    document.getElementById('capacity').value = table.capacity;
+                    document.getElementById('location').value = table.location || '';
+                    document.getElementById('table_type').value = table.table_type || 'regular';
+                    document.getElementById('is_active').checked = table.is_active;
+                    
+                    // Show modal without backdrop
+                    const modalElement = document.getElementById('tableModal');
+                    const modal = new bootstrap.Modal(modalElement, {
+                        backdrop: false,
+                        keyboard: true,
+                        focus: true
+                    });
+                    modal.show();
+                } else {
+                    alert('Error loading table data: ' + data.message);
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading table data');
             });
+    }
+
+    // Add new table
+    function addNewTable() {
+        currentTableId = null;
+        
+        // Clear form
+        document.getElementById('tableForm').reset();
+        document.getElementById('table_id').value = '';
+        
+        // Ensure modal appears properly
+        const modalElement = document.getElementById('tableModal');
+        modalElement.style.zIndex = '10060';
+        
+        const modal = new bootstrap.Modal(modalElement, {
+            backdrop: false,
+            keyboard: true,
+            focus: true
+        });
+        modal.show();
+    }
+
+    // Save table (create or update)
+    function saveTable() {
+        const formData = new FormData(document.getElementById('tableForm'));
+        const tableData = Object.fromEntries(formData.entries());
+        tableData.is_active = document.getElementById('is_active').checked;
+        
+        const url = currentTableId ? 
+            `/admin/api/tables/${currentTableId}` : 
+            '/admin/api/tables';
+        const method = currentTableId ? 'PUT' : 'POST';
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(tableData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('tableModal')).hide();
+                location.reload(); // Refresh to show updated data
+            } else {
+                alert('Error saving table: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error saving table');
+        });
+    }
+
+    // Regenerate QR code - using backend
+    function regenerateQR(tableId) {
+        const tableCard = document.querySelector(`[data-table-id="${tableId}"]`);
+        const tableNumber = tableCard.querySelector('.qr-title').textContent.replace('Table ', '');
+        const qrContainer = document.getElementById(`qr-code-${tableId}`);
+        
+        // Show loading state
+        if (qrContainer) {
+            qrContainer.innerHTML = '<div class="qr-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        }
+        
+        // Generate new QR code via backend
+        fetch(`/admin/api/qr-codes/generate/${tableId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.qr_image) {
+                if (qrContainer) {
+                    qrContainer.innerHTML = `<img src="${data.qr_image}" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;">`;
+                }
+                
+                // Show success message
+                const button = event.target.closest('.action-btn');
+                const originalIcon = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.style.background = '#10b981';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.style.background = '';
+                }, 2000);
+            } else {
+                if (qrContainer) {
+                    qrContainer.innerHTML = '<div class="qr-error">Failed to generate QR</div>';
+                }
+                alert('Error regenerating QR code: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error regenerating QR code:', error);
+            if (qrContainer) {
+                qrContainer.innerHTML = '<div class="qr-error">Failed to generate QR</div>';
+            }
+            alert('Error regenerating QR code');
+        });
+    }
+
+    // Generate new QR (for header button) - now includes generate all option
+    function generateNewQR() {
+        const hasExistingTables = document.querySelectorAll('[data-table-id]').length > 0;
+        
+        if (hasExistingTables) {
+            // Show options: Add new table OR Generate all QR codes
+            if (confirm('Generate QR codes for all existing tables? Click OK to generate all, Cancel to add a new table.')) {
+                generateAllQRCodes();
+            } else {
+                addNewTable();
+            }
+        } else {
+            // No tables exist, just add new table
+            addNewTable();
+        }
+    }
+
+    // Generate QR codes for all tables
+    function generateAllQRCodes() {
+        const button = document.querySelector('.header-btn-primary');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Generating...</span>';
+        button.disabled = true;
+
+        fetch('/admin/api/qr-codes/generate-all', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Refresh the page to show updated QR codes
+                location.reload();
+            } else {
+                alert('Error generating QR codes: ' + data.message);
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error generating QR codes:', error);
+            alert('Error generating QR codes');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generate QR codes for all existing tables
+        document.querySelectorAll('[data-table-id]').forEach(tableCard => {
+            const tableId = tableCard.dataset.tableId;
+            const tableNumber = tableCard.querySelector('.qr-title').textContent.replace('Table ', '');
+            generateQRCode(tableId, tableNumber);
         });
 
-        // Empty card click listeners
-        document.querySelectorAll('.qr-card.empty').forEach(card => {
-            card.addEventListener('click', function() {
-                // Handle add new QR code
-                console.log('Add new QR code');
+        // Search functionality
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                document.querySelectorAll('[data-table-id]').forEach(card => {
+                    const tableName = card.querySelector('.qr-title').textContent.toLowerCase();
+                    const tableInfo = card.querySelector('.table-info');
+                    const location = tableInfo ? tableInfo.textContent.toLowerCase() : '';
+                    
+                    const shouldShow = tableName.includes(searchTerm) || location.includes(searchTerm);
+                    card.style.display = shouldShow ? '' : 'none';
+                });
             });
-        });
+        }
 
-        // Intersection Observer for lazy loading animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0) translateZ(0)';
-                }
+        // Initialize tooltips if Bootstrap is available
+        if (typeof bootstrap !== 'undefined') {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
-        }, observerOptions);
+        }
 
-        // Observe QR cards for smooth loading
-        document.querySelectorAll('.qr-card').forEach(card => {
+        // Smooth loading animation
+        document.querySelectorAll('.qr-card').forEach((card, index) => {
             card.style.opacity = '0';
-            card.style.transform = 'translateY(20px) translateZ(0)';
+            card.style.transform = 'translateY(20px)';
             card.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
-            observer.observe(card);
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
         });
     });
 </script>

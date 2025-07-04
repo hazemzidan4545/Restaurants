@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block page_title %}Loyalty Settings{% endblock %}
+
+{% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-cogs"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Loyalty Program Settings</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Configure loyalty program parameters and tier thresholds
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.loyalty_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Management</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Form -->
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom-0 pb-0">
+                <h5 class="mb-3">Program Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.loyalty_settings') }}">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="pointsPerDollar" class="form-label">Points per 50 EGP Spent</label>
+                                <input type="number" class="form-control" id="pointsPerDollar" name="points_per_50_egp" 
+                                       value="{{ program.points_per_50EGP if program else 100 }}" min="0" step="1" required>
+                                <div class="form-text">Number of points customers earn for every 50 EGP spent</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="pointsValue" class="form-label">Points Value (EGP per 100 points)</label>
+                                <input type="number" class="form-control" id="pointsValue" name="points_value" 
+                                       value="{{ program.points_value if program else 1.0 }}" min="0" step="0.01" required>
+                                <div class="form-text">Monetary value of 100 points when redeemed</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Tier Thresholds (Lifetime Points)</label>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="bronzeThreshold" class="form-label small text-muted">Bronze</label>
+                                <input type="number" class="form-control" id="bronzeThreshold" name="bronze_threshold" value="0" readonly>
+                                <div class="form-text">Starting tier</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="silverThreshold" class="form-label small">Silver</label>
+                                <input type="number" class="form-control" id="silverThreshold" name="silver_threshold" 
+                                       value="{{ tier_thresholds.silver if tier_thresholds else 500 }}" min="1" required>
+                                <div class="form-text">Points needed for Silver</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="goldThreshold" class="form-label small">Gold</label>
+                                <input type="number" class="form-control" id="goldThreshold" name="gold_threshold" 
+                                       value="{{ tier_thresholds.gold if tier_thresholds else 1000 }}" min="1" required>
+                                <div class="form-text">Points needed for Gold</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="platinumThreshold" class="form-label small">Platinum</label>
+                                <input type="number" class="form-control" id="platinumThreshold" name="platinum_threshold" 
+                                       value="{{ tier_thresholds.platinum if tier_thresholds else 2000 }}" min="1" required>
+                                <div class="form-text">Points needed for Platinum</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="minRedemption" class="form-label">Minimum Redemption Amount</label>
+                                <input type="number" class="form-control" id="minRedemption" name="min_redemption" 
+                                       value="{{ program.min_redemption if program else 100 }}" min="1" required>
+                                <div class="form-text">Minimum points required for redemption</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="maxRedemption" class="form-label">Maximum Redemption Percentage</label>
+                                <input type="number" class="form-control" id="maxRedemption" name="max_redemption_percentage" 
+                                       value="{{ program.max_redemption_percentage if program else 50 }}" min="1" max="100" required>
+                                <div class="form-text">Maximum percentage of order total that can be paid with points</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="programActive" name="program_active" 
+                                   {{ 'checked' if program and program.status == 'active' else '' }}>
+                            <label class="form-check-label" for="programActive">
+                                Enable Loyalty Program
+                            </label>
+                            <div class="form-text">When disabled, customers cannot earn or redeem points</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('admin.loyalty_management') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Preview Card -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Settings Preview</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Earning Structure</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-coins text-warning me-2"></i>Spend 50 EGP = <span id="previewPoints">100</span> points</li>
+                            <li><i class="fas fa-gift text-success me-2"></i>100 points = <span id="previewValue">1.00</span> EGP value</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Tier Structure</h6>
+                        <div class="tier-preview">
+                            <div class="tier-item bronze">
+                                <span class="badge bg-secondary">Bronze</span> 0+ points
+                            </div>
+                            <div class="tier-item silver">
+                                <span class="badge bg-secondary">Silver</span> <span id="previewSilver">500</span>+ points
+                            </div>
+                            <div class="tier-item gold">
+                                <span class="badge bg-warning">Gold</span> <span id="previewGold">1000</span>+ points
+                            </div>
+                            <div class="tier-item platinum">
+                                <span class="badge bg-info">Platinum</span> <span id="previewPlatinum">2000</span>+ points
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+.tier-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tier-item {
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.tier-item .badge {
+    margin-right: 8px;
+}
+</style>
+{% endblock %}
+
+<script>
+// Update preview when values change
+document.addEventListener('DOMContentLoaded', function() {
+    const pointsPerDollar = document.getElementById('pointsPerDollar');
+    const pointsValue = document.getElementById('pointsValue');
+    const silverThreshold = document.getElementById('silverThreshold');
+    const goldThreshold = document.getElementById('goldThreshold');
+    const platinumThreshold = document.getElementById('platinumThreshold');
+
+    function updatePreview() {
+        document.getElementById('previewPoints').textContent = pointsPerDollar.value;
+        document.getElementById('previewValue').textContent = parseFloat(pointsValue.value).toFixed(2);
+        document.getElementById('previewSilver').textContent = silverThreshold.value;
+        document.getElementById('previewGold').textContent = goldThreshold.value;
+        document.getElementById('previewPlatinum').textContent = platinumThreshold.value;
+    }
+
+    [pointsPerDollar, pointsValue, silverThreshold, goldThreshold, platinumThreshold].forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+
+    // Validate tier thresholds
+    function validateTiers() {
+        const silver = parseInt(silverThreshold.value);
+        const gold = parseInt(goldThreshold.value);
+        const platinum = parseInt(platinumThreshold.value);
+
+        if (gold <= silver) {
+            goldThreshold.value = silver + 1;
+        }
+        if (platinum <= gold) {
+            platinumThreshold.value = gold + 1;
+        }
+        updatePreview();
+    }
+
+    silverThreshold.addEventListener('change', validateTiers);
+    goldThreshold.addEventListener('change', validateTiers);
+    platinumThreshold.addEventListener('change', validateTiers);
+
+    // Initial preview update
+    updatePreview();
+});
+</script>
+{% endblock %}

@@ -3,68 +3,53 @@
 {% block page_title %}Loyalty Management{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">
-        <i class="fas fa-crown text-warning me-2"></i>
-        Loyalty Program Management
-    </h2>
-    <div>
-        <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#settingsModal">
-            <i class="fas fa-cogs me-1"></i> Settings
-        </button>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-            <i class="fas fa-user-plus me-1"></i> Add Customer
-        </button>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-crown"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Loyalty Program Management</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Monitor and manage customer loyalty points, tiers, and program performance
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_customers if total_customers else 0 }}</span>
+                    <span class="stat-label">Total Members</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ active_customers if active_customers else 0 }}</span>
+                    <span class="stat-label">Active Members</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_points_distributed if total_points_distributed else 0 }}</span>
+                    <span class="stat-label">Points Distributed</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.loyalty_settings') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-cogs"></i>
+                <span>Settings</span>
+            </a>
+            <a href="{{ url_for('admin.loyalty_adjust_points') }}" class="header-btn header-btn-primary">
+                <i class="fas fa-coins"></i>
+                <span>Adjust Points</span>
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-primary mb-2">
-                    <i class="fas fa-users fa-2x"></i>
-                </div>
-                <h3 class="mb-0">{{ total_customers }}</h3>
-                <p class="text-muted mb-0">Total Customers</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-success mb-2">
-                    <i class="fas fa-star fa-2x"></i>
-                </div>
-                <h3 class="mb-0">{{ active_customers }}</h3>
-                <p class="text-muted mb-0">Active Members</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-warning mb-2">
-                    <i class="fas fa-coins fa-2x"></i>
-                </div>
-                <h3 class="mb-0">{{ total_points_distributed }}</h3>
-                <p class="text-muted mb-0">Points Distributed</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-info mb-2">
-                    <i class="fas fa-gift fa-2x"></i>
-                </div>
-                <h3 class="mb-0">{{ total_redemptions }}</h3>
-                <p class="text-muted mb-0">Redemptions</p>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Statistics are now in the page header above -->
 
 <!-- Customer List -->
 <div class="card border-0 shadow-sm">
@@ -115,12 +100,12 @@
                             <div class="d-flex align-items-center">
                                 <div class="avatar-sm me-3">
                                     <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
-                                        {{ (customer.user.first_name[0] if customer.user and customer.user.first_name else 'U').upper() }}
+                                        {{ (customer.user.name[0] if customer.user and customer.user.name else 'U').upper() }}
                                     </div>
                                 </div>
                                 <div>
-                                    <h6 class="mb-0">{{ customer.user.first_name if customer.user else 'Unknown' }} {{ customer.user.last_name if customer.user else '' }}</h6>
-                                    <small class="text-muted">{{ customer.user.email if customer.user else 'No email' }}</small>
+                                    <h6 class="mb-0">{{ customer.user.name if customer.user and customer.user.name else 'Unknown User' }}</h6>
+                                    <small class="text-muted">{{ customer.user.email if customer.user and customer.user.email else 'No email' }}</small>
                                 </div>
                             </div>
                         </td>
@@ -131,7 +116,7 @@
                         </td>
                         <td>{{ customer.lifetime_points }}</td>
                         <td>{{ customer.total_points }}</td>
-                        <td>${{ "%.2f"|format(0) }}</td>
+                        <td>{{ "%.2f"|format(customer.total_spent if customer.total_spent is defined else 0) }} EGP</td>
                         <td>{{ customer.join_date.strftime('%b %d, %Y') }}</td>
                         <td>
                             <span class="badge bg-{{ 'success' if customer.total_points > 0 else 'secondary' }}">
@@ -140,12 +125,15 @@
                         </td>
                         <td>
                             <div class="btn-group" role="group">
-                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customerModal{{ customer.loyalty_id }}">
+                                <a href="{{ url_for('admin.loyalty_customer_details', customer_id=customer.loyalty_id) }}" class="btn btn-sm btn-outline-primary" title="View Details">
                                     <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-success" onclick="adjustPoints({{ customer.customer_id }})">
+                                </a>
+                                <a href="{{ url_for('admin.loyalty_adjust_points', customer_id=customer.loyalty_id) }}" class="btn btn-sm btn-outline-success" title="Adjust Points">
                                     <i class="fas fa-coins"></i>
-                                </button>
+                                </a>
+                                <a href="{{ url_for('admin.loyalty_transactions', customer_id=customer.loyalty_id) }}" class="btn btn-sm btn-outline-info" title="View Transactions">
+                                    <i class="fas fa-history"></i>
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -193,62 +181,35 @@
 </nav>
 {% endif %}
 
-<!-- Settings Modal -->
-<div class="modal fade" id="settingsModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Loyalty Program Settings</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="mb-3">
-                        <label class="form-label">Points per Dollar Spent</label>
-                        <input type="number" class="form-control" value="1" min="0" step="0.1">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Points Value (cents per point)</label>
-                        <input type="number" class="form-control" value="1" min="0" step="0.01">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Tier Thresholds</label>
-                        <div class="row">
-                            <div class="col-4">
-                                <label class="form-label small">Bronze</label>
-                                <input type="number" class="form-control" value="0">
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label small">Silver</label>
-                                <input type="number" class="form-control" value="500">
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label small">Gold</label>
-                                <input type="number" class="form-control" value="1000">
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Save Settings</button>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
+{% block extra_css %}
 <style>
 .avatar-sm {
     width: 40px;
     height: 40px;
 }
-</style>
 
-<script>
-function adjustPoints(customerId) {
-    // Implement points adjustment functionality
-    alert('Points adjustment for customer ' + customerId);
+.stat-item {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    backdrop-filter: blur(10px);
 }
-</script>
+
+.stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+</style>
 {% endblock %}

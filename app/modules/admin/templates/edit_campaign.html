@@ -3,20 +3,40 @@
 {% block page_title %}Edit Campaign{% endblock %}
 
 {% block content %}
+{% set now = now() %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-edit"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Edit Campaign</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Modify campaign details and settings
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.campaigns_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Campaigns</span>
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-8 mx-auto">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom-0 pb-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">
-                            <i class="fas fa-edit text-primary me-2"></i>
-                            Edit Campaign: {{ campaign.name }}
-                        </h4>
-                        <a href="{{ url_for('admin.campaigns_management') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Back to Campaigns
-                        </a>
-                    </div>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('admin.edit_campaign', campaign_id=campaign.campaign_id) }}">
@@ -111,7 +131,7 @@
                             <div class="border-end">
                                 <h4 class="text-success mb-1">
                                     {% if campaign.start_date %}
-                                        {{ (now() - campaign.start_date).days }}
+                                        {{ (now - campaign.start_date).days }}
                                     {% else %}
                                         0
                                     {% endif %}
@@ -123,7 +143,7 @@
                             <div class="border-end">
                                 <h4 class="text-warning mb-1">
                                     {% if campaign.end_date %}
-                                        {{ (campaign.end_date - now()).days if campaign.end_date > now() else 0 }}
+                                        {{ (campaign.end_date - now).days if campaign.end_date > now else 0 }}
                                     {% else %}
                                         ∞
                                     {% endif %}

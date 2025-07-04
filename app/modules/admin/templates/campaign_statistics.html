@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block page_title %}Campaign Statistics - {{ campaign.name }}{% endblock %}
+
+{% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Campaign Statistics</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Performance analytics and metrics for "{{ campaign.name }}"
+            </p>
+            <div class="campaign-info">
+                <span class="badge bg-{{ 'success' if campaign.status == 'active' else 'secondary' }} me-2">
+                    {{ campaign.status.title() }}
+                </span>
+                <span class="text-muted">
+                    {% if campaign.start_date and campaign.end_date %}
+                        {{ campaign.start_date.strftime('%b %d, %Y') }} - {{ campaign.end_date.strftime('%b %d, %Y') }}
+                    {% else %}
+                        No date range specified
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.campaigns_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Campaigns</span>
+            </a>
+            <a href="{{ url_for('admin.edit_campaign', campaign_id=campaign.campaign_id) }}" class="header-btn header-btn-primary">
+                <i class="fas fa-edit"></i>
+                <span>Edit Campaign</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Overview -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="mb-3">Campaign Details</h5>
+                        <div class="campaign-details">
+                            <div class="detail-item">
+                                <label>Campaign Name:</label>
+                                <span>{{ campaign.name }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Description:</label>
+                                <span>{{ campaign.description or 'No description provided' }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Bonus Multiplier:</label>
+                                <span class="badge bg-success">{{ campaign.bonus_multiplier }}x Points</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Duration:</label>
+                                <span>
+                                    {% if campaign.start_date and campaign.end_date %}
+                                        {% set duration = (campaign.end_date - campaign.start_date).days %}
+                                        {{ duration }} day{{ 's' if duration != 1 else '' }}
+                                    {% else %}
+                                        Not specified
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="mb-3">Campaign Status</h5>
+                        <div class="status-indicator text-center">
+                            {% set now = datetime.utcnow() %}
+                            {% if campaign.status == 'active' and campaign.start_date and campaign.end_date %}
+                                {% if campaign.start_date <= now <= campaign.end_date %}
+                                    <div class="status-icon text-success mb-2">
+                                        <i class="fas fa-play-circle fa-3x"></i>
+                                    </div>
+                                    <h6 class="text-success">Currently Active</h6>
+                                    <small class="text-muted">
+                                        {% set remaining = (campaign.end_date - now).days %}
+                                        {{ remaining }} day{{ 's' if remaining != 1 else '' }} remaining
+                                    </small>
+                                {% elif campaign.start_date > now %}
+                                    <div class="status-icon text-warning mb-2">
+                                        <i class="fas fa-clock fa-3x"></i>
+                                    </div>
+                                    <h6 class="text-warning">Scheduled</h6>
+                                    <small class="text-muted">
+                                        {% set days_until = (campaign.start_date - now).days %}
+                                        Starts in {{ days_until }} day{{ 's' if days_until != 1 else '' }}
+                                    </small>
+                                {% else %}
+                                    <div class="status-icon text-secondary mb-2">
+                                        <i class="fas fa-stop-circle fa-3x"></i>
+                                    </div>
+                                    <h6 class="text-secondary">Expired</h6>
+                                    <small class="text-muted">Campaign has ended</small>
+                                {% endif %}
+                            {% else %}
+                                <div class="status-icon text-secondary mb-2">
+                                    <i class="fas fa-pause-circle fa-3x"></i>
+                                </div>
+                                <h6 class="text-secondary">{{ campaign.status.title() }}</h6>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-shopping-cart fa-2x"></i>
+                </div>
+                <h3 class="mb-0">{{ stats.total_orders or 0 }}</h3>
+                <p class="text-muted mb-0">Orders Affected</p>
+                {% if stats.total_orders_growth %}
+                <small class="text-{{ 'success' if stats.total_orders_growth > 0 else 'danger' }}">
+                    <i class="fas fa-arrow-{{ 'up' if stats.total_orders_growth > 0 else 'down' }}"></i>
+                    {{ stats.total_orders_growth }}% vs. baseline
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-coins fa-2x"></i>
+                </div>
+                <h3 class="mb-0">{{ stats.bonus_points_awarded or 0 }}</h3>
+                <p class="text-muted mb-0">Bonus Points Awarded</p>
+                {% if stats.bonus_points_awarded %}
+                <small class="text-info">
+                    ≈ ${{ "%.2f"|format((stats.bonus_points_awarded / 100.0) * 1.0) }} value
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+                <h3 class="mb-0">{{ stats.customers_engaged or 0 }}</h3>
+                <p class="text-muted mb-0">Customers Engaged</p>
+                {% if stats.unique_customers_percentage %}
+                <small class="text-success">
+                    {{ stats.unique_customers_percentage }}% of total customers
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-dollar-sign fa-2x"></i>
+                </div>
+                <h3 class="mb-0">${{ stats.revenue_impact or '0.00' }}</h3>
+                <p class="text-muted mb-0">Revenue Impact</p>
+                {% if stats.revenue_growth %}
+                <small class="text-{{ 'success' if stats.revenue_growth > 0 else 'danger' }}">
+                    <i class="fas fa-arrow-{{ 'up' if stats.revenue_growth > 0 else 'down' }}"></i>
+                    {{ stats.revenue_growth }}% vs. baseline
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Campaign Performance Over Time</h6>
+            </div>
+            <div class="card-body">
+                <div class="performance-chart">
+                    <!-- Chart placeholder - can be replaced with actual chart library -->
+                    <div class="chart-placeholder text-center py-5">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Performance chart will be displayed here</p>
+                        <small class="text-muted">Integration with chart library (Chart.js, D3, etc.) can be added</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Campaign Performance Score</h6>
+            </div>
+            <div class="card-body">
+                <div class="performance-score text-center">
+                    <div class="score-circle mb-3">
+                        <div class="progress-circle">
+                            <div class="progress-bar-circle" data-percentage="{{ stats.performance_percentage or 0 }}">
+                                <span class="progress-text">{{ stats.performance_percentage or 0 }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="mb-2">Performance Rating</h6>
+                    <p class="text-muted small">{{ stats.performance_description or 'No performance data available' }}</p>
+                    
+                    {% if stats.performance_percentage %}
+                        {% set performance = stats.performance_percentage %}
+                        {% if performance >= 80 %}
+                            <span class="badge bg-success">Excellent</span>
+                        {% elif performance >= 60 %}
+                            <span class="badge bg-warning">Good</span>
+                        {% elif performance >= 40 %}
+                            <span class="badge bg-info">Average</span>
+                        {% else %}
+                            <span class="badge bg-danger">Needs Improvement</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analytics -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Customer Engagement Breakdown</h6>
+            </div>
+            <div class="card-body">
+                {% if stats.engagement_breakdown %}
+                    <div class="engagement-stats">
+                        {% for tier, count in stats.engagement_breakdown.items() %}
+                        <div class="engagement-item d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-{{ 'warning' if tier == 'gold' else 'secondary' if tier == 'silver' else 'info' if tier == 'platinum' else 'primary' }}">
+                                {{ tier.title() }} Tier
+                            </span>
+                            <span class="fw-bold">{{ count }} customers</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No engagement data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Order Pattern Analysis</h6>
+            </div>
+            <div class="card-body">
+                {% if stats.order_patterns %}
+                    <div class="order-patterns">
+                        <div class="pattern-item">
+                            <label>Average Order Value:</label>
+                            <span class="fw-bold">${{ "%.2f"|format(stats.order_patterns.avg_order_value or 0) }}</span>
+                        </div>
+                        <div class="pattern-item">
+                            <label>Peak Order Time:</label>
+                            <span>{{ stats.order_patterns.peak_time or 'Not available' }}</span>
+                        </div>
+                        <div class="pattern-item">
+                            <label>Repeat Customers:</label>
+                            <span>{{ stats.order_patterns.repeat_customers or 0 }}%</span>
+                        </div>
+                        <div class="pattern-item">
+                            <label>New Customers:</label>
+                            <span>{{ stats.order_patterns.new_customers or 0 }}%</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No order pattern data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.campaign-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.detail-item label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.detail-item span {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.status-indicator {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.chart-placeholder {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+}
+
+.performance-score {
+    padding: 20px;
+}
+
+.progress-circle {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    position: relative;
+    border-radius: 50%;
+    background: conic-gradient(#28a745 0deg 216deg, #e9ecef 216deg 360deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+}
+
+.progress-text {
+    position: relative;
+    z-index: 1;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.engagement-item,
+.pattern-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.pattern-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pattern-item label {
+    color: #6c757d;
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update progress circle based on performance percentage
+document.addEventListener('DOMContentLoaded', function() {
+    const progressCircle = document.querySelector('.progress-circle');
+    const percentage = {{ (stats.performance_percentage or 0) | tojson }};
+    
+    if (progressCircle && percentage > 0) {
+        const degrees = (percentage / 100) * 360;
+        progressCircle.style.background = `conic-gradient(#28a745 0deg ${degrees}deg, #e9ecef ${degrees}deg 360deg)`;
+    }
+});
+</script>
+{% endblock %}

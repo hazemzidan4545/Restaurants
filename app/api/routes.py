@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from flask_login import current_user, login_required
 from app.api import bp
-from app.models import MenuItem, Category, Order, OrderItem, User, Table, Service, ServiceRequest
+from app.models import MenuItem, Category, Order, OrderItem, User, Table, Service, ServiceRequest, TableSession
 from app.extensions import db
 from datetime import datetime
 import uuid
@@ -595,9 +595,24 @@ def create_service_request():
                 'message': 'Service not found or unavailable'
             }), 404
             
-        # Get user's current table (you may need to implement table assignment logic)
-        # For now, we'll use a default or the user can be assigned a table
-        table_id = 1  # Default table - you might want to implement proper table assignment
+        # Get user's current table from session or request data
+        table_id = data.get('table_id')
+        
+        # If no table_id provided, try to get from active table session
+        if not table_id and current_user.is_authenticated:
+            active_session = TableSession.query.filter(
+                TableSession.user_id == current_user.user_id,
+                TableSession.is_active == True
+            ).order_by(TableSession.started_at.desc()).first()
+            
+            if active_session:
+                table_id = active_session.table_id
+        
+        if not table_id:
+            return jsonify({
+                'success': False,
+                'message': 'Table assignment required for service request'
+            }), 400
         
         # Create service request
         service_request = ServiceRequest(
@@ -625,3 +640,140 @@ def create_service_request():
             'success': False,
             'message': 'Unable to submit service request. Please try again.'
         }), 500
+
+@bp.route('/table-session', methods=['GET', 'POST'])
+def table_session_api():
+    """Handle table session operations"""
+    
+    if request.method == 'GET':
+        # Get current table session info
+        table_id = request.args.get('table_id', type=int)
+        session_token = request.args.get('session_token')
+        
+        if not table_id:
+            return jsonify({
+                'success': False,
+                'message': 'Table ID is required'
+            }), 400
+        
+        try:
+            # Get active session
+            table_session = TableSession.get_active_session(
+                table_id=table_id,
+                user_id=current_user.user_id if current_user.is_authenticated else None,
+                session_token=session_token
+            )
+            
+            if not table_session:
+                return jsonify({
+                    'success': False,
+                    'message': 'No active session found'
+                }), 404
+            
+            return jsonify({
+                'success': True,
+                'session': {
+                    'session_id': table_session.session_id,
+                    'table_id': table_session.table_id,
+                    'session_token': table_session.session_token,
+                    'started_at': table_session.started_at.isoformat(),
+                    'is_active': table_session.is_active,
+                    'table_number': table_session.table.table_number,
+                    'table_status': table_session.table.status
+                }
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Error retrieving session: {str(e)}'
+            }), 500
+    
+    elif request.method == 'POST':
+        # Create or manage table session
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No data provided'
+            }), 400
+        
+        action = data.get('action', 'create')
+        table_id = data.get('table_id')
+        
+        if not table_id:
+            return jsonify({
+                'success': False,
+                'message': 'Table ID is required'
+            }), 400
+        
+        try:
+            if action == 'create':
+                # Create new session
+                device_info = request.headers.get('User-Agent', 'Unknown')
+                ip_address = request.remote_addr
+                
+                table_session = TableSession.create_session(
+                    table_id=table_id,
+                    user_id=current_user.user_id if current_user.is_authenticated else None,
+                    device_info=device_info,
+                    ip_address=ip_address
+                )
+                
+                return jsonify({
+                    'success': True,
+                    'message': 'Session created successfully',
+                    'session': {
+                        'session_id': table_session.session_id,
+                        'session_token': table_session.session_token,
+                        'table_id': table_session.table_id
+                    }
+                })
+                
+            elif action == 'end':
+                # End existing session
+                session_token = data.get('session_token')
+                table_session = TableSession.get_active_session(
+                    table_id=table_id,
+                    user_id=current_user.user_id if current_user.is_authenticated else None,
+                    session_token=session_token
+                )
+                
+                if table_session:
+                    table_session.end_session()
+                    
+                    # Update table status to available if no other active sessions
+                    other_sessions = TableSession.query.filter(
+                        TableSession.table_id == table_id,
+                        TableSession.is_active == True,
+                        TableSession.session_id != table_session.session_id
+                    ).count()
+                    
+                    if other_sessions == 0:
+                        table = Table.query.get(table_id)
+                        if table:
+                            table.status = 'available'
+                            db.session.commit()
+                    
+                    return jsonify({
+                        'success': True,
+                        'message': 'Session ended successfully'
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': 'Session not found'
+                    }), 404
+            
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Invalid action'
+                }), 400
+                
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({
+                'success': False,
+                'message': f'Error managing session: {str(e)}'
+            }), 500

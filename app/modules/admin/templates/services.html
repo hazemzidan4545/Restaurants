@@ -266,6 +266,40 @@
 {% endblock %}
 
 {% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-concierge-bell"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Services</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Manage restaurant services and offerings
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ services|length }}</span>
+                    <span class="stat-label">Total Services</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.add_service') }}" class="header-btn header-btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>Add Service</span>
+            </a>
+        </div>
+    </div>
+</div>
+
 <!-- Services Grid -->
 <div class="services-grid">
     {% for service in services %}

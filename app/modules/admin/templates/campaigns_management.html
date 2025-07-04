@@ -3,68 +3,53 @@
 {% block page_title %}Campaigns Management{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">
-        <i class="fas fa-bullhorn text-primary me-2"></i>
-        Campaigns Management
-    </h2>
-    <div>
-        <button class="btn btn-outline-primary me-2" onclick="exportCampaigns()">
-            <i class="fas fa-download me-1"></i> Export
-        </button>
-        <a href="{{ url_for('admin.add_campaign') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> New Campaign
-        </a>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Campaigns Management</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Create and manage promotional campaigns and loyalty program bonuses
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_campaigns if total_campaigns else 0 }}</span>
+                    <span class="stat-label">Total Campaigns</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ active_campaigns if active_campaigns else 0 }}</span>
+                    <span class="stat-label">Active Campaigns</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ (campaigns.items|selectattr('status', 'equalto', 'scheduled')|list|length) if campaigns else 0 }}</span>
+                    <span class="stat-label">Scheduled</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn header-btn-secondary" onclick="exportCampaigns()">
+                <i class="fas fa-download"></i>
+                <span>Export</span>
+            </button>
+            <a href="{{ url_for('admin.add_campaign') }}" class="header-btn header-btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>New Campaign</span>
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-primary mb-2">
-                    <i class="fas fa-bullhorn fa-2x"></i>
-                </div>
-                <h3 class="mb-0">{{ total_campaigns }}</h3>
-                <p class="text-muted mb-0">Total Campaigns</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-success mb-2">
-                    <i class="fas fa-play fa-2x"></i>
-                </div>
-                <h3 class="mb-0">{{ active_campaigns }}</h3>
-                <p class="text-muted mb-0">Active Campaigns</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-warning mb-2">
-                    <i class="fas fa-clock fa-2x"></i>
-                </div>
-                <h3 class="mb-0">{{ scheduled_campaigns }}</h3>
-                <p class="text-muted mb-0">Scheduled</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="text-info mb-2">
-                    <i class="fas fa-chart-line fa-2x"></i>
-                </div>
-                <h3 class="mb-0">{{ total_reach }}</h3>
-                <p class="text-muted mb-0">Total Reach</p>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Statistics are now in the page header above -->
 
 <!-- Campaigns List -->
 <div class="card border-0 shadow-sm">
@@ -102,11 +87,10 @@
                 <thead class="table-light">
                     <tr>
                         <th class="border-0">Campaign</th>
-                        <th class="border-0">Type</th>
+                        <th class="border-0">Bonus Multiplier</th>
                         <th class="border-0">Start Date</th>
                         <th class="border-0">End Date</th>
-                        <th class="border-0">Discount</th>
-                        <th class="border-0">Usage</th>
+                        <th class="border-0">Duration</th>
                         <th class="border-0">Status</th>
                         <th class="border-0">Actions</th>
                     </tr>
@@ -117,51 +101,61 @@
                         <td>
                             <div>
                                 <h6 class="mb-0">{{ campaign.name }}</h6>
-                                <small class="text-muted">{{ campaign.description[:50] }}{% if campaign.description|length > 50 %}...{% endif %}</small>
+                                <small class="text-muted">{{ campaign.description[:50] if campaign.description else 'No description' }}{% if campaign.description and campaign.description|length > 50 %}...{% endif %}</small>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-{{ 'info' if campaign.campaign_type == 'percentage' else 'success' if campaign.campaign_type == 'fixed' else 'warning' }}">
-                                {{ campaign.campaign_type.title() }}
+                            <span class="badge bg-success">
+                                {{ campaign.bonus_multiplier }}x Points
                             </span>
                         </td>
                         <td>{{ campaign.start_date.strftime('%b %d, %Y') if campaign.start_date else 'N/A' }}</td>
                         <td>{{ campaign.end_date.strftime('%b %d, %Y') if campaign.end_date else 'N/A' }}</td>
                         <td>
-                            {% if campaign.discount_type == 'percentage' %}
-                                {{ campaign.discount_value }}%
+                            {% if campaign.start_date and campaign.end_date %}
+                                {% set duration = (campaign.end_date - campaign.start_date).days %}
+                                {{ duration }} day{{ 's' if duration != 1 else '' }}
                             {% else %}
-                                ${{ "%.2f"|format(campaign.discount_value) }}
+                                N/A
                             {% endif %}
                         </td>
                         <td>
-                            <div class="progress" style="height: 20px;">
-                                {% set usage_percent = (campaign.usage_count / campaign.max_usage * 100) if campaign.max_usage else 0 %}
-                                <div class="progress-bar" role="progressbar" style="width: {{ usage_percent }}%">
-                                    {{ campaign.usage_count }}{% if campaign.max_usage %}/{{ campaign.max_usage }}{% endif %}
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-{{ 'success' if campaign.is_active else 'secondary' }}">
-                                {{ 'Active' if campaign.is_active else 'Inactive' }}
-                            </span>
+                            {% set now = datetime.utcnow() %}
+                            {% if campaign.status == 'active' and campaign.start_date and campaign.end_date %}
+                                {% if campaign.start_date <= now <= campaign.end_date %}
+                                    <span class="badge bg-success">Active</span>
+                                {% elif campaign.start_date > now %}
+                                    <span class="badge bg-warning">Scheduled</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Expired</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary">{{ campaign.status.title() }}</span>
+                            {% endif %}
                         </td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="{{ url_for('admin.edit_campaign', campaign_id=campaign.campaign_id) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ url_for('admin.edit_campaign', campaign_id=campaign.campaign_id) }}" class="btn btn-sm btn-outline-primary" title="Edit Campaign">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button class="btn btn-sm btn-outline-info" onclick="viewStats({{ campaign.campaign_id }})">
+                                <a href="{{ url_for('admin.campaign_statistics', campaign_id=campaign.campaign_id) }}" class="btn btn-sm btn-outline-info" title="View Statistics">
                                     <i class="fas fa-chart-bar"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-{{ 'secondary' if campaign.status == 'active' else 'success' }}" onclick="toggleCampaign('{{ campaign.campaign_id }}')" title="{{ 'Deactivate' if campaign.status == 'active' else 'Activate' }} Campaign">
+                                    <i class="fas fa-{{ 'pause' if campaign.status == 'active' else 'play' }}"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-{{ 'secondary' if campaign.is_active else 'success' }}" onclick="toggleCampaign({{ campaign.campaign_id }})">
-                                    <i class="fas fa-{{ 'pause' if campaign.is_active else 'play' }}"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCampaign({{ campaign.campaign_id }})">
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCampaign('{{ campaign.campaign_id }}')" title="Delete Campaign">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-bullhorn fa-2x mb-2"></i>
+                            <br>
+                            No campaigns found. <a href="{{ url_for('admin.add_campaign') }}">Create your first campaign</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -208,30 +202,172 @@
 </nav>
 {% endif %}
 
-<script>
-function exportCampaigns() {
-    // Implement export functionality
-    alert('Export campaigns functionality');
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-item {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    backdrop-filter: blur(10px);
 }
 
-function viewStats(campaignId) {
-    // Implement campaign stats view
-    alert('View stats for campaign ' + campaignId);
+.stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+</style>
+
+<script>
+function exportCampaigns() {
+    // Create CSV export
+    const campaigns = [];
+    const rows = document.querySelectorAll('tbody tr');
+    
+    // Add header
+    campaigns.push(['Campaign Name', 'Description', 'Bonus Multiplier', 'Start Date', 'End Date', 'Status']);
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length > 1) {
+            const name = cells[0].querySelector('h6').textContent.trim();
+            const description = cells[0].querySelector('small').textContent.trim();
+            const multiplier = cells[1].textContent.trim();
+            const startDate = cells[2].textContent.trim();
+            const endDate = cells[3].textContent.trim();
+            const status = cells[5].textContent.trim();
+            
+            campaigns.push([name, description, multiplier, startDate, endDate, status]);
+        }
+    });
+    
+    // Create and download CSV
+    const csvContent = campaigns.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'campaigns_export.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
 }
 
 function toggleCampaign(campaignId) {
-    // Implement campaign toggle
     if (confirm('Are you sure you want to toggle this campaign status?')) {
-        // AJAX call to toggle campaign
-        alert('Toggle campaign ' + campaignId);
+        fetch(`/admin/api/campaigns/${campaignId}/toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh to show updated status
+            } else {
+                alert('Error toggling campaign: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error toggling campaign');
+        });
     }
 }
 
 function deleteCampaign(campaignId) {
     if (confirm('Are you sure you want to delete this campaign? This action cannot be undone.')) {
-        // AJAX call to delete campaign
-        alert('Delete campaign ' + campaignId);
+        fetch(`/admin/api/campaigns/${campaignId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh to show updated list
+            } else {
+                alert('Error deleting campaign: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting campaign');
+        });
     }
 }
+
+// Filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const filterRadios = document.querySelectorAll('input[name="filter"]');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    filterRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const filter = this.id;
+            
+            tableRows.forEach(row => {
+                const statusCell = row.querySelector('td:nth-child(6)');
+                if (!statusCell) return;
+                
+                const statusText = statusCell.textContent.toLowerCase();
+                let show = false;
+                
+                switch(filter) {
+                    case 'all':
+                        show = true;
+                        break;
+                    case 'active':
+                        show = statusText.includes('active');
+                        break;
+                    case 'scheduled':
+                        show = statusText.includes('scheduled');
+                        break;
+                    case 'completed':
+                        show = statusText.includes('expired') || statusText.includes('inactive');
+                        break;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    });
+    
+    // Search functionality
+    const searchInput = document.querySelector('input[placeholder="Search campaigns..."]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            tableRows.forEach(row => {
+                const nameCell = row.querySelector('td:first-child h6');
+                if (!nameCell) return;
+                
+                const name = nameCell.textContent.toLowerCase();
+                const show = name.includes(searchTerm);
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    }
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
 </script>
+
 {% endblock %}

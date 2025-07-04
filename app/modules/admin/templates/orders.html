@@ -269,6 +269,52 @@
 {% endblock %}
 
 {% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Orders Management</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                View and manage customer orders, track order status and process payments
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_orders if total_orders else 0 }}</span>
+                    <span class="stat-label">Total Orders</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ pending_orders if pending_orders else 0 }}</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ completed_orders if completed_orders else 0 }}</span>
+                    <span class="stat-label">Completed</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn header-btn-secondary" onclick="exportOrders()">
+                <i class="fas fa-download"></i>
+                <span>Export</span>
+            </button>
+            <button class="header-btn header-btn-primary" onclick="refreshOrders()">
+                <i class="fas fa-sync-alt"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Orders Section -->
 <div class="orders-section">
     <!-- Filters Section -->

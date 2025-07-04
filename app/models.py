@@ -25,7 +25,7 @@ class User(UserMixin, db.Model):
     service_requests = db.relationship('ServiceRequest', backref='customer', lazy='dynamic')
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     feedback = db.relationship('Feedback', backref='user', lazy='dynamic')
-    loyalty_account = db.relationship('CustomerLoyalty', backref='user', uselist=False)
+    loyalty_account = db.relationship('CustomerLoyalty', back_populates='user', uselist=False)
     point_transactions = db.relationship('PointTransaction', backref='user', lazy='dynamic')
     reward_redemptions = db.relationship('RewardRedemption', backref='user', lazy='dynamic')
     audit_logs = db.relationship('AuditLog', backref='user', lazy='dynamic')
@@ -528,6 +528,9 @@ class LoyaltyProgram(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     points_per_50EGP = db.Column(db.Integer, nullable=False, default=100)
+    points_value = db.Column(db.Float, nullable=False, default=1.0)  # EGP value per 100 points
+    min_redemption = db.Column(db.Integer, nullable=False, default=100)  # Minimum points for redemption
+    max_redemption_percentage = db.Column(db.Integer, nullable=False, default=50)  # Max % of order total
     status = db.Column(db.Enum('active', 'inactive', name='program_status'),
                       nullable=False, default='active')
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -547,6 +550,9 @@ class CustomerLoyalty(db.Model):
                           nullable=False, default='bronze')
     join_date = db.Column(db.DateTime, default=datetime.utcnow)
     last_activity = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', back_populates='loyalty_account', lazy='joined')
 
     def update_tier(self):
         """Update tier based on lifetime points"""
@@ -571,11 +577,20 @@ class PointTransaction(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), nullable=True)
     points_earned = db.Column(db.Integer, nullable=False, default=0)
     points_redeemed = db.Column(db.Integer, nullable=False, default=0)
-    transaction_type = db.Column(db.Enum('earned', 'redeemed', 'expired', 'bonus', name='transaction_types'),
+    balance_after = db.Column(db.Integer, nullable=True)  # Points balance after transaction
+    transaction_type = db.Column(db.Enum('earned', 'redeemed', 'expired', 'bonus', 'adjustment', name='transaction_types'),
                                nullable=False)
     description = db.Column(db.String(255), nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     expiry_date = db.Column(db.DateTime, nullable=True)
+    
+    @property
+    def customer(self):
+        """Get customer loyalty account for this transaction"""
+        return CustomerLoyalty.query.filter_by(user_id=self.user_id).first()
+
+    def __repr__(self):
+        return f'<PointTransaction {self.transaction_id}>'
 
     def __repr__(self):
         return f'<PointTransaction {self.transaction_id}>'
@@ -652,9 +667,16 @@ class QRCode(db.Model):
     qr_type = db.Column(db.Enum('menu', 'login', 'payment', name='qr_types'),
                        nullable=False, default='menu')
     is_active = db.Column(db.Boolean, default=True)
+    qr_image_data = db.Column(db.Text, nullable=True)  # Base64 encoded QR code image
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_scanned = db.Column(db.DateTime, nullable=True)
     scan_count = db.Column(db.Integer, default=0)
+    
+    def get_qr_image_url(self):
+        """Get data URL for QR code image"""
+        if self.qr_image_data:
+            return f"data:image/png;base64,{self.qr_image_data}"
+        return None
 
     def __repr__(self):
         return f'<QRCode {self.qr_id}>'
@@ -700,3 +722,63 @@ class CustomerPreferences(db.Model):
 
     def __repr__(self):
         return f'<CustomerPreferences {self.user_id}>'
+
+class TableSession(db.Model):
+    """Track customer sessions at tables"""
+    __tablename__ = 'table_sessions'
+    
+    session_id = db.Column(db.Integer, primary_key=True)
+    table_id = db.Column(db.Integer, db.ForeignKey('tables.table_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)  # Can be anonymous
+    session_token = db.Column(db.String(255), unique=True, nullable=False)  # For anonymous sessions
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ended_at = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    device_info = db.Column(db.Text, nullable=True)  # Browser/device info
+    ip_address = db.Column(db.String(45), nullable=True)  # IPv4/IPv6
+    
+    # Relationships
+    table = db.relationship('Table', backref='sessions')
+    user = db.relationship('User', backref='table_sessions')
+    
+    @classmethod
+    def create_session(cls, table_id, user_id=None, device_info=None, ip_address=None):
+        """Create a new table session"""
+        import uuid
+        session_token = str(uuid.uuid4())
+        
+        session = cls(
+            table_id=table_id,
+            user_id=user_id,
+            session_token=session_token,
+            device_info=device_info,
+            ip_address=ip_address
+        )
+        
+        db.session.add(session)
+        db.session.commit()
+        return session
+    
+    @classmethod
+    def get_active_session(cls, table_id, user_id=None, session_token=None):
+        """Get active session for table"""
+        query = cls.query.filter(
+            cls.table_id == table_id,
+            cls.is_active == True
+        )
+        
+        if user_id:
+            query = query.filter(cls.user_id == user_id)
+        elif session_token:
+            query = query.filter(cls.session_token == session_token)
+            
+        return query.first()
+    
+    def end_session(self):
+        """End the current session"""
+        self.ended_at = datetime.utcnow()
+        self.is_active = False
+        db.session.commit()
+    
+    def __repr__(self):
+        return f'<TableSession {self.session_id}>'

@@ -1,6 +1,53 @@
 {% extends "base.html" %}
 
-{% block title %}Rewards Management - Admin Panel{% endblock %}
+{% block page_title %}Rewards Management{% endblock %}
+
+{% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-gift"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Rewards Management</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Manage reward items, track redemptions, and monitor program performance
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_rewards if total_rewards else 0 }}</span>
+                    <span class="stat-label">Total Rewards</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ active_rewards if active_rewards else 0 }}</span>
+                    <span class="stat-label">Active Rewards</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_redemptions if total_redemptions else 0 }}</span>
+                    <span class="stat-label">Total Redemptions</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn header-btn-secondary" onclick="exportRewards()">
+                <i class="fas fa-download"></i>
+                <span>Export</span>
+            </button>
+            <a href="{{ url_for('admin.add_reward') }}" class="header-btn header-btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>New Reward</span>
+            </a>
+        </div>
+    </div>
+</div>
 
 {% block extra_css %}
 <style>
@@ -15,38 +62,6 @@
         --border-color: #e9ecef;
         --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         --border-radius: 8px;
-    }
-
-    .rewards-dashboard {
-        padding: 2rem;
-        background: var(--light-gray);
-        min-height: 100vh;
-    }
-
-    .dashboard-header {
-        background: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        margin-bottom: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .dashboard-title {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--primary-dark);
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .dashboard-title i {
-        color: var(--primary-yellow);
-        font-size: 1.8rem;
     }
 
     .stats-row {
@@ -289,16 +304,6 @@
     }
 
     @media (max-width: 768px) {
-        .rewards-dashboard {
-            padding: 1rem;
-        }
-
-        .dashboard-header {
-            flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-        }
-
         .stats-row {
             grid-template-columns: repeat(2, 1fr);
         }
@@ -325,29 +330,15 @@
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="rewards-dashboard">
-    <!-- Dashboard Header -->
-    <div class="dashboard-header">
-        <h1 class="dashboard-title">
-            <i class="fas fa-gift"></i>
-            Rewards Management
-        </h1>
-        <div class="header-actions">
-            <a href="{{ url_for('admin.add_reward') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i>
-                Add New Reward
-            </a>
-        </div>
-    </div>
-
+<!-- Main Content Container -->
+<div class="container-fluid">
     <!-- Statistics Row -->
     <div class="stats-row">
         <div class="stat-card total">
             <div class="stat-icon">
                 <i class="fas fa-gift"></i>
             </div>
-            <div class="stat-number">{{ total_rewards }}</div>
+            <div class="stat-number">{{ total_rewards if total_rewards else 0 }}</div>
             <p class="stat-label">Total Rewards</p>
         </div>
         <div class="stat-card active">
@@ -482,12 +473,12 @@
                                 <i class="fas fa-edit"></i>
                             </a>
                             <button class="btn btn-sm btn-warning" 
-                                    onclick="toggleRewardStatus({{ reward.reward_id }})" 
+                                    onclick="toggleRewardStatus('{{ reward.reward_id }}')" 
                                     title="{{ 'Deactivate' if reward.status == 'active' else 'Activate' }}">
                                 <i class="fas fa-{{ 'pause' if reward.status == 'active' else 'play' }}"></i>
                             </button>
                             <button class="btn btn-sm btn-danger" 
-                                    onclick="deleteReward({{ reward.reward_id }})" 
+                                    onclick="deleteReward('{{ reward.reward_id }}')" 
                                     title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>

@@ -505,8 +505,23 @@ def reorder_to_cart(order_id):
         
         # Add each item from the original order to the cart
         for original_item in order_items:
-            # Check if the menu item is still available
-            menu_item = MenuItem.query.get(original_item.item_id)
+            try:
+                # Check if the menu item is still available
+                menu_item = MenuItem.query.get(original_item.item_id)
+                if not menu_item:
+                    print(f"Menu item {original_item.item_id} not found")
+                    unavailable_items.append(original_item.item_id)
+                    continue
+                
+                if menu_item.status != 'available':
+                    print(f"Menu item {original_item.item_id} ({menu_item.name}) not available")
+                    unavailable_items.append(original_item.item_id)
+                    continue
+            except Exception as item_error:
+                print(f"Error processing menu item {original_item.item_id}: {str(item_error)}")
+                unavailable_items.append(original_item.item_id)
+                continue
+            
             if menu_item and menu_item.status == 'available':
                 # Check if item already exists in cart
                 existing_item = None

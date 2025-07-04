@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from sqlalchemy import func
 from app.modules.admin import bp
-from app.models import MenuItem, Category, User, Order, Table, OrderItem, QRCode, RewardItem, CustomerLoyalty, PointTransaction, RewardRedemption, PromotionalCampaign, Service
+from app.models import MenuItem, Category, User, Order, Table, OrderItem, QRCode, RewardItem, CustomerLoyalty, PointTransaction, RewardRedemption, PromotionalCampaign, LoyaltyProgram, Service
 from app.extensions import db
 from datetime import datetime, timedelta
 import os
@@ -352,7 +352,10 @@ def orders():
 
     return render_template('orders.html',
                          orders=formatted_orders,
-                         pagination=orders_pagination)
+                         pagination=orders_pagination,
+                         total_orders=Order.query.count(),
+                         pending_orders=Order.query.filter(Order.status.in_(['new', 'processing'])).count(),
+                         completed_orders=Order.query.filter_by(status='completed').count())
 
 @bp.route('/analytics/popular-items')
 @login_required
@@ -576,71 +579,20 @@ def qr_codes():
     if not current_user.is_admin():
         return redirect(url_for('main.index'))
 
-    # Sample QR codes data - replace with actual database queries
-    qr_codes = [
-        {
-            'id': 1,
-            'name': '#1',
-            'description': 'Table 1 QR Code',
-            'url': 'https://restaurant.com/table/1'
-        },
-        {
-            'id': 2,
-            'name': '#2',
-            'description': 'Table 2 QR Code',
-            'url': 'https://restaurant.com/table/2'
-        },
-        {
-            'id': 3,
-            'name': '#3',
-            'description': 'Table 3 QR Code',
-            'url': 'https://restaurant.com/table/3'
-        },
-        {
-            'id': 4,
-            'name': '#4',
-            'description': 'Table 4 QR Code',
-            'url': 'https://restaurant.com/table/4'
-        },
-        {
-            'id': 5,
-            'name': '#5',
-            'description': 'Table 5 QR Code',
-            'url': 'https://restaurant.com/table/5'
-        },
-        {
-            'id': 6,
-            'name': '#6',
-            'description': 'Table 6 QR Code',
-            'url': 'https://restaurant.com/table/6'
-        },
-        {
-            'id': 7,
-            'name': '#7',
-            'description': 'Table 7 QR Code',
-            'url': 'https://restaurant.com/table/7'
-        },
-        {
-            'id': 8,
-            'name': '#8',
-            'description': 'Table 8 QR Code',
-            'url': 'https://restaurant.com/table/8'
-        },
-        {
-            'id': 9,
-            'name': '#9',
-            'description': 'Table 9 QR Code',
-            'url': 'https://restaurant.com/table/9'
-        },
-        {
-            'id': 10,
-            'name': '#10',
-            'description': 'Table 10 QR Code',
-            'url': 'https://restaurant.com/table/10'
-        }
-    ]
+    # Get all tables with their QR codes
+    tables = Table.query.all()
+    
+    # Get QR code statistics
+    qr_codes = QRCode.query.all()
+    active_qr_codes = len([qr for qr in qr_codes if qr.is_active])
+    table_qr_codes = len([qr for qr in qr_codes if qr.qr_type == 'menu'])
 
-    return render_template('qr_codes.html', qr_codes=qr_codes)
+    return render_template('qr_codes.html', 
+                         tables=tables,
+                         qr_codes=qr_codes,
+                         active_qr_codes=active_qr_codes,
+                         table_qr_codes=table_qr_codes)
+
 
 @bp.route('/profile')
 @login_required
@@ -691,7 +643,13 @@ def category_management():
         return redirect(url_for('main.index'))
 
     categories = Category.query.order_by(Category.display_order).all()
-    return render_template('category_management.html', categories=categories)
+    active_categories = Category.query.filter_by(is_active=True).count()
+    total_items = MenuItem.query.count()
+    
+    return render_template('category_management.html', 
+                         categories=categories,
+                         active_categories=active_categories,
+                         total_items=total_items)
 
 @bp.route('/menu/categories/add', methods=['GET', 'POST'])
 @login_required
@@ -735,7 +693,8 @@ def add_category():
             flash('Error adding category', 'error')
             current_app.logger.error(f"Error adding category: {e}")
 
-    return render_template('add_category.html')
+    return render_template('add_category.html',
+                         existing_categories=Category.query.count())
 
 @bp.route('/menu/categories/<int:category_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -754,13 +713,17 @@ def edit_category(category_id):
 
         if not name:
             flash('Category name is required', 'error')
-            return render_template('edit_category.html', category=category)
+            return render_template('edit_category.html', 
+                                 category=category,
+                                 menu_items_count=MenuItem.query.filter_by(category_id=category_id).count())
 
         # Check if another category with this name exists
         existing = Category.query.filter(Category.name == name, Category.category_id != category_id).first()
         if existing:
             flash('Category with this name already exists', 'error')
-            return render_template('edit_category.html', category=category)
+            return render_template('edit_category.html', 
+                                 category=category,
+                                 menu_items_count=MenuItem.query.filter_by(category_id=category_id).count())
 
         category.name = name
         category.description = description
@@ -776,7 +739,9 @@ def edit_category(category_id):
             flash('Error updating category', 'error')
             current_app.logger.error(f"Error updating category: {e}")
 
-    return render_template('edit_category.html', category=category)
+    return render_template('edit_category.html', 
+                         category=category,
+                         menu_items_count=MenuItem.query.filter_by(category_id=category_id).count())
 
 @bp.route('/menu/categories/<int:category_id>/delete', methods=['POST'])
 @login_required
@@ -875,7 +840,9 @@ def add_menu_item():
             flash('Error adding menu item', 'error')
             current_app.logger.error(f"Error adding menu item: {e}")
 
-    return render_template('add_menu_item.html', categories=categories)
+    return render_template('add_menu_item.html', 
+                         categories=categories,
+                         total_items=MenuItem.query.count())
 
 @bp.route('/menu/items/<int:item_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -1021,7 +988,8 @@ def rewards_management():
                          active_rewards=active_rewards,
                          inactive_rewards=inactive_rewards,
                          total_redemptions=total_redemptions,
-                         recent_redemptions=recent_redemptions)
+                         recent_redemptions=recent_redemptions,
+                         datetime=datetime)
 
 @bp.route('/rewards/add', methods=['GET', 'POST'])
 @login_required
@@ -1058,7 +1026,8 @@ def add_reward():
     
     return render_template('add_reward.html',
                          menu_items=menu_items,
-                         categories=categories)
+                         categories=categories,
+                         existing_rewards=RewardItem.query.count())
 
 @bp.route('/rewards/edit/<int:reward_id>', methods=['GET', 'POST'])
 @login_required
@@ -1191,7 +1160,7 @@ def bulk_update_rewards():
             'message': f'Error updating rewards: {str(e)}'
         }), 500
 
-# ======================== END REWARD MANAGEMENT ROUTES ========================
+# ======================== END REWARD MANAGEMENT ROUTES
 
 # ======================== LOYALTY MANAGEMENT ROUTES ========================
 
@@ -1206,14 +1175,32 @@ def loyalty_management():
     page = request.args.get('page', 1, type=int)
     per_page = 20  # Number of customers per page
     
-    # Get paginated customers
-    customers = CustomerLoyalty.query.order_by(
+    # Get paginated customers with total spent calculation
+    customers_query = CustomerLoyalty.query.order_by(
         CustomerLoyalty.total_points.desc()
-    ).paginate(
+    )
+    
+    customers_paginated = customers_query.paginate(
         page=page, 
         per_page=per_page, 
         error_out=False
     )
+    
+    # Calculate total spent for each customer in the current page
+    customers_with_spent = []
+    for customer in customers_paginated.items:
+        # Calculate total spent from completed orders
+        total_spent = db.session.query(func.sum(Order.total_amount)).filter(
+            Order.user_id == customer.user_id,
+            Order.status.in_(['completed', 'delivered'])
+        ).scalar() or 0
+        
+        # Add the total_spent attribute to the customer object
+        customer.total_spent = float(total_spent)
+        customers_with_spent.append(customer)
+    
+    # Update the paginated object items
+    customers_paginated.items = customers_with_spent
     
     # Get loyalty program statistics
     total_customers = CustomerLoyalty.query.count()
@@ -1239,8 +1226,11 @@ def loyalty_management():
         CustomerLoyalty.total_points.desc()
     ).limit(10).all()
     
+    # Calculate total redemptions
+    total_redemptions = RewardRedemption.query.filter_by(status='completed').count()
+    
     return render_template('loyalty_management.html',
-                         customers=customers,
+                         customers=customers_paginated,
                          total_customers=total_customers,
                          active_customers=active_customers,
                          bronze_customers=bronze_customers,
@@ -1249,8 +1239,230 @@ def loyalty_management():
                          platinum_customers=platinum_customers,
                          total_points_distributed=total_points_distributed,
                          total_points_redeemed=total_points_redeemed,
+                         total_redemptions=total_redemptions,
                          recent_transactions=recent_transactions,
-                         top_customers=top_customers)
+                         top_customers=top_customers,
+                         datetime=datetime)
+
+@bp.route('/loyalty-settings', methods=['GET', 'POST'])
+@login_required
+def loyalty_settings():
+    """Loyalty program settings page"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        try:
+            # Get or create loyalty program
+            program = LoyaltyProgram.query.filter_by(status='active').first()
+            if not program:
+                program = LoyaltyProgram(
+                    name='Restaurant Loyalty Program',
+                    description='Earn points with every purchase',
+                    status='active'
+                )
+                db.session.add(program)
+            
+            # Update settings
+            program.points_per_50EGP = int(request.form.get('points_per_50_egp', 100))
+            program.points_value = float(request.form.get('points_value', 1.0))
+            program.min_redemption = int(request.form.get('min_redemption', 100))
+            program.max_redemption_percentage = int(request.form.get('max_redemption_percentage', 50))
+            program.status = 'active' if request.form.get('program_active') else 'inactive'
+            
+            db.session.commit()
+            flash('Loyalty program settings updated successfully!', 'success')
+            return redirect(url_for('admin.loyalty_settings'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating settings: {str(e)}', 'error')
+    
+    # Get current program settings
+    program = LoyaltyProgram.query.filter_by(status='active').first()
+    
+    # Mock tier thresholds (these could be stored in database too)
+    tier_thresholds = {
+        'bronze': 0,
+        'silver': 500,
+        'gold': 1000,
+        'platinum': 2000
+    }
+    
+    return render_template('loyalty_settings.html',
+                         program=program,
+                         tier_thresholds=tier_thresholds)
+
+@bp.route('/loyalty-adjust-points', methods=['GET', 'POST'])
+@login_required
+def loyalty_adjust_points():
+    """Adjust customer loyalty points"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    customer_id = request.args.get('customer_id', type=int)
+    customer = None
+    
+    if customer_id:
+        customer = CustomerLoyalty.query.filter_by(loyalty_id=customer_id).first()
+        if not customer:
+            flash('Customer not found', 'error')
+            return redirect(url_for('admin.loyalty_management'))
+    
+    if request.method == 'POST':
+        try:
+            customer_id = int(request.form.get('customer_id'))
+            adjustment_type = request.form.get('adjustment_type')
+            points_amount = int(request.form.get('points_amount'))
+            reason = request.form.get('reason')
+            
+            # Get customer loyalty account
+            loyalty = CustomerLoyalty.query.filter_by(loyalty_id=customer_id).first()
+            if not loyalty:
+                flash('Customer not found', 'error')
+                return redirect(url_for('admin.loyalty_adjust_points'))
+            
+            # Apply adjustment
+            if adjustment_type == 'add':
+                loyalty.total_points += points_amount
+                loyalty.lifetime_points += points_amount
+                transaction_type = 'bonus'
+                description = f'Admin adjustment: {reason} (+{points_amount} points)'
+                points_earned = points_amount
+                points_redeemed = 0
+            elif adjustment_type == 'deduct':
+                if loyalty.total_points < points_amount:
+                    flash('Insufficient points for deduction', 'error')
+                    return redirect(url_for('admin.loyalty_adjust_points', customer_id=customer_id))
+                loyalty.total_points -= points_amount
+                transaction_type = 'adjustment'
+                description = f'Admin adjustment: {reason} (-{points_amount} points)'
+                points_earned = 0
+                points_redeemed = points_amount
+            elif adjustment_type == 'set':
+                old_points = loyalty.total_points
+                loyalty.total_points = points_amount
+                if points_amount > old_points:
+                    loyalty.lifetime_points += (points_amount - old_points)
+                transaction_type = 'adjustment'
+                description = f'Admin adjustment: {reason} (set to {points_amount} points)'
+                points_earned = max(0, points_amount - old_points)
+                points_redeemed = max(0, old_points - points_amount)
+            
+            # Update tier
+            loyalty.update_tier()
+            
+            # Create transaction record
+            transaction = PointTransaction(
+                user_id=loyalty.user_id,
+                points_earned=points_earned,
+                points_redeemed=points_redeemed,
+                balance_after=loyalty.total_points,
+                transaction_type=transaction_type,
+                description=description
+            )
+            db.session.add(transaction)
+            db.session.commit()
+            
+            flash('Points adjusted successfully!', 'success')
+            return redirect(url_for('admin.loyalty_customer_details', customer_id=customer_id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adjusting points: {str(e)}', 'error')
+    
+    # Get all customers for selection
+    customers = CustomerLoyalty.query.order_by(CustomerLoyalty.total_points.desc()).all()
+    
+    # Get recent adjustments
+    recent_adjustments = db.session.query(PointTransaction).join(
+        CustomerLoyalty, PointTransaction.user_id == CustomerLoyalty.user_id
+    ).filter(
+        PointTransaction.transaction_type.in_(['bonus', 'adjustment'])
+    ).order_by(PointTransaction.timestamp.desc()).limit(10).all()
+    
+    return render_template('loyalty_adjust_points.html',
+                         customer=customer,
+                         customers=customers,
+                         customer_id=customer_id,
+                         recent_adjustments=recent_adjustments)
+
+@bp.route('/loyalty-customer-details/<int:customer_id>')
+@login_required
+def loyalty_customer_details(customer_id):
+    """Customer loyalty details page"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    customer = CustomerLoyalty.query.filter_by(loyalty_id=customer_id).first()
+    if not customer:
+        flash('Customer not found', 'error')
+        return redirect(url_for('admin.loyalty_management'))
+    
+    # Get recent transactions (last 10)
+    recent_transactions = PointTransaction.query.filter_by(
+        user_id=customer.user_id
+    ).order_by(PointTransaction.timestamp.desc()).limit(10).all()
+    
+    return render_template('loyalty_customer_details.html',
+                         customer=customer,
+                         recent_transactions=recent_transactions)
+
+@bp.route('/loyalty-transactions/<int:customer_id>')
+@login_required
+def loyalty_transactions(customer_id):
+    """Customer loyalty transactions page"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    customer = CustomerLoyalty.query.filter_by(loyalty_id=customer_id).first()
+    if not customer:
+        flash('Customer not found', 'error')
+        return redirect(url_for('admin.loyalty_management'))
+    
+    # Get filter parameters
+    page = request.args.get('page', 1, type=int)
+    transaction_type = request.args.get('transaction_type', '')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    
+    # Build query
+    query = PointTransaction.query.filter_by(user_id=customer.user_id)
+    
+    # Apply filters
+    if transaction_type:
+        query = query.filter(PointTransaction.transaction_type == transaction_type)
+    
+    if date_from:
+        date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+        query = query.filter(PointTransaction.timestamp >= date_from_obj)
+    
+    if date_to:
+        date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+        # Add one day to include the entire end date
+        date_to_obj = date_to_obj.replace(hour=23, minute=59, second=59)
+        query = query.filter(PointTransaction.timestamp <= date_to_obj)
+    
+    # Get paginated results
+    transactions = query.order_by(
+        PointTransaction.timestamp.desc()
+    ).paginate(page=page, per_page=20, error_out=False)
+    
+    # Calculate summary statistics
+    all_transactions = PointTransaction.query.filter_by(user_id=customer.user_id).all()
+    total_earned = sum(t.points_earned or 0 for t in all_transactions)
+    total_redeemed = sum(t.points_redeemed or 0 for t in all_transactions)
+    total_bonuses = sum(t.points_earned or 0 for t in all_transactions if t.transaction_type == 'bonus')
+    
+    return render_template('loyalty_transactions.html',
+                         customer=customer,
+                         transactions=transactions,
+                         transaction_type=transaction_type,
+                         date_from=date_from,
+                         date_to=date_to,
+                         total_earned=total_earned,
+                         total_redeemed=total_redeemed,
+                         total_bonuses=total_bonuses)
 
 # ======================== END LOYALTY MANAGEMENT ROUTES ========================
 
@@ -1282,7 +1494,8 @@ def campaigns_management():
                          total_campaigns=total_campaigns,
                          active_campaigns=active_campaigns,
                          inactive_campaigns=inactive_campaigns,
-                         expired_campaigns=expired_campaigns)
+                         expired_campaigns=expired_campaigns,
+                         datetime=datetime)
 
 @bp.route('/campaigns/add', methods=['GET', 'POST'])
 @login_required
@@ -1343,9 +1556,118 @@ def edit_campaign(campaign_id):
             db.session.rollback()
             flash(f'Error updating campaign: {str(e)}', 'error')
     
-    return render_template('edit_campaign.html', campaign=campaign)
+    return render_template('edit_campaign.html', campaign=campaign, now=datetime.now)
 
-# ======================== END CAMPAIGNS MANAGEMENT ROUTES ========================
+@bp.route('/campaign-statistics/<int:campaign_id>')
+@login_required
+def campaign_statistics(campaign_id):
+    """Campaign statistics page"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+    
+    campaign = PromotionalCampaign.query.get(campaign_id)
+    if not campaign:
+        flash('Campaign not found', 'error')
+        return redirect(url_for('admin.campaigns_management'))
+    
+    # Calculate campaign statistics
+    stats = calculate_campaign_stats(campaign)
+    
+    return render_template('campaign_statistics.html',
+                         campaign=campaign,
+                         stats=stats,
+                         datetime=datetime)
+
+def calculate_campaign_stats(campaign):
+    """Calculate comprehensive statistics for a campaign"""
+    # Mock statistics - in a real application, these would be calculated from actual data
+    
+    # Basic stats
+    total_orders = 0
+    bonus_points_awarded = 0
+    customers_engaged = 0
+    revenue_impact = 0.0
+    
+    # Calculate if campaign is currently active
+    now = datetime.utcnow()
+    is_active = (campaign.status == 'active' and 
+                campaign.start_date and campaign.end_date and 
+                campaign.start_date <= now <= campaign.end_date)
+    
+    if is_active:
+        # Mock data for active campaigns
+        total_orders = 150
+        bonus_points_awarded = 15000
+        customers_engaged = 85
+        revenue_impact = 2500.00
+        performance_percentage = 75
+        performance_description = "Campaign is performing well with good customer engagement"
+        
+        # Growth metrics
+        total_orders_growth = 25
+        revenue_growth = 18
+        unique_customers_percentage = 45
+        
+        # Engagement breakdown by tier
+        engagement_breakdown = {
+            'bronze': 45,
+            'silver': 25,
+            'gold': 12,
+            'platinum': 3
+        }
+        
+        # Order patterns
+        order_patterns = {
+            'avg_order_value': 35.50,
+            'peak_time': '7:00 PM - 9:00 PM',
+            'repeat_customers': 65,
+            'new_customers': 35
+        }
+    else:
+        # Mock data for inactive/completed campaigns
+        total_orders = 320
+        bonus_points_awarded = 25000
+        customers_engaged = 150
+        revenue_impact = 4200.00
+        performance_percentage = 85
+        performance_description = "Campaign completed successfully with excellent results"
+        
+        # Growth metrics
+        total_orders_growth = 35
+        revenue_growth = 28
+        unique_customers_percentage = 60
+        
+        # Engagement breakdown by tier
+        engagement_breakdown = {
+            'bronze': 80,
+            'silver': 45,
+            'gold': 20,
+            'platinum': 5
+        }
+        
+        # Order patterns
+        order_patterns = {
+            'avg_order_value': 42.75,
+            'peak_time': '6:30 PM - 8:30 PM',
+            'repeat_customers': 70,
+            'new_customers': 30
+        }
+    
+    return {
+        'total_orders': total_orders,
+        'bonus_points_awarded': bonus_points_awarded,
+        'customers_engaged': customers_engaged,
+        'revenue_impact': revenue_impact,
+        'performance_percentage': performance_percentage,
+        'performance_description': performance_description,
+        'total_orders_growth': total_orders_growth,
+        'revenue_growth': revenue_growth,
+        'unique_customers_percentage': unique_customers_percentage,
+        'engagement_breakdown': engagement_breakdown,
+        'order_patterns': order_patterns
+    }
+
+# ======================== END CAMPAIGNS MANAGEMENT ROUTES
 
 # API Routes for AJAX operations
 
@@ -1537,4 +1859,768 @@ def api_mark_orders_seen():
         return jsonify({
             'success': False,
             'error': 'Failed to mark orders as seen'
+        }), 500
+
+# ======================== LOYALTY API ROUTES ========================
+
+@bp.route('/api/loyalty/customer/<int:customer_id>/transactions')
+@login_required
+def get_customer_transactions(customer_id):
+    """Get transaction history for a specific customer"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        transactions = PointTransaction.query.filter_by(
+            user_id=customer_id
+        ).order_by(PointTransaction.timestamp.desc()).limit(50).all()
+        
+        transaction_data = []
+        for transaction in transactions:
+            transaction_data.append({
+                'transaction_id': transaction.transaction_id,
+                'timestamp': transaction.timestamp.isoformat(),
+                'transaction_type': transaction.transaction_type,
+                'description': transaction.description,
+                'points_earned': transaction.points_earned,
+                'points_redeemed': transaction.points_redeemed,
+                'order_id': transaction.order_id
+            })
+        
+        return jsonify({
+            'success': True,
+            'transactions': transaction_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error loading transactions: {str(e)}'
+        }), 500
+
+@bp.route('/api/loyalty/adjust-points', methods=['POST'])
+@login_required
+def adjust_customer_points():
+    """Adjust customer loyalty points"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        data = request.get_json()
+        customer_id = data.get('customer_id')
+        adjustment_type = data.get('adjustment_type')
+        points_amount = data.get('points_amount')
+        reason = data.get('reason')
+        
+        # Get customer loyalty account
+        loyalty = CustomerLoyalty.query.filter_by(loyalty_id=customer_id).first()
+        if not loyalty:
+            return jsonify({'success': False, 'message': 'Customer not found'}), 404
+        
+        # Apply adjustment
+        if adjustment_type == 'add':
+            loyalty.total_points += points_amount
+            loyalty.lifetime_points += points_amount
+            transaction_type = 'bonus'
+            description = f'Admin adjustment: {reason} (+{points_amount} points)'
+        elif adjustment_type == 'deduct':
+            if loyalty.total_points < points_amount:
+                return jsonify({'success': False, 'message': 'Insufficient points'}), 400
+            loyalty.total_points -= points_amount
+            transaction_type = 'adjustment'
+            description = f'Admin adjustment: {reason} (-{points_amount} points)'
+        elif adjustment_type == 'set':
+            old_points = loyalty.total_points
+            loyalty.total_points = points_amount
+            if points_amount > old_points:
+                loyalty.lifetime_points += (points_amount - old_points)
+            transaction_type = 'adjustment'
+            description = f'Admin adjustment: {reason} (set to {points_amount} points)'
+        
+        # Update tier
+        loyalty.update_tier()
+        
+        # Create transaction record
+        transaction = PointTransaction(
+            user_id=loyalty.user_id,
+            points_earned=points_amount if adjustment_type == 'add' else 0,
+            points_redeemed=points_amount if adjustment_type == 'deduct' else 0,
+            transaction_type=transaction_type,
+            description=description
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Points adjusted successfully',
+            'new_balance': loyalty.total_points
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error adjusting points: {str(e)}'
+        }), 500
+
+@bp.route('/api/loyalty/settings', methods=['POST'])
+@login_required
+def save_loyalty_settings():
+    """Save loyalty program settings"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        data = request.get_json()
+        
+        # Get or create loyalty program
+        program = LoyaltyProgram.query.filter_by(status='active').first()
+        if not program:
+            program = LoyaltyProgram(
+                name='Restaurant Loyalty Program',
+                description='Earn points with every purchase'
+            )
+            db.session.add(program)
+        
+        # Update settings
+        program.points_per_50EGP = data.get('points_per_50_egp', 100)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Settings saved successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error saving settings: {str(e)}'
+        }), 500
+
+# ======================== CAMPAIGN API ROUTES ========================
+
+@bp.route('/api/campaigns/<int:campaign_id>/stats')
+@login_required
+def get_campaign_stats(campaign_id):
+    """Get statistics for a specific campaign"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        campaign = PromotionalCampaign.query.get(campaign_id)
+        if not campaign:
+            return jsonify({'success': False, 'message': 'Campaign not found'}), 404
+        
+        # Calculate statistics (mock data for now)
+        stats = {
+            'total_orders': 0,
+            'bonus_points_awarded': 0,
+            'customers_engaged': 0,
+            'revenue_impact': '0.00',
+            'performance_percentage': 0,
+            'performance_description': 'Campaign statistics will be calculated based on actual usage'
+        }
+        
+        # You can enhance this with real data from point transactions
+        # where the campaign was active
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error loading statistics: {str(e)}'
+        }), 500
+
+@bp.route('/api/campaigns/<int:campaign_id>/toggle', methods=['POST'])
+@login_required
+def toggle_campaign(campaign_id):
+    """Toggle campaign active status"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        campaign = PromotionalCampaign.query.get(campaign_id)
+        if not campaign:
+            return jsonify({'success': False, 'message': 'Campaign not found'}), 404
+        
+        # Toggle status
+        campaign.status = 'inactive' if campaign.status == 'active' else 'active'
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Campaign {"deactivated" if campaign.status == "inactive" else "activated"} successfully',
+            'new_status': campaign.status
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error toggling campaign: {str(e)}'
+        }), 500
+
+@bp.route('/api/campaigns/<int:campaign_id>', methods=['DELETE'])
+@login_required
+def delete_campaign(campaign_id):
+    """Delete a campaign"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        campaign = PromotionalCampaign.query.get(campaign_id)
+        if not campaign:
+            return jsonify({'success': False, 'message': 'Campaign not found'}), 404
+        
+        db.session.delete(campaign)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Campaign deleted successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting campaign: {str(e)}'
+        }), 500
+
+@bp.route('/api/notifications')
+@login_required
+def api_notifications():
+    """API endpoint to get all real-time notifications"""
+    if not current_user.is_admin():
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    try:
+        notifications = []
+        
+        # Recent orders (last 30 minutes)
+        recent_cutoff = datetime.utcnow() - timedelta(minutes=30)
+        recent_orders = Order.query.filter(
+            Order.order_time >= recent_cutoff,
+            Order.status.in_(['new', 'processing'])
+        ).order_by(Order.order_time.desc()).limit(5).all()
+        
+        for order in recent_orders:
+            time_ago = datetime.utcnow() - order.order_time
+            minutes_ago = int(time_ago.total_seconds() / 60)
+            
+            notifications.append({
+                'id': f"order_{order.id}",
+                'type': 'order',
+                'icon': 'fas fa-shopping-cart',
+                'color': 'success' if order.status == 'processing' else 'warning',
+                'title': f"Order #{order.id}",
+                'message': f"Status: {order.status.title()}",
+                'time': f"{minutes_ago} minutes ago" if minutes_ago > 0 else "Just now",
+                'url': url_for('admin.orders')
+            })
+        
+        # Low stock items
+        low_stock_items = MenuItem.query.filter(
+            MenuItem.stock <= 5,
+            MenuItem.stock > 0,
+            MenuItem.status == 'available'
+        ).limit(3).all()
+        
+        for item in low_stock_items:
+            notifications.append({
+                'id': f"stock_{item.id}",
+                'type': 'stock',
+                'icon': 'fas fa-exclamation-triangle',
+                'color': 'warning',
+                'title': f"Low Stock: {item.name}",
+                'message': f"Only {item.stock} items left",
+                'time': "Now",
+                'url': url_for('admin.menu_management')
+            })
+        
+        # Recent loyalty redemptions (last hour)
+        recent_redemptions = RewardRedemption.query.filter(
+            RewardRedemption.redeemed_at >= datetime.utcnow() - timedelta(hours=1)
+        ).order_by(RewardRedemption.redeemed_at.desc()).limit(3).all()
+        
+        for redemption in recent_redemptions:
+            time_ago = datetime.utcnow() - redemption.redeemed_at
+            minutes_ago = int(time_ago.total_seconds() / 60)
+            
+            notifications.append({
+                'id': f"redemption_{redemption.id}",
+                'type': 'loyalty',
+                'icon': 'fas fa-gift',
+                'color': 'info',
+                'title': "Reward Redeemed",
+                'message': f"{redemption.reward.name}",
+                'time': f"{minutes_ago} minutes ago" if minutes_ago > 0 else "Just now",
+                'url': url_for('admin.rewards_management')
+            })
+        
+        # Sort by most recent
+        notifications.sort(key=lambda x: x['time'])
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications[:10],  # Limit to 10 most recent
+            'total_count': len(notifications),
+            'has_new': len(notifications) > 0
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching notifications: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch notifications'
+        }), 500
+
+# ======================== TABLE MANAGEMENT API ROUTES ========================
+
+@bp.route('/api/tables', methods=['GET'])
+@login_required
+def api_get_tables():
+    """Get all tables with their details"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        tables = Table.query.order_by(Table.table_number).all()
+        tables_data = []
+        
+        for table in tables:
+            # Get active orders count for this table
+            active_orders = Order.query.filter(
+                Order.table_id == table.table_id,
+                Order.status.in_(['new', 'processing'])
+            ).count()
+            
+            # Get QR codes for this table
+            qr_codes = QRCode.query.filter_by(table_id=table.table_id).count()
+            
+            tables_data.append({
+                'table_id': table.table_id,
+                'table_number': table.table_number,
+                'capacity': table.capacity,
+                'status': table.status,
+                'is_occupied': table.status == 'occupied',
+                'active_orders': active_orders,
+                'qr_codes_count': qr_codes,
+                'created_at': table.created_at.isoformat() if table.created_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'tables': tables_data,
+            'total_count': len(tables_data)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching tables: {str(e)}'
+        }), 500
+
+@bp.route('/api/tables', methods=['POST'])
+@login_required
+def api_create_table():
+    """Create a new table"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('table_number'):
+            return jsonify({
+                'success': False,
+                'message': 'Table number is required'
+            }), 400
+        
+        # Check if table number already exists
+        existing_table = Table.query.filter_by(table_number=data['table_number']).first()
+        if existing_table:
+            return jsonify({
+                'success': False,
+                'message': 'Table number already exists'
+            }), 400
+        
+        # Create new table
+        table = Table(
+            table_number=data['table_number'],
+            capacity=int(data.get('capacity', 4)),
+            status='available'
+        )
+        
+        db.session.add(table)
+        db.session.commit()
+        
+        # Automatically create QR code for the new table
+        qr_url = f"{request.url_root}table/{table.table_id}?table={table.table_number}"
+        qr_code = QRCode(
+            table_id=table.table_id,
+            url=qr_url,
+            qr_type='menu',
+            is_active=True
+        )
+        db.session.add(qr_code)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Table created successfully',
+            'table': {
+                'table_id': table.table_id,
+                'table_number': table.table_number,
+                'capacity': table.capacity,
+                'status': table.status,
+                'qr_code_id': qr_code.qr_id
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error creating table: {str(e)}'
+        }), 500
+
+@bp.route('/api/tables/<int:table_id>', methods=['GET'])
+@login_required
+def api_get_table(table_id):
+    """Get specific table details"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        table = Table.query.get_or_404(table_id)
+        
+        # Get active orders for this table
+        active_orders = Order.query.filter(
+            Order.table_id == table.table_id,
+            Order.status.in_(['new', 'processing'])
+        ).all()
+        
+        # Get QR codes for this table
+        qr_codes = QRCode.query.filter_by(table_id=table.table_id).all()
+        
+        return jsonify({
+            'success': True,
+            'table': {
+                'table_id': table.table_id,
+                'table_number': table.table_number,
+                'capacity': table.capacity,
+                'status': table.status,
+                'is_occupied': table.status == 'occupied',
+                'is_active': True,  # Default for now
+                'location': '',  # Add this field to Table model if needed
+                'table_type': 'regular',  # Add this field to Table model if needed
+                'active_orders': [
+                    {
+                        'order_id': order.order_id,
+                        'status': order.status,
+                        'order_time': order.order_time.isoformat(),
+                        'customer_name': order.customer.name if order.customer else 'Unknown'
+                    }
+                    for order in active_orders
+                ],
+                'qr_codes': [
+                    {
+                        'qr_id': qr.qr_id,
+                        'url': qr.url,
+                        'is_active': qr.is_active,
+                        'scan_count': qr.scan_count
+                    }
+                    for qr in qr_codes
+                ]
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching table: {str(e)}'
+        }), 500
+
+@bp.route('/api/tables/<int:table_id>', methods=['PUT'])
+@login_required
+def api_update_table(table_id):
+    """Update table details"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        table = Table.query.get_or_404(table_id)
+        data = request.get_json()
+        
+        # Update table fields
+        if 'table_number' in data:
+            # Check if new table number conflicts with existing
+            existing_table = Table.query.filter(
+                Table.table_number == data['table_number'],
+                Table.table_id != table_id
+            ).first()
+            if existing_table:
+                return jsonify({
+                    'success': False,
+                    'message': 'Table number already exists'
+                }), 400
+            table.table_number = data['table_number']
+        
+        if 'capacity' in data:
+            table.capacity = int(data['capacity'])
+        
+        if 'status' in data:
+            table.status = data['status']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Table updated successfully',
+            'table': {
+                'table_id': table.table_id,
+                'table_number': table.table_number,
+                'capacity': table.capacity,
+                'status': table.status
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error updating table: {str(e)}'
+        }), 500
+
+@bp.route('/api/tables/<int:table_id>', methods=['DELETE'])
+@login_required
+def api_delete_table(table_id):
+    """Delete a table"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        table = Table.query.get_or_404(table_id)
+        
+        # Check if table has active orders
+        active_orders = Order.query.filter(
+            Order.table_id == table.table_id,
+            Order.status.in_(['new', 'processing'])
+        ).count()
+        
+        if active_orders > 0:
+            return jsonify({
+                'success': False,
+                'message': 'Cannot delete table with active orders'
+            }), 400
+        
+        # Delete associated QR codes first
+        QRCode.query.filter_by(table_id=table.table_id).delete()
+        
+        # Delete the table
+        db.session.delete(table)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Table deleted successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting table: {str(e)}'
+        }), 500
+
+# ======================== END TABLE MANAGEMENT API ROUTES ========================
+
+@bp.route('/api/qr-codes/generate/<int:table_id>', methods=['POST'])
+@login_required
+def generate_table_qr(table_id):
+    """Generate QR code for a specific table"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        import qrcode
+        from PIL import Image
+        import io
+        import base64
+        
+        # Get table
+        table = Table.query.get_or_404(table_id)
+        
+        # Create table URL
+        base_url = "http://localhost:5000"  # Change to your production domain
+        table_url = f"{base_url}/table/{table.table_id}"
+        
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(table_url)
+        qr.make(fit=True)
+
+        # Create QR code image
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Resize to 300x300
+        img = img.resize((300, 300), Image.Resampling.LANCZOS)
+
+        # Convert to base64
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        
+        # Check if QR code exists
+        existing_qr = QRCode.query.filter_by(table_id=table.table_id).first()
+        
+        if existing_qr:
+            existing_qr.url = table_url
+            existing_qr.qr_image_data = img_str
+            existing_qr.is_active = True
+        else:
+            new_qr = QRCode(
+                table_id=table.table_id,
+                url=table_url,
+                qr_type='menu',
+                is_active=True,
+                qr_image_data=img_str
+            )
+            db.session.add(new_qr)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'QR code generated successfully',
+            'qr_image': f"data:image/png;base64,{img_str}"
+        })
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error generating QR code: {str(e)}'
+        }), 500
+
+@bp.route('/api/qr-codes/generate-all', methods=['POST'])
+@login_required
+def generate_all_qr():
+    """Generate QR codes for all tables"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    try:
+        import qrcode
+        from PIL import Image
+        import io
+        import base64
+        
+        # Get all tables
+        tables = Table.query.all()
+        created_count = 0
+        updated_count = 0
+        
+        base_url = "http://localhost:5000"  # Change to your production domain
+        
+        for table in tables:
+            try:
+                # Create table URL
+                table_url = f"{base_url}/table/{table.table_id}"
+                
+                # Generate QR code
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_M,
+                    box_size=10,
+                    border=4,
+                )
+                qr.add_data(table_url)
+                qr.make(fit=True)
+
+                # Create QR code image
+                img = qr.make_image(fill_color="black", back_color="white")
+                
+                # Resize to 300x300
+                img = img.resize((300, 300), Image.Resampling.LANCZOS)
+
+                # Convert to base64
+                buffered = io.BytesIO()
+                img.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                
+                # Check if QR code exists
+                existing_qr = QRCode.query.filter_by(table_id=table.table_id).first()
+                
+                if existing_qr:
+                    existing_qr.url = table_url
+                    existing_qr.qr_image_data = img_str
+                    existing_qr.is_active = True
+                    updated_count += 1
+                else:
+                    new_qr = QRCode(
+                        table_id=table.table_id,
+                        url=table_url,
+                        qr_type='menu',
+                        is_active=True,
+                        qr_image_data=img_str
+                    )
+                    db.session.add(new_qr)
+                    created_count += 1
+                    
+            except Exception as e:
+                current_app.logger.error(f"Error processing Table {table.table_number}: {e}")
+                continue
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'QR codes generated successfully for all tables. Created: {created_count}, Updated: {updated_count}'
+        })
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error generating QR codes: {str(e)}'
+        }), 500
+
+@bp.route('/api/qr-codes/<int:table_id>/image')
+def get_qr_image(table_id):
+    """Get QR code image for a table"""
+    try:
+        qr_code = QRCode.query.filter_by(table_id=table_id, is_active=True).first()
+        
+        if not qr_code or not qr_code.qr_image_data:
+            return jsonify({
+                'success': False,
+                'message': 'QR code not found'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'qr_image': f"data:image/png;base64,{qr_code.qr_image_data}",
+            'url': qr_code.url,
+            'scan_count': qr_code.scan_count
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error retrieving QR code: {str(e)}'
         }), 500

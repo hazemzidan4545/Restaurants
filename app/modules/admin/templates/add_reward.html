@@ -237,6 +237,52 @@
 {% endblock %}
 
 {% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-gift"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Add New Reward</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Create a new loyalty reward to incentivize customer engagement
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">New</span>
+                    <span class="stat-label">Reward</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ existing_rewards if existing_rewards else 0 }}</span>
+                    <span class="stat-label">Existing</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">Active</span>
+                    <span class="stat-label">Status</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.rewards_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Rewards</span>
+            </a>
+            <button type="submit" form="addRewardForm" class="header-btn header-btn-primary">
+                <i class="fas fa-save"></i>
+                <span>Save Reward</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="add-reward-container">
     <div class="form-card">
         <div class="form-header">

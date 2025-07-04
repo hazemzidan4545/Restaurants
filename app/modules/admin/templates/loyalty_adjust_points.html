@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block page_title %}Adjust Points{% endblock %}
+
+{% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Adjust Customer Points</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Add, deduct, or set customer loyalty points with proper tracking
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.loyalty_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Management</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Current Customer Info (if pre-selected) -->
+        {% if customer %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                            {{ (customer.user.name[0] if customer.user and customer.user.name else 'U').upper() }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-1">{{ customer.user.name if customer.user and customer.user.name else 'Unknown User' }}</h5>
+                        <p class="text-muted mb-0">{{ customer.user.email if customer.user and customer.user.email else 'No email' }}</p>
+                        <small class="text-muted">Member since {{ customer.join_date.strftime('%B %Y') }}</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="loyalty-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ customer.total_points }}</span>
+                                <span class="stat-label">Available Points</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="badge bg-{{ 'warning' if customer.tier_level == 'gold' else 'secondary' if customer.tier_level == 'silver' else 'info' if customer.tier_level == 'platinum' else 'primary' }}">
+                                    {{ customer.tier_level.title() }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Adjustment Form -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom-0 pb-0">
+                <h5 class="mb-3">Point Adjustment</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.loyalty_adjust_points') }}">
+                    {% if not customer %}
+                    <div class="mb-4">
+                        <label for="customerSelect" class="form-label">Select Customer</label>
+                        <select class="form-select" id="customerSelect" name="customer_id" required>
+                            <option value="">Choose a customer...</option>
+                            {% for customer_option in customers %}
+                            <option value="{{ customer_option.loyalty_id }}" 
+                                    data-points="{{ customer_option.total_points }}"
+                                    data-tier="{{ customer_option.tier_level }}"
+                                    {{ 'selected' if customer_id and customer_id == customer_option.loyalty_id else '' }}>
+                                {{ customer_option.user.name if customer_option.user else 'Unknown' }} - {{ customer_option.total_points }} points
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="customer_id" value="{{ customer.loyalty_id }}">
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="adjustmentType" class="form-label">Adjustment Type</label>
+                                <select class="form-select" id="adjustmentType" name="adjustment_type" required>
+                                    <option value="">Select adjustment type...</option>
+                                    <option value="add">Add Points</option>
+                                    <option value="deduct">Deduct Points</option>
+                                    <option value="set">Set Total Points</option>
+                                </select>
+                                <div class="form-text" id="adjustmentTypeHelp"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="pointsAmount" class="form-label">Points Amount</label>
+                                <input type="number" class="form-control" id="pointsAmount" name="points_amount" min="0" required>
+                                <div class="form-text" id="pointsAmountHelp"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="adjustmentReason" class="form-label">Reason for Adjustment</label>
+                        <input type="text" class="form-control" id="adjustmentReason" name="reason" 
+                               placeholder="Provide a clear reason for this adjustment..." required>
+                        <div class="form-text">This will be recorded in the customer's transaction history</div>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div class="alert alert-info" id="adjustmentPreview" style="display: none;">
+                        <h6><i class="fas fa-info-circle"></i> Adjustment Preview</h6>
+                        <div id="previewContent"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('admin.loyalty_management') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                    <i class="fas fa-save"></i> Apply Adjustment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Adjustments -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Recent Point Adjustments</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_adjustments %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for adjustment in recent_adjustments %}
+                            <tr>
+                                <td>{{ adjustment.timestamp.strftime('%b %d, %Y %I:%M %p') }}</td>
+                                <td>
+                                    {% if adjustment.customer and adjustment.customer.user %}
+                                        {{ adjustment.customer.user.name }}
+                                    {% else %}
+                                        Unknown
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if adjustment.points_earned > 0 else 'warning' if adjustment.points_redeemed > 0 else 'info' }}">
+                                        {{ adjustment.transaction_type.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if adjustment.points_earned > 0 %}
+                                        +{{ adjustment.points_earned }}
+                                    {% elif adjustment.points_redeemed > 0 %}
+                                        -{{ adjustment.points_redeemed }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ adjustment.description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No recent adjustments found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+.avatar-lg {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+}
+
+.loyalty-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+#adjustmentPreview {
+    border-left: 4px solid #17a2b8;
+}
+</style>
+{% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const customerSelect = document.getElementById('customerSelect');
+    const adjustmentType = document.getElementById('adjustmentType');
+    const pointsAmount = document.getElementById('pointsAmount');
+    const adjustmentReason = document.getElementById('adjustmentReason');
+    const submitBtn = document.getElementById('submitBtn');
+    const preview = document.getElementById('adjustmentPreview');
+    const previewContent = document.getElementById('previewContent');
+    const adjustmentTypeHelp = document.getElementById('adjustmentTypeHelp');
+    const pointsAmountHelp = document.getElementById('pointsAmountHelp');
+
+    let selectedCustomer = null;
+
+    // Customer selection handler
+    if (customerSelect) {
+        customerSelect.addEventListener('change', function() {
+            const option = this.options[this.selectedIndex];
+            if (option.value) {
+                selectedCustomer = {
+                    id: option.value,
+                    points: parseInt(option.dataset.points),
+                    tier: option.dataset.tier
+                };
+            } else {
+                selectedCustomer = null;
+            }
+            updatePreview();
+            validateForm();
+        });
+    } else {
+        // Pre-selected customer
+        {% if customer %}
+        selectedCustomer = {
+            id: {{ customer.loyalty_id }},
+            points: {{ customer.total_points }},
+            tier: '{{ customer.tier_level }}'
+        };
+        {% endif %}
+    }
+
+    // Adjustment type handler
+    adjustmentType.addEventListener('change', function() {
+        const type = this.value;
+        switch(type) {
+            case 'add':
+                adjustmentTypeHelp.textContent = 'Points will be added to customer\'s current balance';
+                pointsAmountHelp.textContent = 'Enter the number of points to add';
+                break;
+            case 'deduct':
+                adjustmentTypeHelp.textContent = 'Points will be deducted from customer\'s current balance';
+                pointsAmountHelp.textContent = selectedCustomer ? 
+                    `Customer has ${selectedCustomer.points} points available` : 
+                    'Select a customer first';
+                break;
+            case 'set':
+                adjustmentTypeHelp.textContent = 'Customer\'s total points will be set to the specified amount';
+                pointsAmountHelp.textContent = 'Enter the exact number of points the customer should have';
+                break;
+            default:
+                adjustmentTypeHelp.textContent = '';
+                pointsAmountHelp.textContent = '';
+        }
+        updatePreview();
+        validateForm();
+    });
+
+    // Points amount handler
+    pointsAmount.addEventListener('input', function() {
+        updatePreview();
+        validateForm();
+    });
+
+    // Reason handler
+    adjustmentReason.addEventListener('input', validateForm);
+
+    function updatePreview() {
+        if (!selectedCustomer || !adjustmentType.value || !pointsAmount.value) {
+            preview.style.display = 'none';
+            return;
+        }
+
+        const type = adjustmentType.value;
+        const amount = parseInt(pointsAmount.value);
+        const currentPoints = selectedCustomer.points;
+
+        let newBalance;
+        let changeText;
+
+        switch(type) {
+            case 'add':
+                newBalance = currentPoints + amount;
+                changeText = `+${amount} points`;
+                break;
+            case 'deduct':
+                newBalance = Math.max(0, currentPoints - amount);
+                changeText = `-${amount} points`;
+                break;
+            case 'set':
+                newBalance = amount;
+                changeText = `Set to ${amount} points`;
+                break;
+        }
+
+        previewContent.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Current Balance:</strong> ${currentPoints} points
+                </div>
+                <div class="col-md-6">
+                    <strong>Change:</strong> ${changeText}
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <strong>New Balance:</strong> ${newBalance} points
+                </div>
+                <div class="col-md-6">
+                    <strong>Tier:</strong> <span class="badge bg-info">${selectedCustomer.tier.charAt(0).toUpperCase() + selectedCustomer.tier.slice(1)}</span>
+                </div>
+            </div>
+        `;
+
+        preview.style.display = 'block';
+    }
+
+    function validateForm() {
+        let isValid = true;
+
+        // Check if customer is selected
+        if (!selectedCustomer) {
+            isValid = false;
+        }
+
+        // Check adjustment type
+        if (!adjustmentType.value) {
+            isValid = false;
+        }
+
+        // Check points amount
+        const amount = parseInt(pointsAmount.value);
+        if (!amount || amount <= 0) {
+            isValid = false;
+        }
+
+        // Check for deduction validation
+        if (adjustmentType.value === 'deduct' && selectedCustomer && amount > selectedCustomer.points) {
+            isValid = false;
+            pointsAmountHelp.textContent = `Cannot deduct more than ${selectedCustomer.points} points`;
+            pointsAmountHelp.style.color = '#dc3545';
+        } else if (adjustmentType.value === 'deduct' && selectedCustomer) {
+            pointsAmountHelp.textContent = `Customer has ${selectedCustomer.points} points available`;
+            pointsAmountHelp.style.color = '#6c757d';
+        }
+
+        // Check reason
+        if (!adjustmentReason.value.trim()) {
+            isValid = false;
+        }
+
+        submitBtn.disabled = !isValid;
+    }
+
+    // Initial validation
+    validateForm();
+});
+</script>
+{% endblock %}

@@ -2610,6 +2610,40 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body{% if current_user.is_authenticated %} class="authenticated"{% endif %}>
+    {% if request.endpoint and request.endpoint.startswith('admin.') %}
+        <!-- Admin Layout -->
+        {% include 'admin_navigation.html' %}
+        <div class="admin-layout">
+            <div class="admin-content">
+                <!-- Flash Messages for Admin -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages-center">
+                            {% for category, message in messages %}
+                                <div class="alert-center alert-{{ 'danger' if category == 'error' else category }}">
+                                    <div class="alert-content">
+                                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
+                                        <span>{{ message }}</span>
+                                    </div>
+                                    <button type="button" class="btn-close-center" onclick="this.parentElement.style.display='none'">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Main Content -->
+                <main class="main-content">
+                    <div class="content-wrapper">
+                        {% block content %}{% endblock %}
+                    </div>
+                </main>
+            </div>
+        </div>
+    {% else %}
+        <!-- Customer Layout -->
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark modern-navbar">
         <div class="container-fluid px-4">

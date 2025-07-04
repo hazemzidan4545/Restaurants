@@ -114,29 +114,226 @@ class AdminPerformance {
     }
 
     /**
+     * Setup enhanced navigation functionality
+     */
+    setupNavigationOptimizations() {
+        // Global search functionality
+        const globalSearch = document.getElementById('globalSearch');
+        if (globalSearch) {
+            globalSearch.addEventListener('input', this.debounce((e) => {
+                this.performGlobalSearch(e.target.value);
+            }, 300));
+        }
+
+        // Mobile toggle functionality
+        const mobileToggle = document.querySelector('.mobile-toggle');
+        const sidebar = document.querySelector('.admin-sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+
+        if (mobileToggle && sidebar) {
+            mobileToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+                mobileToggle.classList.toggle('active');
+                if (overlay) {
+                    overlay.classList.toggle('show');
+                }
+            });
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('show');
+                mobileToggle.classList.remove('active');
+                overlay.classList.remove('show');
+            });
+        }
+
+        // Dropdown enhancements
+        this.enhanceDropdowns();
+    }
+
+    /**
+     * Perform global search across admin content
+     */
+    performGlobalSearch(query) {
+        if (!query.trim()) {
+            this.clearSearchResults();
+            return;
+        }
+
+        // Search in current page content
+        const searchableElements = document.querySelectorAll('[data-searchable]');
+        let results = [];
+
+        searchableElements.forEach(element => {
+            const text = element.textContent.toLowerCase();
+            if (text.includes(query.toLowerCase())) {
+                results.push({
+                    element: element,
+                    text: element.textContent.trim(),
+                    type: element.dataset.searchable
+                });
+            }
+        });
+
+        this.displaySearchResults(results, query);
+    }
+
+    /**
+     * Display search results
+     */
+    displaySearchResults(results, query) {
+        // Create or update search results dropdown
+        let resultsContainer = document.getElementById('searchResults');
+        if (!resultsContainer) {
+            resultsContainer = document.createElement('div');
+            resultsContainer.id = 'searchResults';
+            resultsContainer.className = 'search-results-dropdown';
+            document.querySelector('.search-box').appendChild(resultsContainer);
+        }
+
+        if (results.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="search-no-results">
+                    <i class="fas fa-search"></i>
+                    <span>No results found for "${query}"</span>
+                </div>
+            `;
+        } else {
+            resultsContainer.innerHTML = results.map(result => `
+                <div class="search-result-item" data-element-id="${result.element.id}">
+                    <i class="fas fa-${this.getIconForType(result.type)}"></i>
+                    <span>${this.highlightQuery(result.text, query)}</span>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const elementId = item.dataset.elementId;
+                    const targetElement = document.getElementById(elementId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                        targetElement.classList.add('highlight-search');
+                        setTimeout(() => {
+                            targetElement.classList.remove('highlight-search');
+                        }, 2000);
+                    }
+                    this.clearSearchResults();
+                });
+            });
+        }
+
+        resultsContainer.style.display = 'block';
+    }
+
+    /**
+     * Clear search results
+     */
+    clearSearchResults() {
+        const resultsContainer = document.getElementById('searchResults');
+        if (resultsContainer) {
+            resultsContainer.style.display = 'none';
+        }
+    }
+
+    /**
+     * Get icon for search result type
+     */
+    getIconForType(type) {
+        const icons = {
+            'menu-item': 'utensils',
+            'category': 'folder',
+            'order': 'shopping-cart',
+            'customer': 'user',
+            'service': 'concierge-bell',
+            'default': 'file'
+        };
+        return icons[type] || icons.default;
+    }
+
+    /**
+     * Highlight query in text
+     */
+    highlightQuery(text, query) {
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+    }
+
+    /**
+     * Enhance dropdown functionality
+     */
+    enhanceDropdowns() {
+        // Auto-hide dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+
+        // Add ripple effect to dropdown items
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                const ripple = document.createElement('div');
+                ripple.className = 'ripple-effect';
+                
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+    }
+
+    /**
      * Optimize navigation and page transitions
      */
     setupNavigationOptimizations() {
-        const navLinks = document.querySelectorAll('.nav-link');
-        
-        navLinks.forEach(link => {
-            // Preload on hover
-            link.addEventListener('mouseenter', () => {
-                if (link.href && !this.cache.has(link.href)) {
-                    this.preloadPage(link.href);
+        // Global search functionality
+        const globalSearch = document.getElementById('globalSearch');
+        if (globalSearch) {
+            globalSearch.addEventListener('input', this.debounce((e) => {
+                this.performGlobalSearch(e.target.value);
+            }, 300));
+        }
+
+        // Mobile toggle functionality
+        const mobileToggle = document.querySelector('.mobile-toggle');
+        const sidebar = document.querySelector('.admin-sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+
+        if (mobileToggle && sidebar) {
+            mobileToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+                mobileToggle.classList.toggle('active');
+                if (overlay) {
+                    overlay.classList.toggle('show');
                 }
             });
+        }
 
-            // Add loading states
-            link.addEventListener('click', (e) => {
-                if (!link.classList.contains('active')) {
-                    this.showNavigationLoading(link);
-                }
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('show');
+                mobileToggle.classList.remove('active');
+                overlay.classList.remove('show');
             });
-        });
+        }
 
-        // Prefetch critical resources
-        this.prefetchCriticalResources();
+        // Dropdown enhancements
+        this.enhanceDropdowns();
     }
 
     /**

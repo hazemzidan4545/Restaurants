@@ -320,15 +320,39 @@
 
 {% block content %}
 
-<div class="content-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="analytics-header">
-            <h1 class="page-title"><i class="fas fa-chart-line"></i> Popular Items Analytics</h1>
-            <p class="text-muted">Track your most popular menu items based on order frequency and revenue</p>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
         </div>
-        <div class="dashboard-actions">
-            <a href="{{ url_for('admin.menu_management') }}" class="btn btn-outline-primary">
-                <i class="fas fa-utensils"></i> Menu Management
+        <div class="header-text">
+            <h1 class="page-title">Popular Items Analytics</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Track your most popular menu items based on order frequency and revenue
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_orders }}</span>
+                    <span class="stat-label">Total Orders</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${{ "%.2f"|format(total_revenue) }}</span>
+                    <span class="stat-label">Total Revenue</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.menu_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-utensils"></i>
+                <span>Menu Management</span>
             </a>
         </div>
     </div>

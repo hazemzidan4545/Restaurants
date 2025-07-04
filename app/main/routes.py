@@ -1,7 +1,8 @@
-from flask import render_template, redirect, url_for, send_from_directory, current_app
+from flask import render_template, redirect, url_for, send_from_directory, current_app, request, session, jsonify
 from flask_login import current_user
 from app.main import bp
-from app.models import MenuItem, Category
+from app.models import MenuItem, Category, Table, TableSession, QRCode
+from app.extensions import db
 import os
 
 @bp.route('/')
@@ -39,3 +40,55 @@ def uploaded_file(filename):
 def customer_service_test():
     """Customer service test page"""
     return send_from_directory('.', 'customer_service_test.html')
+
+@bp.route('/table/<int:table_id>')
+def table_landing(table_id):
+    """Customer landing page when scanning QR code"""
+    # Get table info
+    table = Table.query.get_or_404(table_id)
+    
+    # Get or create table session
+    session_token = request.args.get('session') or session.get(f'table_{table_id}_session')
+    user_id = current_user.user_id if current_user.is_authenticated else None
+    
+    # Get device and IP info
+    device_info = request.headers.get('User-Agent', 'Unknown')
+    ip_address = request.remote_addr
+    
+    # Check for existing active session
+    table_session = TableSession.get_active_session(
+        table_id=table_id,
+        user_id=user_id,
+        session_token=session_token
+    )
+    
+    # Create new session if none exists
+    if not table_session:
+        table_session = TableSession.create_session(
+            table_id=table_id,
+            user_id=user_id,
+            device_info=device_info,
+            ip_address=ip_address
+        )
+    
+    # Store session token in browser session
+    session[f'table_{table_id}_session'] = table_session.session_token
+    
+    # Update table status if available
+    if table.status == 'available':
+        table.status = 'occupied'
+        db.session.commit()
+    
+    # Get popular menu items for the table landing
+    popular_items = MenuItem.get_popular_items(limit=6)
+    if not popular_items:
+        popular_items = MenuItem.query.filter_by(status='available').limit(6).all()
+    
+    # Get all categories for menu navigation
+    categories = Category.query.filter_by(status='active').all()
+    
+    return render_template('table_landing.html', 
+                         table=table,
+                         table_session=table_session,
+                         popular_items=popular_items,
+                         categories=categories)

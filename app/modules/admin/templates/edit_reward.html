@@ -212,32 +212,47 @@
 {% endblock %}
 
 {% block content %}
-<div class="edit-reward-container">
-    <div class="form-card">
-        <div class="form-header">
-            <h1>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
                 <i class="fas fa-edit"></i>
-                Edit Reward
-            </h1>
+            </div>
         </div>
-
-        <div class="form-body">
-            <!-- Reward Statistics -->
-            <div class="stats-card">
+        <div class="header-text">
+            <h1 class="page-title">Edit Reward</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Modify reward details and settings
+            </p>
+            <div class="header-stats">
                 <div class="stat-item">
-                    <h4>{{ reward.redemptions.count() }}</h4>
-                    <p>Total Redemptions</p>
+                    <span class="stat-number">{{ reward.redemptions.count() }}</span>
+                    <span class="stat-label">Redemptions</span>
                 </div>
                 <div class="stat-item">
-                    <h4>{{ reward.created_at.strftime('%Y-%m-%d') }}</h4>
-                    <p>Created Date</p>
-                </div>
-                <div class="stat-item">
-                    <h4>{{ reward.status|title }}</h4>
-                    <p>Current Status</p>
+                    <span class="stat-number">{{ reward.status|title }}</span>
+                    <span class="stat-label">Status</span>
                 </div>
             </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.rewards_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Rewards</span>
+            </a>
+        </div>
+    </div>
+</div>
 
+<div class="edit-reward-container">
+    <div class="form-card">
+        <div class="form-body">
             <form method="POST">
                 <!-- Basic Information -->
                 <div class="form-group">

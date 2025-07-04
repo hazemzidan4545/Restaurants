@@ -4,17 +4,48 @@
 {% block page_title %}Add Category{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="admin-card mb-4">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2 class="card-title">
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
                 <i class="fas fa-plus"></i>
-                Add Category
-            </h2>
-            <a href="{{ url_for('admin.category_management') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Categories
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Add Category</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Create a new menu category to organize your items
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">New</span>
+                    <span class="stat-label">Category</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ existing_categories if existing_categories else 0 }}</span>
+                    <span class="stat-label">Existing</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">Active</span>
+                    <span class="stat-label">Status</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.category_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Categories</span>
             </a>
+            <button type="submit" form="addCategoryForm" class="header-btn header-btn-primary">
+                <i class="fas fa-save"></i>
+                <span>Save Category</span>
+            </button>
         </div>
     </div>
 </div>

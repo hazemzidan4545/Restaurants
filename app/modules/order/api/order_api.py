@@ -41,10 +41,31 @@ def create_order():
 
     total = 0
     for item in items:
-        menu_item = MenuItem.query.get(item['item_id'])
-        if not menu_item or menu_item.status != 'available':
+        try:
+            item_id = item.get('item_id')
+            if not item_id:
+                db.session.rollback()
+                return jsonify({'error': 'Item ID is required'}), 400
+            
+            # Validate that item_id is a reasonable database ID (not a timestamp)
+            if not isinstance(item_id, int) or item_id > 1000000:
+                db.session.rollback()
+                return jsonify({'error': f'Menu item {item_id} not found'}), 400
+            
+            menu_item = MenuItem.query.get(item_id)
+            if not menu_item:
+                db.session.rollback()
+                return jsonify({'error': f'Menu item {item_id} not found'}), 400
+            
+            if menu_item.status != 'available':
+                db.session.rollback()
+                return jsonify({'error': f'Menu item {menu_item.name} is not available'}), 400
+                
+        except Exception as e:
             db.session.rollback()
-            return jsonify({'error': f"Item {item['item_id']} unavailable"}), 400
+            current_app.logger.error(f"Error processing item {item.get('item_id', 'unknown')}: {str(e)}")
+            return jsonify({'error': f'Menu item {item.get("item_id", "unknown")} not found'}), 400
+        
         order_item = OrderItem(
             order_id=order.order_id,
             item_id=menu_item.item_id,
@@ -157,9 +178,13 @@ def update_order_status(order_id):
     if new_status == 'completed' and old_status != 'completed':
         try:
             from app.modules.loyalty.loyalty_service import award_points_for_order
-            award_points_for_order(order_id, order.user_id)
+            current_app.logger.info(f"Attempting to award points for order {order_id} to user {order.user_id}")
+            result = award_points_for_order(order_id, order.user_id)
+            current_app.logger.info(f"Point awarding result for order {order_id}: {result}")
         except Exception as e:
-            current_app.logger.error(f"Error awarding loyalty points: {str(e)}")
+            current_app.logger.error(f"Error awarding loyalty points for order {order_id}: {str(e)}")
+            import traceback
+            current_app.logger.error(f"Traceback: {traceback.format_exc()}")
     
     # Emit real-time update event
     socketio.emit('order_status_updated', {

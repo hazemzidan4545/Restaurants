@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "./base.html" %}
 
 {% block title %}Edit Menu Item - Admin Dashboard{% endblock %}
 {% block page_title %}Edit Menu Item{% endblock %}
@@ -8,17 +8,48 @@
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="admin-card mb-4">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2 class="card-title">
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="header-background">
+        <div class="header-pattern"></div>
+        <div class="header-gradient"></div>
+    </div>
+    <div class="header-content">
+        <div class="header-icon-container">
+            <div class="header-icon">
                 <i class="fas fa-edit"></i>
-                Edit Menu Item
-            </h2>
-            <a href="{{ url_for('admin.menu_management') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Menu
+            </div>
+        </div>
+        <div class="header-text">
+            <h1 class="page-title">Edit Menu Item</h1>
+            <p class="page-description">
+                <i class="fas fa-info-circle"></i>
+                Modify menu item details, pricing, and availability settings
+            </p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ menu_item.name if menu_item else 'Item' }}</span>
+                    <span class="stat-label">Editing</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ menu_item.category.name if menu_item and menu_item.category else 'N/A' }}</span>
+                    <span class="stat-label">Category</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${{ "%.2f"|format(menu_item.price if menu_item else 0) }}</span>
+                    <span class="stat-label">Price</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.menu_management') }}" class="header-btn header-btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Menu</span>
             </a>
+            <button type="submit" form="editMenuItemForm" class="header-btn header-btn-primary">
+                <i class="fas fa-save"></i>
+                <span>Save Changes</span>
+            </button>
         </div>
     </div>
 </div>
@@ -228,8 +259,9 @@
                                         <!-- Current Image Display -->
                                         {% if menu_item.image_url %}
                                         <div class="current-image" id="currentImageDisplay">
-                                            <img src="{{ url_for('main.uploaded_file', filename='menu_images/' + menu_item.image_url) }}"
-                                                 alt="{{ menu_item.name }}" class="preview-image" id="currentImg">
+                                            <img src="{{ url_for('static', filename='uploads/menu_images/' + menu_item.image_url) }}"
+                                                 alt="{{ menu_item.name }}" class="preview-image" id="currentImg"
+                                                 onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'upload-placeholder\' id=\'uploadPlaceholder\'><i class=\'fas fa-image fa-3x mb-3 text-muted\'></i><p class=\'mb-2 text-muted\'>Image not found</p><p class=\'text-muted small\'>Click to upload new image</p></div>';">
                                             <div class="image-overlay">
                                                 <button type="button" class="btn btn-sm btn-outline-light" id="changeCurrentImage">
                                                     <i class="fas fa-edit me-1"></i>Change
@@ -603,6 +635,28 @@
 
 {% block extra_css %}
 <style>
+/* Force sidebar to be fixed on edit menu item page */
+.admin-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 260px !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    background: linear-gradient(180deg, #000000 0%, #0a0a0a 50%, #000000 100%) !important;
+    transform: translateX(0) !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Ensure main content has proper offset */
+.main-content {
+    margin-left: 260px !important;
+    position: relative !important;
+    min-height: 100vh !important;
+}
+
 /* Optimized CSS for better performance */
 html {
     scroll-behavior: auto; /* We'll handle smooth scrolling with JS */
@@ -985,10 +1039,15 @@ function initializeImageUpload() {
     const imagePreview = document.getElementById('imagePreview');
     const previewImg = document.getElementById('previewImg');
     const currentImageDisplay = document.getElementById('currentImageDisplay');
+    const imageUploadArea = document.getElementById('imageUploadArea');
     
     // Use event delegation where possible
     if (uploadPlaceholder) {
         uploadPlaceholder.addEventListener('click', () => imageInput.click(), { passive: true });
+    }
+    
+    if (imageUploadArea && !uploadPlaceholder) {
+        imageUploadArea.addEventListener('click', () => imageInput.click(), { passive: true });
     }
     
     if (imageInput) {
@@ -998,452 +1057,379 @@ function initializeImageUpload() {
     // Optimize event handlers for image controls
     const changeCurrentImage = document.getElementById('changeCurrentImage');
     if (changeCurrentImage) {
-        changeCurrentImage.addEventListener('click', () => imageInput.click(), { passive: true });
+        changeCurrentImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            imageInput.click();
+        }, { passive: true });
     }
     
     const removeCurrentImage = document.getElementById('removeCurrentImage');
     if (removeCurrentImage) {
-        removeCurrentImage.addEventListener('click', () => {
-            console.log('Current image removed');
-            requestAnimationFrame(updateProgress);
+        removeCurrentImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeImage();
         }, { passive: true });
     }
     
     const changeImage = document.getElementById('changeImage');
     if (changeImage) {
-        changeImage.addEventListener('click', () => imageInput.click(), { passive: true });
+        changeImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            imageInput.click();
+        }, { passive: true });
     }
     
     const removeImage = document.getElementById('removeImage');
     if (removeImage) {
-        removeImage.addEventListener('click', () => {
-            console.log('New image removed');
-            requestAnimationFrame(updateProgress);
+        removeImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeImagePreview();
         }, { passive: true });
     }
 }
 
-// Handle image change with optimized processing
-function handleImageChange(e) {
-    console.log('Image changed');
-    requestAnimationFrame(updateProgress);
+// Add drag and drop functionality for image upload
+document.addEventListener('DOMContentLoaded', function() {
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const imageInput = document.getElementById('image');
+    
+    if (imageUploadArea && imageInput) {
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            imageUploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            imageUploadArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            imageUploadArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        // Handle dropped files
+        imageUploadArea.addEventListener('drop', handleDrop, false);
+    }
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function highlight(e) {
+        imageUploadArea.classList.add('dragover');
+    }
+    
+    function unhighlight(e) {
+        imageUploadArea.classList.remove('dragover');
+    }
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            imageInput.files = files;
+            handleImageChange({ target: { files: files } });
+        }
+    }
+});
+
+// Handle image file selection and preview
+function handleImageChange(event) {
+    const file = event.target.files[0];
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const currentImageDisplay = document.getElementById('currentImageDisplay');
+    
+    if (file) {
+        // Validate file type
+        const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            alert('Please select a valid image file (PNG, JPG, JPEG, GIF, WebP)');
+            event.target.value = '';
+            return;
+        }
+        
+        // Validate file size (16MB max)
+        if (file.size > 16 * 1024 * 1024) {
+            alert('File size must be less than 16MB');
+            event.target.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (previewImg) {
+                previewImg.src = e.target.result;
+                previewImg.alt = file.name;
+            }
+            
+            // Show preview and hide other elements
+            if (imagePreview) imagePreview.style.display = 'block';
+            if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
+            if (currentImageDisplay) currentImageDisplay.style.display = 'none';
+            
+            updateProgress();
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
-// Update progress bar with optimized calculations
+// Remove image preview and show upload placeholder
+function removeImagePreview() {
+    const imageInput = document.getElementById('image');
+    const imagePreview = document.getElementById('imagePreview');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const currentImageDisplay = document.getElementById('currentImageDisplay');
+    
+    if (imageInput) imageInput.value = '';
+    if (imagePreview) imagePreview.style.display = 'none';
+    
+    // Show appropriate placeholder
+    if (currentImageDisplay) {
+        currentImageDisplay.style.display = 'block';
+    } else if (uploadPlaceholder) {
+        uploadPlaceholder.style.display = 'flex';
+    }
+    
+    updateProgress();
+}
+
+// Remove current image (existing image)
+function removeImage() {
+    const currentImageDisplay = document.getElementById('currentImageDisplay');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const imageInput = document.getElementById('image');
+    
+    if (currentImageDisplay) currentImageDisplay.style.display = 'none';
+    if (uploadPlaceholder) uploadPlaceholder.style.display = 'flex';
+    if (imageInput) imageInput.value = '';
+    
+    // Add a hidden input to indicate image removal
+    let removeInput = document.getElementById('remove_image');
+    if (!removeInput) {
+        removeInput = document.createElement('input');
+        removeInput.type = 'hidden';
+        removeInput.name = 'remove_image';
+        removeInput.id = 'remove_image';
+        removeInput.value = '1';
+        document.getElementById('editMenuItemForm').appendChild(removeInput);
+    } else {
+        removeInput.value = '1';
+    }
+    
+    updateProgress();
+}
+
+// Update progress bar and completion status
 function updateProgress() {
+    const form = document.getElementById('editMenuItemForm');
+    if (!form) return;
+    
     const progressBar = document.getElementById('completionProgress');
-    const progressText = document.querySelector('.progress-text');
+    const progressText = progressBar ? progressBar.querySelector('.progress-text') : null;
     const completionText = document.getElementById('completionText');
-    const formFields = document.querySelectorAll('#editMenuItemForm input, #editMenuItemForm select, #editMenuItemForm textarea');
+    const statusIndicator = document.querySelector('.status-indicator');
     
-    if (!progressBar || !progressText || !completionText) return;
+    // Get required fields
+    const requiredFields = form.querySelectorAll('[required]');
+    let completedFields = 0;
+    let totalFields = requiredFields.length;
     
-    // Field weights for progress calculation - cached for performance
-    const fieldWeights = {
-        'name': 15,
-        'category_id': 15,
-        'price': 15,
-        'description': 10,
-        'ingredients': 10,
-        'image': 10,
-        'stock': 5,
-        'preparation_time': 5,
-        'allergens': 5,
-        'calories': 5,
-        'status': 5
-    };
-    
-    // Pre-calculate total weight for performance
-    const totalWeight = 100; // Sum of all weights above
-    
-    let completedWeight = 0;
-    
-    // Calculate completed weight with optimized loop
-    formFields.forEach(field => {
-        const weight = fieldWeights[field.name];
-        if (weight) {
-            // Check if field has a value
-            if (field.value && field.value.trim() !== '') {
-                completedWeight += weight;
-            }
-            // Special case for image (already uploaded)
-            if (field.name === 'image' && document.getElementById('currentImageDisplay')) {
-                completedWeight += weight;
-            }
+    // Check each required field
+    requiredFields.forEach(field => {
+        if (field.type === 'checkbox' || field.type === 'radio') {
+            if (field.checked) completedFields++;
+        } else if (field.tagName === 'SELECT') {
+            if (field.value && field.value !== '') completedFields++;
+        } else {
+            if (field.value && field.value.trim() !== '') completedFields++;
         }
     });
     
     // Calculate percentage
-    let percentage = Math.round((completedWeight / totalWeight) * 100);
+    const percentage = Math.round((completedFields / totalFields) * 100);
     
-    // Ensure minimum of 5% for visual feedback
-    percentage = Math.max(5, percentage);
-    
-    // Update progress bar with optimized DOM updates
-    progressBar.style.width = percentage + '%';
-    progressBar.setAttribute('aria-valuenow', percentage);
-    progressText.textContent = percentage + '%';
-    
-    // Update completion text and status indicator
-    const statusIndicator = document.querySelector('.completion-status .status-indicator');
-    if (!statusIndicator) return;
-    
-    // Remove all status classes first
-    statusIndicator.classList.remove('ready', 'almost-ready', 'in-progress', 'needs-work');
-    
-    // Add appropriate class based on percentage
-    if (percentage >= 100) {
-        completionText.textContent = 'Ready to update!';
-        statusIndicator.classList.add('ready');
-    } else if (percentage >= 80) {
-        completionText.textContent = 'Almost ready!';
-        statusIndicator.classList.add('almost-ready');
-    } else if (percentage >= 50) {
-        completionText.textContent = 'Making good progress!';
-        statusIndicator.classList.add('in-progress');
-    } else {
-        completionText.textContent = 'Please complete more fields';
-        statusIndicator.classList.add('needs-work');
+    // Update progress bar
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+        progressBar.setAttribute('aria-valuenow', percentage);
     }
-}
-
-// Show preview modal with optimized rendering
-function showPreview() {
-    // Get form values - cache DOM lookups
-    const nameEl = document.getElementById('name');
-    const categoryEl = document.getElementById('category_id');
-    const descriptionEl = document.getElementById('description');
-    const priceEl = document.getElementById('price');
-    const stockEl = document.getElementById('stock');
-    const prepTimeEl = document.getElementById('preparation_time');
-    const caloriesEl = document.getElementById('calories');
-    const ingredientsEl = document.getElementById('ingredients');
-    const allergensEl = document.getElementById('allergens');
     
-    // Get values with fallbacks
-    const name = nameEl?.value || 'Untitled Item';
-    const category = categoryEl?.selectedOptions[0]?.text || 'No Category';
-    const description = descriptionEl?.value || 'No description provided';
-    const price = priceEl?.value || '0.00';
-    const stock = stockEl?.value || '0';
-    const prepTime = prepTimeEl?.value || 'Not specified';
-    const calories = caloriesEl?.value || 'Not specified';
-    const ingredients = ingredientsEl?.value || 'Not specified';
-    const allergens = allergensEl?.value || 'None specified';
-
-    // Update preview modal content with optimized DOM updates
-    const previewNameEl = document.getElementById('previewName');
-    const previewCategoryEl = document.getElementById('previewCategory');
-    const previewDescriptionEl = document.getElementById('previewDescription');
-    const previewPriceEl = document.getElementById('previewPrice');
-    const previewStockEl = document.getElementById('previewStock');
-    const previewPrepTimeEl = document.getElementById('previewPrepTime');
-    const previewCaloriesEl = document.getElementById('previewCalories');
-    const previewIngredientsEl = document.getElementById('previewIngredients');
-    const previewAllergensEl = document.getElementById('previewAllergens');
+    if (progressText) {
+        progressText.textContent = percentage + '%';
+    }
     
-    // Batch DOM updates for better performance
-    if (previewNameEl) previewNameEl.textContent = name;
-    if (previewCategoryEl) previewCategoryEl.textContent = category;
-    if (previewDescriptionEl) previewDescriptionEl.textContent = description;
-    if (previewPriceEl) previewPriceEl.textContent = `EGP ${price}`;
-    if (previewStockEl) previewStockEl.textContent = stock === '0' ? 'Unlimited' : stock;
-    if (previewPrepTimeEl) previewPrepTimeEl.textContent = prepTime === 'Not specified' ? prepTime : `${prepTime} minutes`;
-    if (previewCaloriesEl) previewCaloriesEl.textContent = calories === 'Not specified' ? calories : `${calories} kcal`;
-    if (previewIngredientsEl) previewIngredientsEl.textContent = ingredients;
-    if (previewAllergensEl) previewAllergensEl.textContent = allergens;
-
-    // Handle image preview with optimized image loading
-    const imageInput = document.getElementById('image');
-    const previewContainer = document.querySelector('.preview-image-container');
-    
-    if (!previewContainer) return;
-    
-    // Clear previous content
-    previewContainer.innerHTML = '';
-    
-    // Use createDocumentFragment for better performance
-    const fragment = document.createDocumentFragment();
-    let imgElement;
-    
-    if (imageInput && imageInput.files && imageInput.files[0]) {
-        // New image selected - use createObjectURL for better performance
-        imgElement = document.createElement('img');
-        imgElement.src = URL.createObjectURL(imageInput.files[0]);
-        imgElement.alt = "Menu Item";
-        imgElement.className = "preview-image";
-        imgElement.onload = () => URL.revokeObjectURL(imgElement.src); // Clean up memory
-        fragment.appendChild(imgElement);
-    } else if (document.getElementById('currentImageDisplay')) {
-        // Existing image
-        const currentImage = document.getElementById('currentImageDisplay').querySelector('img');
-        if (currentImage) {
-            imgElement = document.createElement('img');
-            imgElement.src = currentImage.src;
-            imgElement.alt = "Menu Item";
-            imgElement.className = "preview-image";
-            fragment.appendChild(imgElement);
+    // Update status
+    if (completionText && statusIndicator) {
+        if (percentage >= 100) {
+            completionText.textContent = 'Ready to update!';
+            statusIndicator.className = 'status-indicator ready';
+        } else if (percentage >= 80) {
+            completionText.textContent = 'Almost complete!';
+            statusIndicator.className = 'status-indicator ready';
         } else {
-            showNoImagePlaceholder(fragment);
+            completionText.textContent = `${totalFields - completedFields} fields remaining`;
+            statusIndicator.className = 'status-indicator incomplete';
         }
-    } else {
-        // No image
-        showNoImagePlaceholder(fragment);
-    }
-    
-    // Append fragment to container in one operation
-    previewContainer.appendChild(fragment);
-
-    // Show modal with optimized rendering
-    showOptimizedModal('previewModal');
-}
-
-// Show optimized modal with better performance
-function showOptimizedModal(modalId) {
-    // Create backdrop with optimized rendering
-    const backdrop = createOptimizedBackdrop();
-    
-    // Get modal element
-    const modalElement = document.getElementById(modalId);
-    if (!modalElement) return;
-    
-    // Prepare modal with optimized settings
-    modalElement.style.display = 'block';
-    modalElement.style.zIndex = '9999';
-    
-    // Optimize modal dialog
-    const modalDialog = modalElement.querySelector('.modal-dialog');
-    if (modalDialog) {
-        modalDialog.style.zIndex = '10000';
-        modalDialog.style.transform = 'translate(0, 0)';
-    }
-    
-    // Show modal with optimized animation
-    if (window.modals && window.modals[modalId.replace('Modal', '') + 'Modal']) {
-        window.modals[modalId.replace('Modal', '') + 'Modal'].show();
-    }
-    
-    // Ensure modal is visible and scroll to it
-    requestAnimationFrame(() => {
-        ensureModalIsVisible(modalId);
-        smoothScrollToModal(modalId);
-    });
-}
-
-// Create optimized backdrop
-function createOptimizedBackdrop() {
-    // Remove existing backdrops
-    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-    
-    // Create transparent backdrop
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop fade show';
-    backdrop.style.opacity = '0.5'; // Make it visible but semi-transparent
-    backdrop.style.background = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent black
-    backdrop.style.pointerEvents = 'auto'; // Allow clicks to close
-    backdrop.style.zIndex = '1040';
-    
-    // Add to DOM
-    document.body.appendChild(backdrop);
-    
-    // Add click handler to close modals
-    backdrop.addEventListener('click', function() {
-        // Find visible modal and close it
-        const visibleModal = document.querySelector('.modal.show');
-        if (visibleModal) closeModal(visibleModal.id);
-    }, { passive: true });
-    
-    return backdrop;
-}
-
-// Show no image placeholder with optimized DOM creation
-function showNoImagePlaceholder(container) {
-    const placeholderDiv = document.createElement('div');
-    placeholderDiv.className = 'no-image-placeholder';
-    
-    const icon = document.createElement('i');
-    icon.className = 'fas fa-image';
-    
-    const text = document.createElement('p');
-    text.textContent = 'No Image Available';
-    
-    placeholderDiv.appendChild(icon);
-    placeholderDiv.appendChild(text);
-    
-    if (container instanceof DocumentFragment) {
-        container.appendChild(placeholderDiv);
-    } else {
-        container.innerHTML = '';
-        container.appendChild(placeholderDiv);
     }
 }
 
-// Ensure modal is visible with optimized rendering
-function ensureModalIsVisible(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) return;
-    
-    // Force display with hardware acceleration
-    modal.style.display = 'block';
-    modal.style.zIndex = '9999';
-    modal.style.transform = 'translateZ(0)';
-    
-    // Optimize modal dialog
-    const modalDialog = modal.querySelector('.modal-dialog');
-    if (modalDialog) {
-        modalDialog.style.zIndex = '10000';
-        modalDialog.style.transform = 'translateZ(0)';
-        modalDialog.style.willChange = 'transform';
-    }
-    
-    // Optimize modal content
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.style.zIndex = '10001';
-        modalContent.style.transform = 'translateZ(0)';
-        modalContent.style.willChange = 'transform';
-    }
-}
-
-// Smooth scroll to modal with optimized animation
-function smoothScrollToModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) return;
-    
-    // Get the modal's position with optimized calculations
-    const rect = modal.getBoundingClientRect();
-    const modalTop = rect.top + window.pageYOffset;
-    const modalCenter = modalTop - (window.innerHeight / 2) + (rect.height / 2);
-    
-    // Use optimized smooth scrolling with cubic-bezier easing
-    smoothScrollTo(modalCenter, 300);
-}
-
-// Optimized smooth scroll with requestAnimationFrame
-function smoothScrollTo(targetY, duration) {
-    // Early exit if already at target
-    const startY = window.pageYOffset;
-    if (Math.abs(startY - targetY) < 5) return;
-    
-    const difference = targetY - startY;
-    let start;
-    
-    // Optimized easing function - cubic-bezier
-    function easeOutQuint(t) {
-        return 1 - Math.pow(1 - t, 5);
-    }
-    
-    // Animation step with optimized rendering
-    function step(timestamp) {
-        if (!start) start = timestamp;
-        const elapsed = timestamp - start;
-        const progress = Math.min(elapsed / duration, 1);
-        const ease = easeOutQuint(progress);
-        
-        window.scrollTo({
-            top: startY + difference * ease,
-            behavior: 'auto' // We're handling the animation manually
+// Enhanced button event handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Preview button
+    const previewBtn = document.getElementById('previewBtn');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function() {
+            // Show preview modal with current form data
+            showPreview();
         });
-        
-        if (elapsed < duration) {
-            window.requestAnimationFrame(step);
+    }
+    
+    // Delete button
+    const deleteBtn = document.getElementById('deleteBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            showDelete();
+        });
+    }
+    
+    // Form submission with loading state
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('editMenuItemForm');
+    
+    if (form && submitBtn) {
+        form.addEventListener('submit', function() {
+            const submitIcon = document.getElementById('submitIcon');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+            
+            // Show loading state
+            submitBtn.classList.add('loading');
+            if (submitIcon) submitIcon.style.display = 'none';
+            if (submitSpinner) submitSpinner.classList.remove('d-none');
+            if (submitText) submitText.textContent = 'Updating...';
+            
+            submitBtn.disabled = true;
+        });
+    }
+});
+
+// Fix sidebar positioning and mobile toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure sidebar scrolls with content (no forced positioning)
+    const sidebar = document.querySelector('.admin-sidebar');
+    const mainContent = document.querySelector('.main-content');
+    
+    if (sidebar && mainContent) {
+        // Ensure main content has proper margin for desktop
+        if (window.innerWidth >= 768) {
+            mainContent.style.marginLeft = '260px';
         }
     }
     
-    // Start animation with requestAnimationFrame for better performance
-    window.requestAnimationFrame(step);
-}
+    // Mobile sidebar toggle functionality
+    const mobileToggle = document.querySelector('.mobile-toggle');
+    if (mobileToggle && sidebar) {
+        mobileToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            this.classList.toggle('active');
+        });
+    }
+    
+    // Handle window resize for responsive sidebar
+    window.addEventListener('resize', function() {
+        if (sidebar && mainContent) {
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('show');
+                mainContent.style.marginLeft = '260px';
+                if (mobileToggle) mobileToggle.classList.remove('active');
+            } else {
+                mainContent.style.marginLeft = '0';
+            }
+        }
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth < 768 && sidebar && sidebar.classList.contains('show')) {
+            if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                sidebar.classList.remove('show');
+                if (mobileToggle) mobileToggle.classList.remove('active');
+            }
+        }
+    });
+});
 
-// Show delete modal with optimized rendering
-function showDelete() {
-    // Get current item name and category for confirmation
-    const name = document.getElementById('name')?.value || 'this menu item';
+// Show preview modal with current form data
+function showPreview() {
+    const form = document.getElementById('editMenuItemForm');
+    if (!form) return;
+    
+    // Get form data
+    const formData = new FormData(form);
+    const name = formData.get('name') || 'Menu Item';
+    const price = formData.get('price') || '0.00';
+    const description = formData.get('description') || 'No description available';
     const category = document.getElementById('category_id')?.selectedOptions[0]?.text || 'No Category';
     
-    // Update delete confirmation text with optimized DOM updates
-    const itemName = document.querySelector('#deleteModal .item-name');
-    const itemCategory = document.querySelector('#deleteModal .item-category');
-    const deleteQuestion = document.querySelector('#deleteModal .delete-question');
+    // Update preview modal content
+    const previewTitle = document.querySelector('#previewModal .preview-title');
+    const previewPrice = document.querySelector('#previewModal .preview-price');
+    const previewDescription = document.querySelector('#previewModal .preview-description');
+    const previewCategory = document.querySelector('#previewModal .preview-category');
     
-    if (itemName) itemName.textContent = name;
-    if (itemCategory) itemCategory.textContent = category;
-    if (deleteQuestion) deleteQuestion.textContent = `Are you sure you want to delete "${name}"?`;
+    if (previewTitle) previewTitle.textContent = name;
+    if (previewPrice) previewPrice.textContent = `${price} EGP`;
+    if (previewDescription) previewDescription.textContent = description;
+    if (previewCategory) previewCategory.textContent = category;
     
-    // Add warning animation
-    const warningIcon = document.querySelector('#deleteModal .warning-icon');
-    if (warningIcon) {
-        warningIcon.classList.add('warning-pulse');
-    }
-    
-    // Show modal with optimized rendering
-    showOptimizedModal('deleteModal');
-}
-
-// Show add category modal with optimized rendering
-function showAddCategory() {
-    // Reset form with optimized DOM updates
-    const addCategoryForm = document.getElementById('addCategoryForm');
-    if (addCategoryForm) addCategoryForm.reset();
-    
-    // Show modal with optimized rendering
-    showOptimizedModal('addCategoryModal');
-}
-
-// Close modal with optimized animation
-function closeModal(modalId) {
-    // Make backdrop semi-transparent
-    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-        backdrop.style.opacity = '0';
-        backdrop.style.transition = 'opacity 0.3s ease';
-    });
-    
-    // Get modal instance
-    let modalInstance = null;
-    if (window.modals && window.modals[modalId.replace('Modal', '') + 'Modal']) {
-        modalInstance = window.modals[modalId.replace('Modal', '') + 'Modal'];
-    } else {
-        // Fallback
-        const modalElement = document.getElementById(modalId);
-        if (modalElement) modalInstance = bootstrap.Modal.getInstance(modalElement);
-    }
-    
-    // Hide modal with optimized animation
-    if (modalInstance) {
-        modalInstance.hide();
-        
-        // Clean up after animation completes
-        setTimeout(() => {
-            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-                backdrop.remove();
-            });
-        }, 300);
-    }
-    
-    // Remove warning animation if it's the delete modal
-    if (modalId === 'deleteModal') {
-        const warningIcon = document.querySelector('#deleteModal .warning-icon');
-        if (warningIcon) warningIcon.classList.remove('warning-pulse');
-    }
-}
-
-// Save category with optimized processing
-function saveCategory() {
-    const categoryNameEl = document.getElementById('newCategoryName');
-    const categoryDescriptionEl = document.getElementById('newCategoryDescription');
-    
-    if (!categoryNameEl || !categoryNameEl.value) {
-        alert('Please enter a category name');
-        return;
-    }
-    
-    const categoryName = categoryNameEl.value;
-    const categoryDescription = categoryDescriptionEl?.value || '';
-    
-    // Here you would typically make an AJAX call to save the category
-    console.log('Saving category:', categoryName, categoryDescription);
-    
-    // Close modal with optimized animation
-    closeModal('addCategoryModal');
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
 }
 </script>
+
+<!-- Fix for image loading issues -->
+<style>
+/* Ensure proper image display */
+.preview-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 12px;
+    background: #f3f4f6;
+    display: block;
+}
+
+.current-image img,
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Fix for missing image URLs */
+.current-image img[src=""] {
+    display: none;
+}
+
+.current-image img[src=""]:after {
+    content: "Image not found";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 14px;
+}
+</style>
 {% endblock %}
