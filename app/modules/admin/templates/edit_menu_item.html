@@ -36,7 +36,7 @@
                     <span class="stat-label">Category</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number">${{ "%.2f"|format(menu_item.price if menu_item else 0) }}</span>
+                    <span class="stat-number">{{ "%.2f"|format(menu_item.price if menu_item else 0) }} EGP</span>
                     <span class="stat-label">Price</span>
                 </div>
             </div>
@@ -130,6 +130,31 @@
                                     </div>
                                     <div class="invalid-feedback"></div>
                                     <div class="form-text">Set the selling price for this item</div>
+                                </div>
+                                
+                                <!-- Discount Section -->
+                                <div class="mb-3">
+                                    <label for="discount_percentage" class="form-label">
+                                        <i class="fas fa-percentage me-1"></i>Discount (%)
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="discount_percentage" name="discount_percentage"
+                                               min="0" max="95" step="0.01" 
+                                               value="{{ menu_item.discount_percentage or '' }}" placeholder="0.00"
+                                               data-validation="min:0|max:95">
+                                        <span class="input-group-text">%</span>
+                                        <button type="button" class="btn btn-outline-secondary" id="clearDiscount"
+                                                title="Clear Discount">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">
+                                        Optional discount percentage (0-95%)
+                                        {% if menu_item.original_price %}
+                                            <br><small class="text-info">Original price: {{ menu_item.original_price }} EGP</small>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
 
@@ -468,8 +493,8 @@
 </div>
 
 <!-- Preview Modal -->
-<div class="modal fade bottom-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true" data-bs-backdrop="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content preview-modal">
             <div class="modal-header preview-header">
                 <h5 class="modal-title">
@@ -546,8 +571,8 @@
 </div>
 
 <!-- Delete Modal -->
-<div class="modal fade bottom-modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true" data-bs-backdrop="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content enhanced-delete-modal">
             <div class="modal-header enhanced-delete-header">
                 <div class="delete-header-content">
@@ -601,8 +626,8 @@
 </div>
 
 <!-- Add Category Modal -->
-<div class="modal fade bottom-modal" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true" data-bs-backdrop="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -754,15 +779,10 @@ body {
     transform: translate(0, 0);
 }
 
-/* Optimize bottom modal animations */
-.modal.bottom-modal .modal-dialog {
-    transform: translate(0, 100%);
+/* Enhanced Modal Animations */
+.modal .modal-dialog {
     transition: transform 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
     will-change: transform;
-}
-
-.modal.bottom-modal.show .modal-dialog {
-    transform: translate(0, 0);
 }
 
 /* Reduce paint operations by using opacity for transitions */
@@ -1003,6 +1023,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             requestAnimationFrame(updateProgress);
         }, { passive: true });
+    }
+    
+    // Discount functionality
+    const discountPercentage = document.getElementById('discount_percentage');
+    const clearDiscountBtn = document.getElementById('clearDiscount');
+    if (discountPercentage && clearDiscountBtn) {
+        clearDiscountBtn.addEventListener('click', function() {
+            discountPercentage.value = '';
+            updateProgress();
+        });
+        
+        discountPercentage.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            if (value > 95) {
+                this.value = 95;
+            } else if (value < 0) {
+                this.value = 0;
+            }
+            updateProgress();
+        });
     }
     
     // Image upload with optimized handlers
@@ -1388,9 +1428,117 @@ function showPreview() {
     if (previewDescription) previewDescription.textContent = description;
     if (previewCategory) previewCategory.textContent = category;
     
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
-    modal.show();
+    // Scroll to top first for better modal positioning
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+    
+    // Show the modal after scrolling
+    setTimeout(() => {
+        const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+        modal.show();
+        
+        // Ensure modal is centered and visible
+        setTimeout(() => {
+            const modalDialog = document.querySelector('#previewModal .modal-dialog');
+            if (modalDialog) {
+                modalDialog.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }, 150);
+    }, 300);
+}
+
+// Add missing showDelete function
+function showDelete() {
+    // Scroll to top first for better modal positioning
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+    
+    // Show the modal after scrolling
+    setTimeout(() => {
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+        
+        // Ensure modal is centered and visible
+        setTimeout(() => {
+            const modalDialog = document.querySelector('#deleteModal .modal-dialog');
+            if (modalDialog) {
+                modalDialog.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }, 150);
+    }, 300);
+}
+
+// Add missing showAddCategory function
+function showAddCategory() {
+    // Scroll to top first for better modal positioning
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+    
+    // Show the modal after scrolling
+    setTimeout(() => {
+        const modal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+        modal.show();
+        
+        // Ensure modal is centered and visible
+        setTimeout(() => {
+            const modalDialog = document.querySelector('#addCategoryModal .modal-dialog');
+            if (modalDialog) {
+                modalDialog.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }, 150);
+    }, 300);
+}
+
+// Enhanced close modal function
+function closeModal(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (modalElement) {
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide();
+        } else {
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+        }
+    }
+}
+
+// Smooth scroll to modal function
+function smoothScrollToModal(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (modalElement) {
+        // First scroll to top
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        
+        // Then ensure modal dialog is centered
+        setTimeout(() => {
+            const modalDialog = modalElement.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }, 200);
+    }
 }
 </script>
 

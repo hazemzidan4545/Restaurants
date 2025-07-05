@@ -422,7 +422,7 @@
                     {{ order.order_time.strftime('%B %d, %Y at %I:%M %p') }}
                 </div>
             </div>
-            <div class="order-total">${{ "%.2f"|format(order.total_amount) }}</div>
+            <div class="order-total">{{ "%.2f"|format(order.total_amount) }} EGP</div>
         </div>
 
         {% set order_items = order.order_items.all() %}
@@ -434,7 +434,7 @@
                 <div class="item-preview">
                     <div class="item-info">
                         <span class="item-name">{{ item.quantity }}x {{ item.menu_item.name }}</span>
-                        <span class="item-price">${{ "%.2f"|format(item.unit_price * item.quantity) }}</span>
+                        <span class="item-price">{{ "%.2f"|format(item.unit_price * item.quantity) }} EGP</span>
                     </div>
                     {% if item.special_requests %}
                     <div class="item-notes">Special requests: {{ item.special_requests }}</div>

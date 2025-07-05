@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from sqlalchemy import func
 from app.modules.admin import bp
-from app.models import MenuItem, Category, User, Order, Table, OrderItem, QRCode, RewardItem, CustomerLoyalty, PointTransaction, RewardRedemption, PromotionalCampaign, LoyaltyProgram, Service
+from app.models import MenuItem, Category, User, Order, Table, OrderItem, QRCode, RewardItem, CustomerLoyalty, PointTransaction, RewardRedemption, PromotionalCampaign, LoyaltyProgram, Service, SystemSettings
 from app.extensions import db
 from datetime import datetime, timedelta
 import os
@@ -787,6 +787,15 @@ def add_menu_item():
         stock = request.form.get('stock', type=int, default=0)
         status = request.form.get('status', 'available')
 
+        # Get discount information
+        discount_percentage = request.form.get('discount_percentage', type=float)
+        
+        # Handle discount logic
+        if discount_percentage and discount_percentage > 0:
+            if discount_percentage > 95:
+                flash('Discount percentage cannot exceed 95%', 'error')
+                return render_template('add_menu_item.html', categories=categories)
+        
         # Get nutritional information
         ingredients = request.form.get('ingredients')
         calories = request.form.get('calories', type=int)
@@ -827,8 +836,13 @@ def add_menu_item():
             preparation_time=preparation_time,
             allergens=allergens,
             serving_size=serving_size,
-            dietary_info=dietary_info
+            dietary_info=dietary_info,
+            discount_percentage=discount_percentage or 0.00
         )
+        
+        # Apply discount if provided
+        if discount_percentage and discount_percentage > 0:
+            menu_item.apply_discount(discount_percentage)
 
         try:
             db.session.add(menu_item)
@@ -861,6 +875,15 @@ def edit_menu_item(item_id):
         category_id = request.form.get('category_id', type=int)
         stock = request.form.get('stock', type=int)
         status = request.form.get('status')
+
+        # Get discount information
+        discount_percentage = request.form.get('discount_percentage', type=float)
+        
+        # Handle discount logic
+        if discount_percentage and discount_percentage > 0:
+            if discount_percentage > 95:
+                flash('Discount percentage cannot exceed 95%', 'error')
+                return render_template('edit_menu_item.html', menu_item=menu_item, categories=categories)
 
         # Get nutritional information
         ingredients = request.form.get('ingredients')
@@ -913,6 +936,13 @@ def edit_menu_item(item_id):
         menu_item.allergens = allergens
         menu_item.serving_size = serving_size
         menu_item.dietary_info = dietary_info
+        
+        # Handle discount updates
+        if discount_percentage and discount_percentage > 0:
+            menu_item.apply_discount(discount_percentage)
+        elif menu_item.discount_percentage and menu_item.discount_percentage > 0:
+            # Clear discount if percentage is 0 or empty
+            menu_item.remove_discount()
 
         try:
             db.session.commit()
@@ -1092,7 +1122,7 @@ def delete_reward(reward_id):
     except Exception as e:
         db.session.rollback()
         flash(f'Error deleting reward: {str(e)}', 'error')
-    
+
     return redirect(url_for('admin.rewards_management'))
 
 @bp.route('/rewards/toggle/<int:reward_id>', methods=['POST'])
@@ -2048,7 +2078,7 @@ def toggle_campaign(campaign_id):
     try:
         campaign = PromotionalCampaign.query.get(campaign_id)
         if not campaign:
-            return jsonify({'success': False, 'message': 'Campaign not found'}), 404
+            return jsonify({'success': False, 'message': 'Campaign not found'}),  404
         
         # Toggle status
         campaign.status = 'inactive' if campaign.status == 'active' else 'active'
@@ -2086,6 +2116,7 @@ def delete_campaign(campaign_id):
             'success': True,
             'message': 'Campaign deleted successfully'
         })
+        
         
     except Exception as e:
         db.session.rollback()
@@ -2442,8 +2473,6 @@ def api_delete_table(table_id):
             'message': f'Error deleting table: {str(e)}'
         }), 500
 
-# ======================== END TABLE MANAGEMENT API ROUTES ========================
-
 @bp.route('/api/qr-codes/generate/<int:table_id>', methods=['POST'])
 @login_required
 def generate_table_qr(table_id):
@@ -2624,3 +2653,83 @@ def get_qr_image(table_id):
             'success': False,
             'message': f'Error retrieving QR code: {str(e)}'
         }), 500
+
+# ======================== SYSTEM SETTINGS ROUTES ========================
+
+@bp.route('/system-settings', methods=['GET', 'POST'])
+@login_required
+def system_settings():
+    """System settings management"""
+    if not current_user.is_admin():
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        try:
+            # Currency & Pricing Settings
+            SystemSettings.set_setting('system_currency', request.form.get('system_currency', 'EGP'), 'string', 
+                                     'Default system currency', 'currency')
+            SystemSettings.set_setting('tax_rate', request.form.get('tax_rate', '0'), 'float', 
+                                     'Tax rate percentage', 'currency')
+            SystemSettings.set_setting('service_charge', request.form.get('service_charge', '0'), 'float', 
+                                     'Service charge percentage', 'currency')
+            
+            # Restaurant Information
+            SystemSettings.set_setting('restaurant_name', request.form.get('restaurant_name', 'Restaurant Management System'), 'string', 
+                                     'Restaurant display name', 'general')
+            SystemSettings.set_setting('restaurant_phone', request.form.get('restaurant_phone', ''), 'string', 
+                                     'Restaurant phone number', 'general')
+            SystemSettings.set_setting('restaurant_address', request.form.get('restaurant_address', ''), 'string', 
+                                     'Restaurant address', 'general')
+            
+            # Order Settings
+            SystemSettings.set_setting('auto_accept_orders', 'auto_accept_orders' in request.form, 'boolean', 
+                                     'Automatically accept new orders', 'orders')
+            SystemSettings.set_setting('default_prep_time', request.form.get('default_prep_time', '30'), 'integer', 
+                                     'Default preparation time in minutes', 'orders')
+            SystemSettings.set_setting('max_order_items', request.form.get('max_order_items', '50'), 'integer', 
+                                     'Maximum items per order', 'orders')
+            
+            # Notification Settings
+            SystemSettings.set_setting('enable_push_notifications', 'enable_push_notifications' in request.form, 'boolean', 
+                                     'Enable push notifications', 'notifications')
+            SystemSettings.set_setting('email_notifications', 'email_notifications' in request.form, 'boolean', 
+                                     'Send email notifications to staff', 'notifications')
+            SystemSettings.set_setting('notification_sound', 'notification_sound' in request.form, 'boolean', 
+                                     'Play sound for new orders', 'notifications')
+            
+            # Loyalty Program Settings
+            SystemSettings.set_setting('loyalty_enabled', 'loyalty_enabled' in request.form, 'boolean', 
+                                     'Enable loyalty program', 'loyalty')
+            SystemSettings.set_setting('points_per_currency', request.form.get('points_per_currency', '2'), 'integer', 
+                                     'Points earned per currency unit spent', 'loyalty')
+            SystemSettings.set_setting('point_value', request.form.get('point_value', '0.5'), 'float', 
+                                     'Value of each loyalty point', 'loyalty')
+            
+            # System Maintenance
+            SystemSettings.set_setting('maintenance_mode', 'maintenance_mode' in request.form, 'boolean', 
+                                     'Enable maintenance mode', 'system')
+            SystemSettings.set_setting('backup_frequency', request.form.get('backup_frequency', 'daily'), 'string', 
+                                     'Automatic backup frequency', 'system')
+            
+            flash('System settings saved successfully!', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error saving settings: {str(e)}', 'error')
+            current_app.logger.error(f"Error saving system settings: {str(e)}")
+    
+    # Load current settings
+    settings = {}
+    all_settings = SystemSettings.query.all()
+    for setting in all_settings:
+        if setting.setting_type == 'boolean':
+            settings[setting.key] = setting.value.lower() in ('true', '1', 'yes') if setting.value else False
+        elif setting.setting_type == 'integer':
+            settings[setting.key] = int(setting.value) if setting.value else 0
+        elif setting.setting_type == 'float':
+            settings[setting.key] = float(setting.value) if setting.value else 0.0
+        else:
+            settings[setting.key] = setting.value
+    
+    return render_template('admin/system_settings.html', settings=settings)

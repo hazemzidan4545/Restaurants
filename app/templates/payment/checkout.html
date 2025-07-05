@@ -384,8 +384,8 @@
                                         <tr>
                                             <td><strong>{{ item.menu_item.name }}</strong></td>
                                             <td class="text-center">{{ item.quantity }}</td>
-                                            <td class="text-right">${{ "%.2f"|format(item.unit_price) }}</td>
-                                            <td class="text-right">${{ "%.2f"|format(item.unit_price * item.quantity) }}</td>
+                                            <td class="text-right">{{ "%.2f"|format(item.unit_price) }} EGP</td>
+                                            <td class="text-right">{{ "%.2f"|format(item.unit_price * item.quantity) }} EGP</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -395,15 +395,15 @@
                             <div class="payment-summary-card">
                                 <div class="summary-row">
                                     <span>Subtotal</span>
-                                    <span>${{ "%.2f"|format(order.total_amount) }}</span>
+                                    <span>{{ "%.2f"|format(order.total_amount) }} EGP</span>
                                 </div>
                                 <div class="summary-row">
                                     <span>Tax</span>
-                                    <span>$0.00</span>
+                                    <span>0.00 EGP</span>
                                 </div>
                                 <div class="summary-row total">
                                     <span>Total</span>
-                                    <span class="total-amount">${{ "%.2f"|format(order.total_amount) }}</span>
+                                    <span class="total-amount">{{ "%.2f"|format(order.total_amount) }} EGP</span>
                                 </div>
                             </div>
                         </div>
@@ -714,7 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="fas fa-info-circle me-2 text-primary" style="font-size: 1.5rem;"></i>
                             <strong>Cash Payment Instructions</strong>
                         </div>
-                        <p class="mb-0">Please have the exact amount of <strong>${{ "%.2f"|format(order.total_amount) }}</strong> ready for payment.</p>
+                        <p class="mb-0">Please have the exact amount of <strong>{{ "%.2f"|format(order.total_amount) }} EGP</strong> ready for payment.</p>
                         <p class="mb-0">You can pay at the counter or to your server when your order is delivered.</p>
                     </div>
                     <div class="form-check">

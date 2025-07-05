@@ -107,7 +107,7 @@
                         </div>
                         <h3 class="mb-0">{{ customer.total_points }}</h3>
                         <p class="text-muted mb-0">Available Points</p>
-                        <small class="text-success">≈ ${{ "%.2f"|format((customer.total_points / 100.0) * 1.0) }}</small>
+                        <small class="text-success">≈ {{ "%.2f"|format((customer.total_points / 100.0) * 1.0) }} EGP</small>
                     </div>
                 </div>
             </div>

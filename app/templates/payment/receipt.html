@@ -56,8 +56,8 @@
                                 <tr>
                                     <td>{{ item.menu_item.name }}</td>
                                     <td>{{ item.quantity }}</td>
-                                    <td>${{ "%.2f"|format(item.price) }}</td>
-                                    <td class="text-end">${{ "%.2f"|format(item.price * item.quantity) }}</td>
+                                    <td>{{ "%.2f"|format(item.price) }} EGP</td>
+                                    <td class="text-end">{{ "%.2f"|format(item.price * item.quantity) }} EGP</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -72,20 +72,20 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-6">Subtotal:</div>
-                                        <div class="col-6 text-end">${{ "%.2f"|format(payment.amount) }}</div>
+                                        <div class="col-6 text-end">{{ "%.2f"|format(payment.amount) }} EGP</div>
                                     </div>
                                     <div class="row">
                                         <div class="col-6">Tax:</div>
-                                        <div class="col-6 text-end">$0.00</div>
+                                        <div class="col-6 text-end">0.00 EGP</div>
                                     </div>
                                     <div class="row">
                                         <div class="col-6">Tip:</div>
-                                        <div class="col-6 text-end">$0.00</div>
+                                        <div class="col-6 text-end">0.00 EGP</div>
                                     </div>
                                     <hr>
                                     <div class="row fw-bold">
                                         <div class="col-6">Total Paid:</div>
-                                        <div class="col-6 text-end text-success">${{ "%.2f"|format(payment.amount) }}</div>
+                                        <div class="col-6 text-end text-success">{{ "%.2f"|format(payment.amount) }} EGP</div>
                                     </div>
                                 </div>
                             </div>

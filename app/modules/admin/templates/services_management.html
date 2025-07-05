@@ -91,7 +91,9 @@
         {% if services %}
             <div class="services-grid">
                 {% for service in services %}
-                <div class="service-card {% if not service.is_active %}service-inactive{% endif %}">
+                <div class="service-card {% if not service.is_active %}service-inactive{% endif %}" 
+                     data-service-id="{{ service.service_id }}" 
+                     data-service-name="{{ service.name|e }}">
                     <!-- Action buttons in top-right corner -->
                     <div class="service-actions-top">
                         <button type="button" 
@@ -948,11 +950,30 @@ function confirmDelete(serviceId, serviceName) {
         const newModal = modalElement.cloneNode(true);
         modalElement.parentNode.replaceChild(newModal, modalElement);
         
-        // Show the new modal
-        newModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        modalIsOpen = true;
-        console.log('Modal displayed, modalIsOpen set to true');
+        // Scroll to top first for better modal positioning
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        
+        // Show the new modal after scrolling
+        setTimeout(() => {
+            newModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            modalIsOpen = true;
+            console.log('Modal displayed, modalIsOpen set to true');
+            
+            // Ensure modal is centered and visible
+            setTimeout(() => {
+                const modalContainer = newModal.querySelector('.delete-modal-container');
+                if (modalContainer) {
+                    modalContainer.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }, 150);
+        }, 300);
         
         // NO OVERLAY CLICK LISTENER - user must use buttons to close
         console.log('Skipping overlay click listener to prevent auto-close');
@@ -989,6 +1010,7 @@ function confirmDelete(serviceId, serviceName) {
         if (confirm(`Are you sure you want to delete the service "${serviceName}"? This action cannot be undone.`)) {
             window.location.href = `/admin/services/delete/${serviceId}`;
         }
+    }
 }
 
 // Enhanced close function for the delete modal
@@ -1027,6 +1049,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     deleteButtons.forEach((button, index) => {
         console.log(`Setting up delete button ${index + 1}`);
+        console.log('Button dataset:', button.dataset);
+        console.log('Button attributes:', {
+            serviceId: button.getAttribute('data-service-id'),
+            serviceName: button.getAttribute('data-service-name')
+        });
         
         // Remove existing listeners by cloning the button
         const newButton = button.cloneNode(true);
@@ -1056,7 +1083,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     dataset: this.dataset,
                     element: this
                 });
-                alert('Error: Could not get service information. Please refresh the page and try again.');
+                // Check all possible ways to get the data
+                const alternativeId = this.closest('.service-card').dataset.serviceId ||
+                                    this.closest('[data-service-id]').dataset.serviceId ||
+                                    this.closest('[data-service-id]').getAttribute('data-service-id');
+                const alternativeName = this.closest('.service-card').querySelector('.service-name').textContent ||
+                                      this.closest('[data-service-name]').dataset.serviceName ||
+                                      this.closest('[data-service-name]').getAttribute('data-service-name');
+                
+                console.log('Alternative data found:', {alternativeId, alternativeName});
+                
+                if (alternativeId && alternativeName) {
+                    confirmDelete(alternativeId, alternativeName);
+                } else {
+                    alert('Error: Could not get service information. Please refresh the page and try again.');
+                }
             }
         });
     });

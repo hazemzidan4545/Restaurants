@@ -178,6 +178,23 @@
         .modal-dialog {
             z-index: 10070 !important;
             position: relative;
+            margin: 1.75rem auto;
+            max-width: 500px;
+            pointer-events: none;
+        }
+
+        /* Ensure modal is always visible and centered */
+        .modal.show .modal-dialog {
+            transform: none;
+            pointer-events: auto;
+        }
+
+        /* Additional modal positioning for better visibility */
+        @media (max-width: 768px) {
+            .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
         }
 
         .modal-content {
@@ -473,10 +490,6 @@
             overflow: hidden;
         }
 
-        .modal.show {
-            display: block !important;
-        }
-
         .modal.fade.show {
             opacity: 1 !important;
         }
@@ -497,6 +510,40 @@
             width: 100% !important;
             height: 100% !important;
             outline: 0 !important;
+            display: none !important; /* Hidden by default */
+        }
+
+        /* Only show modal when it has the show class */
+        .modal.show {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Modal animation and positioning */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out;
+            transform: translate(0, -50px);
+        }
+
+        .modal.show .modal-dialog {
+            transform: translate(0, 0);
+        }
+
+        /* Smooth modal entrance */
+        .modal-dialog {
+            animation: modalSlideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* QR Loading and Error States */
@@ -591,7 +638,7 @@
             <button class="action-btn" title="Edit Table" onclick="editTable('{{ table.table_id }}')">
                 <i class="fas fa-edit"></i>
             </button>
-            <button class="action-btn" title="Regenerate QR" onclick="regenerateQR('{{ table.table_id }}')">
+            <button class="action-btn" title="Regenerate QR" onclick="regenerateQR('{{ table.table_id }}', event)">
                 <i class="fas fa-sync"></i>
             </button>
         </div>
@@ -854,14 +901,33 @@
                     document.getElementById('table_type').value = table.table_type || 'regular';
                     document.getElementById('is_active').checked = table.is_active;
                     
-                    // Show modal without backdrop
-                    const modalElement = document.getElementById('tableModal');
-                    const modal = new bootstrap.Modal(modalElement, {
-                        backdrop: false,
-                        keyboard: true,
-                        focus: true
+                    // Scroll to top smoothly before showing modal
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
                     });
-                    modal.show();
+                    
+                    // Show modal without backdrop after a brief delay for scroll
+                    setTimeout(() => {
+                        const modalElement = document.getElementById('tableModal');
+                        const modal = new bootstrap.Modal(modalElement, {
+                            backdrop: false,
+                            keyboard: true,
+                            focus: true
+                        });
+                        modal.show();
+                        
+                        // Ensure modal is centered and visible
+                        setTimeout(() => {
+                            const modalDialog = modalElement.querySelector('.modal-dialog');
+                            if (modalDialog) {
+                                modalDialog.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center'
+                                });
+                            }
+                        }, 150);
+                    }, 300);
                 } else {
                     alert('Error loading table data: ' + data.message);
                 }
@@ -880,16 +946,35 @@
         document.getElementById('tableForm').reset();
         document.getElementById('table_id').value = '';
         
-        // Ensure modal appears properly
-        const modalElement = document.getElementById('tableModal');
-        modalElement.style.zIndex = '10060';
-        
-        const modal = new bootstrap.Modal(modalElement, {
-            backdrop: false,
-            keyboard: true,
-            focus: true
+        // Scroll to top smoothly before showing modal
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
         });
-        modal.show();
+        
+        // Show modal after scrolling
+        setTimeout(() => {
+            const modalElement = document.getElementById('tableModal');
+            modalElement.style.zIndex = '10060';
+            
+            const modal = new bootstrap.Modal(modalElement, {
+                backdrop: false,
+                keyboard: true,
+                focus: true
+            });
+            modal.show();
+            
+            // Ensure modal is centered and visible
+            setTimeout(() => {
+                const modalDialog = modalElement.querySelector('.modal-dialog');
+                if (modalDialog) {
+                    modalDialog.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }, 150);
+        }, 300);
     }
 
     // Save table (create or update)
@@ -913,8 +998,18 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                bootstrap.Modal.getInstance(document.getElementById('tableModal')).hide();
-                location.reload(); // Refresh to show updated data
+                // Close modal properly
+                const modalElement = document.getElementById('tableModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                } else {
+                    modalElement.style.display = 'none';
+                    modalElement.classList.remove('show');
+                }
+                
+                // Refresh to show updated data
+                location.reload();
             } else {
                 alert('Error saving table: ' + data.message);
             }
@@ -925,8 +1020,20 @@
         });
     }
 
+    // Function to close modal manually
+    function closeModal() {
+        const modalElement = document.getElementById('tableModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide();
+        } else {
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+        }
+    }
+
     // Regenerate QR code - using backend
-    function regenerateQR(tableId) {
+    function regenerateQR(tableId, event) {
         const tableCard = document.querySelector(`[data-table-id="${tableId}"]`);
         const tableNumber = tableCard.querySelector('.qr-title').textContent.replace('Table ', '');
         const qrContainer = document.getElementById(`qr-code-${tableId}`);
@@ -943,28 +1050,50 @@
                 'Content-Type': 'application/json',
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (response.status === 403) {
+                throw new Error('Authentication required. Please log in as admin.');
+            }
+            if (response.status === 404) {
+                throw new Error('Table not found.');
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             if (data.success && data.qr_image) {
                 if (qrContainer) {
                     qrContainer.innerHTML = `<img src="${data.qr_image}" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;">`;
                 }
                 
-                // Show success message
-                const button = event.target.closest('.action-btn');
-                const originalIcon = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-check"></i>';
-                button.style.background = '#10b981';
-                
-                setTimeout(() => {
-                    button.innerHTML = originalIcon;
-                    button.style.background = '';
-                }, 2000);
+                // Show success message if event and button are available
+                if (event) {
+                    const button = event.target.closest('.action-btn');
+                    if (button) {
+                        const originalIcon = button.innerHTML;
+                        button.innerHTML = '<i class="fas fa-check"></i>';
+                        button.style.background = '#10b981';
+                        
+                        setTimeout(() => {
+                            button.innerHTML = originalIcon;
+                            button.style.background = '';
+                        }, 2000);
+                    }
+                } else {
+                    // Alternative visual feedback when no event is available
+                    console.log('QR code regenerated successfully for table', tableNumber);
+                }
             } else {
                 if (qrContainer) {
                     qrContainer.innerHTML = '<div class="qr-error">Failed to generate QR</div>';
                 }
-                alert('Error regenerating QR code: ' + (data.message || 'Unknown error'));
+                const errorMsg = data.message || 'Unknown error occurred';
+                console.error('QR Generation failed:', errorMsg);
+                alert('Error regenerating QR code: ' + errorMsg);
             }
         })
         .catch(error => {
@@ -972,7 +1101,7 @@
             if (qrContainer) {
                 qrContainer.innerHTML = '<div class="qr-error">Failed to generate QR</div>';
             }
-            alert('Error regenerating QR code');
+            alert('Error regenerating QR code: ' + error.message);
         });
     }
 
@@ -1027,6 +1156,13 @@
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', function() {
+        // Ensure modal is hidden on page load
+        const modalElement = document.getElementById('tableModal');
+        if (modalElement) {
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+        }
+
         // Generate QR codes for all existing tables
         document.querySelectorAll('[data-table-id]').forEach(tableCard => {
             const tableId = tableCard.dataset.tableId;
@@ -1068,6 +1204,12 @@
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
             }, index * 100);
+        });
+
+        // Add modal event listeners for proper cleanup
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
         });
     });
 </script>

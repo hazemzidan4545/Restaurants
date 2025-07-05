@@ -318,8 +318,9 @@
 
 .price-section {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
 }
 
 .menu-item-price {
@@ -327,6 +328,31 @@
     font-weight: 700;
     color: #28a745;
     letter-spacing: -0.02em;
+}
+
+.menu-item-original-price {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #666;
+    text-decoration: line-through;
+    margin-right: 8px;
+}
+
+.menu-item-discount-badge {
+    background: #dc3545;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.discount-prices {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 
@@ -1418,6 +1444,18 @@
         </div>
     </div>
 
+    <!-- Search Bar -->
+    <div class="search-container" style="background: white; padding: 15px 20px; border-bottom: 1px solid #e9ecef;">
+        <div class="search-wrapper" style="position: relative; max-width: 400px; margin: 0 auto;">
+            <input type="text" 
+                   id="searchBox" 
+                   class="search-box" 
+                   placeholder="Search menu items by name or description..."
+                   style="width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #e9ecef; border-radius: 25px; font-size: 1rem; outline: none; transition: all 0.3s ease;">
+            <i class="fas fa-search" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; font-size: 1rem;"></i>
+        </div>
+    </div>
+
     <!-- Menu Items List -->
     <div class="menu-items-list" id="menuItems">
         {% for item_data in items_with_ratings %}
@@ -1463,7 +1501,15 @@
                 
                 <div class="menu-item-footer">
                     <div class="price-section">
-                        <div class="menu-item-price">{{ item.price }} EGP</div>
+                        {% if item.discount_percentage and item.discount_percentage > 0 %}
+                            <div class="menu-item-discount-badge">{{ item.discount_percentage }}% OFF</div>
+                            <div class="discount-prices">
+                                <div class="menu-item-original-price">{{ item.original_price }} EGP</div>
+                                <div class="menu-item-price">{{ item.price }} EGP</div>
+                            </div>
+                        {% else %}
+                            <div class="menu-item-price">{{ item.price }} EGP</div>
+                        {% endif %}
                     </div>
                     <button class="add-btn add-to-cart"
                             data-item-id="{{ item.item_id }}"
@@ -1825,19 +1871,64 @@ function addToCartFromButton(button) {
 
 // View cart functionality is now handled in base template
 
-// Search functionality
-document.getElementById('searchBox').addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase();
-    document.querySelectorAll('.menu-item-card').forEach(item => {
+// Enhanced search functionality
+function searchMenuItem(searchTerm) {
+    const menuItems = document.querySelectorAll('.menu-item-card');
+    let visibleCount = 0;
+
+    menuItems.forEach(item => {
         const title = item.querySelector('.menu-item-title').textContent.toLowerCase();
         const description = item.querySelector('.menu-item-description').textContent.toLowerCase();
+        const category = item.dataset.itemCategory ? item.dataset.itemCategory.toLowerCase() : '';
+        const ingredients = item.dataset.itemIngredients ? item.dataset.itemIngredients.toLowerCase() : '';
 
-        if (title.includes(searchTerm) || description.includes(searchTerm)) {
-            item.style.display = 'block';
+        // Check if search term matches any field
+        const matches = title.includes(searchTerm) || 
+                       description.includes(searchTerm) || 
+                       category.includes(searchTerm) ||
+                       ingredients.includes(searchTerm);
+
+        if (matches || searchTerm === '') {
+            item.style.display = 'flex';
+            visibleCount++;
         } else {
             item.style.display = 'none';
         }
     });
+
+    // Show/hide "no results" message
+    let noResultsMsg = document.getElementById('noSearchResults');
+    if (visibleCount === 0 && searchTerm !== '') {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'noSearchResults';
+            noResultsMsg.style.cssText = 'text-align: center; padding: 40px 20px; color: #666; font-size: 1.1rem;';
+            noResultsMsg.innerHTML = `
+                <i class="fas fa-search" style="font-size: 3rem; color: #ddd; margin-bottom: 15px; display: block;"></i>
+                <div style="font-weight: 600; margin-bottom: 5px;">No items found</div>
+                <div style="font-size: 0.9rem;">Try searching with different keywords</div>
+            `;
+            document.getElementById('menuItems').appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+}
+
+document.getElementById('searchBox').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase().trim();
+    searchMenuItem(searchTerm);
+
+    // Update search box styling based on content
+    const searchBox = this;
+    if (searchTerm !== '') {
+        searchBox.style.borderColor = '#f3cd21';
+        searchBox.style.backgroundColor = '#fefdf8';
+    } else {
+        searchBox.style.borderColor = '#e9ecef';
+        searchBox.style.backgroundColor = 'white';
+    }
 });
 
 // Checkout functionality is now handled by the global cart modal in base template

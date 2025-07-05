@@ -251,6 +251,10 @@ class MenuItem(db.Model):
     status = db.Column(db.Enum('available', 'out_of_stock', 'discontinued', name='item_status'),
                       nullable=False, default='available')
 
+    # Discount and pricing information
+    discount_percentage = db.Column(Numeric(5, 2), nullable=True, default=0.00)  # Discount percentage (0-100)
+    original_price = db.Column(Numeric(10, 2), nullable=True)  # Original price before discount
+
     # Nutritional and detailed information
     ingredients = db.Column(db.Text, nullable=True)
     calories = db.Column(db.Integer, nullable=True)
@@ -358,6 +362,46 @@ class MenuItem(db.Model):
             
         return distribution
 
+    def get_discounted_price(self):
+        """Get the discounted price (alias for get_display_price for compatibility)"""
+        return self.get_display_price()
+
+    def get_display_price(self):
+        """Get the current display price (with discount applied if any)"""
+        if self.discount_percentage and self.discount_percentage > 0:
+            discount_multiplier = (100 - float(self.discount_percentage)) / 100
+            return float(self.price) * discount_multiplier
+        return float(self.price)
+    
+    def get_original_price(self):
+        """Get the original price before any discounts"""
+        return float(self.original_price) if self.original_price else float(self.price)
+    
+    def has_discount(self):
+        """Check if this item has an active discount"""
+        return self.discount_percentage and self.discount_percentage > 0
+    
+    def get_discount_amount(self):
+        """Calculate the discount amount in EGP"""
+        if self.has_discount():
+            original = self.get_original_price()
+            discounted = self.get_display_price()
+            return original - discounted
+        return 0
+
+    def apply_discount(self, discount_percentage):
+        """Apply a discount to this menu item"""
+        if not self.original_price:
+            self.original_price = self.price
+        self.discount_percentage = discount_percentage
+
+    def remove_discount(self):
+        """Remove discount and restore original price"""
+        if self.original_price:
+            self.price = self.original_price
+        self.discount_percentage = 0.00
+        self.original_price = None
+
     def __repr__(self):
         return f'<MenuItem {self.name}>'
 
@@ -400,6 +444,47 @@ class Order(db.Model):
         total = sum(item.quantity * item.menu_item.price for item in self.order_items)
         self.total_amount = total
         return total
+
+    def award_loyalty_points(self):
+        """Award loyalty points when order is completed"""
+        if self.status == 'completed' and self.user_id:
+            # Get or create customer loyalty account
+            loyalty_account = CustomerLoyalty.query.filter_by(user_id=self.user_id).first()
+            if not loyalty_account:
+                loyalty_account = CustomerLoyalty(user_id=self.user_id)
+                db.session.add(loyalty_account)
+                db.session.flush()  # Get the ID
+            
+            # Calculate points based on order total
+            points_to_award = loyalty_account.calculate_loyalty_points(float(self.total_amount))
+            
+            # Check if points already awarded for this order
+            existing_transaction = PointTransaction.query.filter_by(
+                order_id=self.order_id, 
+                transaction_type='earned'
+            ).first()
+            
+            if not existing_transaction and points_to_award > 0:
+                # Award points
+                transaction = loyalty_account.add_points(
+                    points_to_award, 
+                    order_id=self.order_id,
+                    description=f"Points earned from order #{self.order_id}"
+                )
+                
+                # Create notification
+                from app.models import Notification
+                notification = Notification(
+                    user_id=self.user_id,
+                    message=f"You earned {points_to_award} loyalty points from your order!",
+                    notification_type='loyalty_points'
+                )
+                db.session.add(notification)
+                
+                db.session.commit()
+                return points_to_award
+        
+        return 0
 
     @classmethod
     def get_new_orders_count(cls):
@@ -565,6 +650,45 @@ class CustomerLoyalty(db.Model):
         else:
             self.tier_level = 'bronze'
 
+    def calculate_loyalty_points(self, order_total):
+        """Calculate loyalty points based on order total"""
+        # Base rate: 1 point per EGP spent
+        base_points = int(order_total)
+        
+        # Tier multipliers
+        multiplier = 1.0
+        if self.tier_level == 'silver':
+            multiplier = 1.2
+        elif self.tier_level == 'gold':
+            multiplier = 1.5
+        elif self.tier_level == 'platinum':
+            multiplier = 2.0
+            
+        return int(base_points * multiplier)
+
+    def add_points(self, points, order_id=None, description="Points earned"):
+        """Add points to customer account and create transaction record"""
+        self.total_points += points
+        self.lifetime_points += points
+        self.last_activity = datetime.utcnow()
+        
+        # Update tier if necessary
+        self.update_tier()
+        
+        # Create transaction record
+        from app.models import PointTransaction
+        transaction = PointTransaction(
+            user_id=self.user_id,
+            order_id=order_id,
+            points_earned=points,
+            balance_after=self.total_points,
+            transaction_type='earned',
+            description=description
+        )
+        
+        db.session.add(transaction)
+        return transaction
+
     def __repr__(self):
         return f'<CustomerLoyalty {self.user_id}>'
 
@@ -592,8 +716,8 @@ class PointTransaction(db.Model):
     def __repr__(self):
         return f'<PointTransaction {self.transaction_id}>'
 
-    def __repr__(self):
-        return f'<PointTransaction {self.transaction_id}>'
+# Alias for backward compatibility with test scripts
+LoyaltyTransaction = PointTransaction
 
 class RewardItem(db.Model):
     """Available rewards for point redemption"""
@@ -782,3 +906,69 @@ class TableSession(db.Model):
     
     def __repr__(self):
         return f'<TableSession {self.session_id}>'
+
+class SystemSettings(db.Model):
+    """System-wide configuration settings"""
+    __tablename__ = 'system_settings'
+    
+    setting_id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False)
+    value = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    setting_type = db.Column(db.Enum('string', 'integer', 'boolean', 'float', name='setting_types'), 
+                           nullable=False, default='string')
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    @classmethod
+    def get_setting(cls, key, default=None):
+        """Get a system setting value by key"""
+        setting = cls.query.filter_by(key=key, is_active=True).first()
+        if setting:
+            # Convert based on type
+            if setting.setting_type == 'integer':
+                return int(setting.value) if setting.value else default
+            elif setting.setting_type == 'boolean':
+                return setting.value.lower() in ('true', '1', 'yes') if setting.value else default
+            elif setting.setting_type == 'float':
+                return float(setting.value) if setting.value else default
+            else:
+                return setting.value if setting.value else default
+        return default
+    
+    @classmethod
+    def set_setting(cls, key, value, description=None, setting_type='string'):
+        """Set or update a system setting"""
+        setting = cls.query.filter_by(key=key).first()
+        if setting:
+            setting.value = str(value)
+            setting.updated_at = datetime.utcnow()
+            if description:
+                setting.description = description
+            if setting_type:
+                setting.setting_type = setting_type
+        else:
+            setting = cls(
+                key=key,
+                value=str(value),
+                description=description,
+                setting_type=setting_type
+            )
+            db.session.add(setting)
+        
+        db.session.commit()
+        return setting
+    
+    @classmethod
+    def get_currency(cls):
+        """Get the system currency setting"""
+        return cls.get_setting('currency', 'EGP')
+    
+    @classmethod
+    def set_currency(cls, currency):
+        """Set the system currency"""
+        return cls.set_setting('currency', currency, 'System currency for price display', 'string')
+    
+    def __repr__(self):
+        return f'<SystemSettings {self.key}={self.value}>'

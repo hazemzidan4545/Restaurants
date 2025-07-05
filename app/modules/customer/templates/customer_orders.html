@@ -527,7 +527,7 @@
                 <div class="stat-icon spent">
                     <i class="fas fa-dollar-sign"></i>
                 </div>
-                <div class="stat-number">${{ "%.0f"|format(orders|selectattr('status', 'in', ['delivered', 'completed'])|sum(attribute='total_amount')) }}</div>
+                <div class="stat-number">{{ "%.0f"|format(orders|selectattr('status', 'in', ['delivered', 'completed'])|sum(attribute='total_amount')) }} EGP</div>
                 <div class="stat-label">Total Spent</div>
             </div>
         </div>
@@ -565,7 +565,7 @@
                         <div class="order-status status-{{ order.status.lower().replace(' ', '-') }}">
                             {{ order.status.replace('_', ' ').title() }}
                         </div>
-                        <div class="order-total">${{ "%.2f"|format(order.total_amount) }}</div>
+                        <div class="order-total">{{ "%.2f"|format(order.total_amount) }} EGP</div>
                     </div>
                 </div>
 
@@ -578,11 +578,11 @@
                         <div class="item-card">
                             <div class="item-header">
                                 <span class="item-name">{{ item.menu_item.name }}</span>
-                                <span class="item-price">${{ "%.2f"|format(item.unit_price * item.quantity) }}</span>
+                                <span class="item-price">{{ "%.2f"|format(item.unit_price * item.quantity) }} EGP</span>
                             </div>
                             <div class="item-details">
                                 <span>Quantity: {{ item.quantity }}</span>
-                                <span>Unit Price: ${{ "%.2f"|format(item.unit_price) }}</span>
+                                <span>Unit Price: {{ "%.2f"|format(item.unit_price) }} EGP</span>
                             </div>
                         </div>
                         {% endfor %}

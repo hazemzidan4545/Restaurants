@@ -124,6 +124,21 @@
                                     <div class="invalid-feedback"></div>
                                     <div class="form-text">Set the selling price for this item</div>
                                 </div>
+                                
+                                <!-- Discount Section -->
+                                <div class="mb-3">
+                                    <label for="discount_percentage" class="form-label">
+                                        <i class="fas fa-percentage me-1"></i>Discount (%)
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="discount_percentage" name="discount_percentage"
+                                               min="0" max="95" step="0.01" placeholder="0.00"
+                                               data-validation="min:0|max:95">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="form-text">Optional discount percentage (0-95%)</div>
+                                </div>
                             </div>
 
                             <div class="col-md-6">
@@ -339,56 +354,95 @@
 </div>
 
 <!-- Preview Modal -->
-<div class="modal fade" id="previewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true" data-bs-backdrop="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content preview-modal">
+            <div class="modal-header preview-header">
                 <h5 class="modal-title">
                     <i class="fas fa-eye me-2"></i>Menu Item Preview
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="menu-item-preview">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="preview-image-container">
-                                <img id="previewModalImage" src="" alt="Item Image" class="img-fluid rounded">
-                                <div class="no-image-placeholder" id="previewNoImage">
-                                    <i class="fas fa-image fa-3x"></i>
-                                    <p>No Image</p>
+            <div class="modal-body preview-body">
+                <div class="preview-container">
+                    <div class="preview-image-section">
+                        <div class="preview-image-container">
+                            <img id="previewModalImage" src="" alt="Menu Item" class="preview-image">
+                            <div class="no-image-placeholder" id="previewNoImage">
+                                <i class="fas fa-image fa-3x"></i>
+                                <p>No Image</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="preview-details-section">
+                        <div class="preview-header-info">
+                            <h2 id="previewName" class="preview-title"></h2>
+                            <div class="preview-category-badge">
+                                <i class="fas fa-tag me-1"></i>
+                                <span id="previewCategory"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-price-section">
+                            <div id="previewDiscountSection" class="discount-section" style="display: none;">
+                                <span class="discount-badge" id="previewDiscountBadge"></span>
+                                <div class="price-group">
+                                    <span class="original-price" id="previewOriginalPrice"></span>
+                                    <span id="previewPrice" class="preview-price"></span>
+                                </div>
+                            </div>
+                            <div id="previewRegularPrice" class="regular-price-section">
+                                <span id="previewPriceRegular" class="preview-price"></span>
+                            </div>
+                        </div>
+
+                        <div class="preview-description-box">
+                            <p id="previewDescription" class="preview-description"></p>
+                        </div>
+
+                        <div class="preview-info-grid">
+                            <div class="info-item">
+                                <i class="fas fa-box"></i>
+                                <div class="info-content">
+                                    <label>Stock</label>
+                                    <span id="previewStock"></span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-clock"></i>
+                                <div class="info-content">
+                                    <label>Prep Time</label>
+                                    <span id="previewPrepTime"></span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-fire"></i>
+                                <div class="info-content">
+                                    <label>Calories</label>
+                                    <span id="previewCalories"></span>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-8">
-                            <h4 id="previewName" class="mb-2"></h4>
-                            <p class="text-muted mb-2" id="previewCategory"></p>
-                            <p id="previewDescription" class="mb-3"></p>
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <strong>Price:</strong> <span id="previewPrice" class="text-primary"></span>
-                                </div>
-                                <div class="col-6">
-                                    <strong>Stock:</strong> <span id="previewStock"></span>
-                                </div>
+
+                        <div class="preview-details-box">
+                            <div class="details-section">
+                                <h3><i class="fas fa-leaf me-2"></i>Ingredients</h3>
+                                <p id="previewIngredients"></p>
                             </div>
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <strong>Prep Time:</strong> <span id="previewPrepTime"></span>
-                                </div>
-                                <div class="col-6">
-                                    <strong>Calories:</strong> <span id="previewCalories"></span>
-                                </div>
+                            <div class="details-section">
+                                <h3><i class="fas fa-exclamation-triangle me-2"></i>Allergens</h3>
+                                <p id="previewAllergens"></p>
                             </div>
-                            <div class="mb-3" id="previewIngredients"></div>
-                            <div class="mb-3" id="previewAllergens"></div>
-                            <div class="mb-3" id="previewOptions"></div>
+                            <div class="details-section" id="previewOptionsSection">
+                                <h3><i class="fas fa-list me-2"></i>Options</h3>
+                                <div id="previewOptions"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer preview-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close Preview</button>
                 <button type="button" class="btn btn-primary" onclick="document.getElementById('addMenuItemForm').submit()">
                     <i class="fas fa-save me-2"></i>Save Item
                 </button>
@@ -673,6 +727,257 @@
 .no-image-placeholder {
     text-align: center;
     color: var(--text-muted);
+}
+
+/* Enhanced Preview Modal Styling */
+.preview-modal {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.15);
+    border: none;
+}
+
+.preview-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+    padding: 20px 24px;
+}
+
+.preview-header .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.preview-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.preview-body {
+    max-height: 70vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 24px;
+}
+
+.preview-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-image-section {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 12px;
+    background: #f3f4f6;
+    display: block;
+}
+
+.preview-details-section {
+    padding: 1.5rem;
+}
+
+.preview-header-info {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 1rem;
+}
+
+.preview-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+}
+
+.preview-category-badge {
+    background: var(--primary-yellow);
+    color: var(--primary-dark);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.preview-price-section {
+    margin-bottom: 1rem;
+}
+
+.preview-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+.discount-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.discount-badge {
+    background: linear-gradient(45deg, #dc3545, #c82333);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    align-self: flex-start;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.price-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.original-price {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #666;
+    text-decoration: line-through;
+    position: relative;
+}
+
+.original-price::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #dc3545;
+    transform: translateY(-50%);
+}
+
+.preview-description-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.preview-description {
+    color: #6b7280;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.preview-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.info-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.info-item i {
+    color: var(--primary-yellow);
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.info-content label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-content span {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.9rem;
+}
+
+.preview-details-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.details-section {
+    margin-bottom: 1rem;
+}
+
+.details-section:last-child {
+    margin-bottom: 0;
+}
+
+.details-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.details-section p {
+    margin: 0;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.preview-footer {
+    border-top: 1px solid #e3e6f0;
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+}
+
+/* Modal Animation */
+.modal.fade .modal-dialog {
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: translateY(0);
+}
+
+/* Responsive Preview Modal */
+@media (max-width: 768px) {
+    .preview-info-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    
+    .preview-details-section {
+        padding: 1rem;
+    }
+    
+    .preview-title {
+        font-size: 1.3rem;
+    }
+    
+    .preview-price {
+        font-size: 1.2rem;
+    }
 }
 
 /* Responsive Design */
@@ -1028,6 +1333,46 @@ class AddMenuItemManager {
 
         // Auto-focus on name field
         document.getElementById('name').focus();
+
+        // Real-time discount calculation
+        const priceInput = document.getElementById('price');
+        const discountInput = document.getElementById('discount_percentage');
+        
+        if (priceInput && discountInput) {
+            const updateDiscountDisplay = () => {
+                const price = parseFloat(priceInput.value) || 0;
+                const discount = parseFloat(discountInput.value) || 0;
+                
+                // Update display in the form
+                const discountInfo = document.getElementById('discountInfo');
+                if (discount > 0 && price > 0) {
+                    const discountedPrice = price * (1 - discount / 100);
+                    const savingsAmount = price - discountedPrice;
+                    
+                    if (!discountInfo) {
+                        const infoDiv = document.createElement('div');
+                        infoDiv.id = 'discountInfo';
+                        infoDiv.className = 'mt-2 p-2 bg-light rounded';
+                        discountInput.parentNode.appendChild(infoDiv);
+                    }
+                    
+                    document.getElementById('discountInfo').innerHTML = `
+                        <small class="text-muted">
+                            <i class="fas fa-calculator me-1"></i>
+                            Original: <strong>EGP ${price.toFixed(2)}</strong> → 
+                            Discounted: <strong class="text-success">EGP ${discountedPrice.toFixed(2)}</strong>
+                            <br>
+                            <span class="text-danger">Customer saves: EGP ${savingsAmount.toFixed(2)}</span>
+                        </small>
+                    `;
+                } else if (discountInfo) {
+                    discountInfo.remove();
+                }
+            };
+            
+            priceInput.addEventListener('input', updateDiscountDisplay);
+            discountInput.addEventListener('input', updateDiscountDisplay);
+        }
     }
 
     setupUnlimitedStock() {
@@ -1050,7 +1395,8 @@ class AddMenuItemManager {
         const name = document.getElementById('name').value || 'Untitled Item';
         const category = document.getElementById('category_id').selectedOptions[0]?.text || 'No Category';
         const description = document.getElementById('description').value || 'No description provided';
-        const price = document.getElementById('price').value || '0.00';
+        const price = parseFloat(document.getElementById('price').value) || 0;
+        const discountPercentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
         const stock = document.getElementById('stock').value || '0';
         const prepTime = document.getElementById('preparation_time').value || 'Not specified';
         const calories = document.getElementById('calories').value || 'Not specified';
@@ -1060,7 +1406,27 @@ class AddMenuItemManager {
         document.getElementById('previewName').textContent = name;
         document.getElementById('previewCategory').textContent = category;
         document.getElementById('previewDescription').textContent = description;
-        document.getElementById('previewPrice').textContent = `EGP ${price}`;
+        
+        // Handle discount pricing
+        const discountSection = document.getElementById('previewDiscountSection');
+        const regularPriceSection = document.getElementById('previewRegularPrice');
+        
+        if (discountPercentage > 0) {
+            const originalPrice = price; // The price field should contain the original price
+            const discountedPrice = originalPrice * (1 - discountPercentage / 100);
+            
+            document.getElementById('previewDiscountBadge').textContent = `${discountPercentage}% OFF`;
+            document.getElementById('previewOriginalPrice').textContent = `EGP ${originalPrice.toFixed(2)}`;
+            document.getElementById('previewPrice').textContent = `EGP ${discountedPrice.toFixed(2)}`;
+            
+            discountSection.style.display = 'block';
+            regularPriceSection.style.display = 'none';
+        } else {
+            document.getElementById('previewPriceRegular').textContent = `EGP ${price.toFixed(2)}`;
+            discountSection.style.display = 'none';
+            regularPriceSection.style.display = 'block';
+        }
+        
         document.getElementById('previewStock').textContent = stock === '0' ? 'Unlimited' : stock;
         document.getElementById('previewPrepTime').textContent = prepTime === 'Not specified' ? prepTime : `${prepTime} minutes`;
         document.getElementById('previewCalories').textContent = calories === 'Not specified' ? calories : `${calories} kcal`;
@@ -1068,17 +1434,17 @@ class AddMenuItemManager {
         // Ingredients
         const ingredientsDiv = document.getElementById('previewIngredients');
         if (ingredients !== 'Not specified') {
-            ingredientsDiv.innerHTML = `<strong>Ingredients:</strong> ${ingredients}`;
+            ingredientsDiv.textContent = ingredients;
         } else {
-            ingredientsDiv.innerHTML = '';
+            ingredientsDiv.textContent = 'Not specified';
         }
 
         // Allergens
         const allergensDiv = document.getElementById('previewAllergens');
         if (allergens !== 'None specified') {
-            allergensDiv.innerHTML = `<strong>Allergens:</strong> <span class="text-warning">${allergens}</span>`;
+            allergensDiv.textContent = allergens;
         } else {
-            allergensDiv.innerHTML = '';
+            allergensDiv.textContent = 'None specified';
         }
 
         // Options
@@ -1088,11 +1454,13 @@ class AddMenuItemManager {
         if (document.getElementById('is_vegetarian').checked) options.push('Vegetarian');
         if (document.getElementById('is_vegan').checked) options.push('Vegan');
 
+        const optionsSection = document.getElementById('previewOptionsSection');
         const optionsDiv = document.getElementById('previewOptions');
         if (options.length > 0) {
-            optionsDiv.innerHTML = `<strong>Special:</strong> ${options.join(', ')}`;
+            optionsDiv.innerHTML = options.map(opt => `<span class="badge bg-secondary me-1">${opt}</span>`).join('');
+            optionsSection.style.display = 'block';
         } else {
-            optionsDiv.innerHTML = '';
+            optionsSection.style.display = 'none';
         }
 
         // Image

@@ -154,7 +154,7 @@
                 <p class="text-muted mb-0">Bonus Points Awarded</p>
                 {% if stats.bonus_points_awarded %}
                 <small class="text-info">
-                    ≈ ${{ "%.2f"|format((stats.bonus_points_awarded / 100.0) * 1.0) }} value
+                    ≈ {{ "%.2f"|format((stats.bonus_points_awarded / 100.0) * 1.0) }} EGP value
                 </small>
                 {% endif %}
             </div>
@@ -182,7 +182,7 @@
                 <div class="text-warning mb-2">
                     <i class="fas fa-dollar-sign fa-2x"></i>
                 </div>
-                <h3 class="mb-0">${{ stats.revenue_impact or '0.00' }}</h3>
+                <h3 class="mb-0">{{ stats.revenue_impact or '0.00' }} EGP</h3>
                 <p class="text-muted mb-0">Revenue Impact</p>
                 {% if stats.revenue_growth %}
                 <small class="text-{{ 'success' if stats.revenue_growth > 0 else 'danger' }}">
@@ -284,7 +284,7 @@
                     <div class="order-patterns">
                         <div class="pattern-item">
                             <label>Average Order Value:</label>
-                            <span class="fw-bold">${{ "%.2f"|format(stats.order_patterns.avg_order_value or 0) }}</span>
+                            <span class="fw-bold">{{ "%.2f"|format(stats.order_patterns.avg_order_value or 0) }} EGP</span>
                         </div>
                         <div class="pattern-item">
                             <label>Peak Order Time:</label>

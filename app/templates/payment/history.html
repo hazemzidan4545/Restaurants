@@ -43,7 +43,7 @@
                         <div class="card-body">
                             <h5 class="card-title text-success">Total Revenue</h5>
                             <h3 class="text-success">
-                                ${{ "%.2f"|format(payments|selectattr('status', 'equalto', 'completed')|map(attribute='amount')|sum) }}
+                                {{ "%.2f"|format(payments|selectattr('status', 'equalto', 'completed')|map(attribute='amount')|sum) }} EGP
                             </h3>
                         </div>
                     </div>
@@ -109,7 +109,7 @@
                                     <td>{{ payment.order.customer.username if payment.order.customer else 'Guest' }}</td>
                                     {% endif %}
                                     <td>
-                                        <strong class="text-success">${{ "%.2f"|format(payment.amount) }}</strong>
+                                        <strong class="text-success">{{ "%.2f"|format(payment.amount) }} EGP</strong>
                                     </td>
                                     <td>
                                         {% set method_icons = {
