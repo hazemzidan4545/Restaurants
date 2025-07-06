@@ -2732,4 +2732,4 @@ def system_settings():
         else:
             settings[setting.key] = setting.value
     
-    return render_template('admin/system_settings.html', settings=settings)
+    return render_template('system_settings.html', settings=settings)
