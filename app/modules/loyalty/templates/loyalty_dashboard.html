@@ -663,7 +663,7 @@
             </div>
             <div class="stats-content">
                 <h2>{{ '{:,}'.format(loyalty.total_points if loyalty else 7198) }}</h2>
-                <a href="#" class="link">View history</a>
+                <a href="{{ url_for('loyalty.transaction_history') }}" class="link">View history</a>
             </div>
         </div>
 

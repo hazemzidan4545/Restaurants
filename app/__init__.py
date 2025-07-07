@@ -65,5 +65,16 @@ def create_app(config_name='default'):
     # Register main routes
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
-    
+
+    # Register context processors
+    @app.context_processor
+    def inject_system_settings():
+        """Inject system settings into template context"""
+        from app.models import SystemSettings
+
+        def get_system_setting(key, default=None):
+            return SystemSettings.get_setting(key, default)
+
+        return dict(get_system_setting=get_system_setting)
+
     return app

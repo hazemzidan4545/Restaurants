@@ -1,11 +1,28 @@
 from flask_socketio import emit, join_room, leave_room, rooms, disconnect
 from flask_login import current_user
+from flask import current_app
 from app.extensions import socketio
 from app.models import Order, User, ServiceRequest
 from app.extensions import db
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+# Utility functions for real-time notifications
+def notify_waiters(event_type, data):
+    """Send notification to all connected waiters"""
+    socketio.emit(event_type, data, room='waiter')
+    socketio.emit(event_type, data, room='admin')  # Also notify admins
+
+def notify_customer(user_id, event_type, data):
+    """Send notification to specific customer"""
+    socketio.emit(event_type, data, room=f'user_{user_id}')
+
+def notify_all_staff(event_type, data):
+    """Send notification to all staff (waiters and admins)"""
+    socketio.emit(event_type, data, room='waiter')
+    socketio.emit(event_type, data, room='admin')
 
 @socketio.on('connect')
 def handle_connect(auth=None):
@@ -116,11 +133,23 @@ def handle_update_order_status(data):
         # Update order status
         old_status = order.status
         order.status = new_status
-        
+
         if estimated_time:
             order.estimated_delivery_time = estimated_time
-        
+
         db.session.commit()
+
+        # Award loyalty points when order is completed
+        if new_status == 'completed' and old_status != 'completed':
+            try:
+                from app.modules.loyalty.loyalty_service import award_points_for_order
+                current_app.logger.info(f"Attempting to award points for order {order_id} to user {order.user_id}")
+                result = award_points_for_order(order_id, order.user_id)
+                current_app.logger.info(f"Point awarding result for order {order_id}: {result}")
+            except Exception as e:
+                current_app.logger.error(f"Error awarding loyalty points for order {order_id}: {str(e)}")
+                import traceback
+                current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         
         # Broadcast update to all relevant rooms
         update_data = {

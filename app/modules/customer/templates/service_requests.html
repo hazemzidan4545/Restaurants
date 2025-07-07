@@ -1,0 +1,385 @@
+{% extends "shared/base.html" %}
+
+{% block title %}Service Requests - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-concierge-bell text-warning me-2"></i>
+                    Service Requests
+                </h2>
+                <a href="{{ url_for('customer.home') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Service Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Service Requests
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <button class="btn btn-outline-primary w-100 service-btn" 
+                                    onclick="submitQuickRequest('clean_table', 'Please clean our table')">
+                                <i class="fas fa-broom fa-2x mb-2"></i>
+                                <br>Clean Table
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <button class="btn btn-outline-warning w-100 service-btn" 
+                                    onclick="submitQuickRequest('refill_coals', 'Please refill hookah coals')">
+                                <i class="fas fa-fire fa-2x mb-2"></i>
+                                <br>Refill Coals
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <button class="btn btn-outline-info w-100 service-btn" 
+                                    onclick="submitQuickRequest('adjust_ac', 'Please adjust air conditioning')">
+                                <i class="fas fa-snowflake fa-2x mb-2"></i>
+                                <br>Adjust AC
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <button class="btn btn-outline-success w-100 service-btn" 
+                                    onclick="submitQuickRequest('call_waiter', 'Please send a waiter to our table')">
+                                <i class="fas fa-hand-paper fa-2x mb-2"></i>
+                                <br>Call Waiter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Request Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Custom Request
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="customRequestForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="tableNumber" class="form-label">Table Number (Optional)</label>
+                                <input type="text" class="form-control" id="tableNumber" 
+                                       placeholder="e.g., T001" maxlength="10">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="requestType" class="form-label">Request Type</label>
+                                <select class="form-control" id="requestType" required>
+                                    <option value="">Select request type...</option>
+                                    <option value="clean_table">Clean Table</option>
+                                    <option value="refill_coals">Refill Coals</option>
+                                    <option value="adjust_ac">Adjust AC</option>
+                                    <option value="call_waiter">Call Waiter</option>
+                                    <option value="menu_help">Menu Assistance</option>
+                                    <option value="bill_request">Request Bill</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="requestDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="requestDescription" rows="3" 
+                                      placeholder="Please describe your request in detail..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Requests -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Requests
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Request</th>
+                                    <th>Description</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in recent_requests %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-info">{{ request.request_type.replace('_', ' ').title() }}</span>
+                                    </td>
+                                    <td>
+                                        {% if request.description %}
+                                            {{ request.description[:50] }}{% if request.description|length > 50 %}...{% endif %}
+                                        {% else %}
+                                            <span class="text-muted">No description</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ request.created_at.strftime('%Y-%m-%d %H:%M') if request.created_at else request.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if request.status == 'pending' else 'info' if request.status == 'acknowledged' else 'success' }}">
+                                            {{ request.status.title() }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No service requests yet</h6>
+                        <p class="text-muted">Use the buttons above to request service from our staff.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table Number Modal -->
+<div class="modal fade" id="tableNumberModal" tabindex="-1" aria-labelledby="tableNumberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tableNumberModalLabel">
+                    <i class="fas fa-table me-2"></i>Table Information
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Please provide your table number to help our staff locate you quickly.</p>
+                <div class="mb-3">
+                    <label for="modalTableNumber" class="form-label">Table Number (Optional)</label>
+                    <input type="text" class="form-control" id="modalTableNumber"
+                           placeholder="e.g., T001, Table 5, etc." maxlength="10">
+                    <div class="form-text">Leave empty if you're not at a table or prefer not to specify.</div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Request:</strong> <span id="modalRequestDescription"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitModalRequest">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i id="toastIcon" class="fas fa-info-circle me-2"></i>
+            <strong class="me-auto" id="toastTitle">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            Your message here
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.service-btn {
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.service-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.service-btn i {
+    transition: all 0.3s ease;
+}
+
+.service-btn:hover i {
+    transform: scale(1.1);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// Global variables for modal
+let currentRequestType = '';
+let currentRequestDescription = '';
+
+function submitQuickRequest(requestType, description) {
+    // Show table number input modal instead of prompt
+    showTableNumberModal(requestType, description);
+}
+
+function showTableNumberModal(requestType, description) {
+    currentRequestType = requestType;
+    currentRequestDescription = description;
+
+    // Update modal content
+    document.getElementById('modalRequestDescription').textContent = description;
+    document.getElementById('modalTableNumber').value = '';
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('tableNumberModal'));
+    modal.show();
+}
+
+function submitServiceRequest(requestType, description, tableNumber = null) {
+    const requestData = {
+        request_type: requestType,
+        description: description
+    };
+
+    if (tableNumber && tableNumber.trim()) {
+        // For now, we'll include table info in description
+        requestData.description = `Table ${tableNumber.trim()}: ${description}`;
+    }
+
+    fetch('{{ url_for("customer.create_service_request") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Success', data.message, 'success');
+            // Refresh the page to show the new request
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification('Error', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error', 'Failed to submit request', 'error');
+    });
+}
+
+function showNotification(title, message, type = 'info') {
+    const toast = document.getElementById('notificationToast');
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMessage = document.getElementById('toastMessage');
+    const toastIcon = document.getElementById('toastIcon');
+
+    // Set content
+    toastTitle.textContent = title;
+    toastMessage.textContent = message;
+
+    // Set icon and styling based on type
+    const toastHeader = toast.querySelector('.toast-header');
+    toastHeader.className = 'toast-header'; // Reset classes
+
+    switch(type) {
+        case 'success':
+            toastIcon.className = 'fas fa-check-circle me-2 text-success';
+            toastHeader.classList.add('bg-success', 'text-white');
+            break;
+        case 'error':
+            toastIcon.className = 'fas fa-exclamation-circle me-2 text-danger';
+            toastHeader.classList.add('bg-danger', 'text-white');
+            break;
+        case 'warning':
+            toastIcon.className = 'fas fa-exclamation-triangle me-2 text-warning';
+            toastHeader.classList.add('bg-warning', 'text-dark');
+            break;
+        default:
+            toastIcon.className = 'fas fa-info-circle me-2 text-info';
+            toastHeader.classList.add('bg-info', 'text-white');
+    }
+
+    // Show toast
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: type === 'success' ? 3000 : 5000
+    });
+    bsToast.show();
+}
+
+// Handle modal submit button
+document.getElementById('submitModalRequest').addEventListener('click', function() {
+    const tableNumber = document.getElementById('modalTableNumber').value;
+
+    // Hide modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('tableNumberModal'));
+    modal.hide();
+
+    // Submit request
+    submitServiceRequest(currentRequestType, currentRequestDescription, tableNumber);
+});
+
+// Handle Enter key in modal input
+document.getElementById('modalTableNumber').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('submitModalRequest').click();
+    }
+});
+
+// Handle custom request form
+document.getElementById('customRequestForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const requestType = document.getElementById('requestType').value;
+    const description = document.getElementById('requestDescription').value;
+    const tableNumber = document.getElementById('tableNumber').value;
+
+    if (!requestType || !description) {
+        showNotification('Error', 'Please fill in all required fields', 'error');
+        return;
+    }
+
+    submitServiceRequest(requestType, description, tableNumber);
+});
+
+// Auto-focus on modal input when shown
+document.getElementById('tableNumberModal').addEventListener('shown.bs.modal', function() {
+    document.getElementById('modalTableNumber').focus();
+});
+</script>
+{% endblock %}

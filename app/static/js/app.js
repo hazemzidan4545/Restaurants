@@ -82,9 +82,13 @@ function updateOrderStatus(orderId, status) {
 }
 
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('en-EG', {
+    // Get system currency from settings or default to EGP
+    const systemCurrency = window.systemSettings?.currency || 'EGP';
+    const locale = systemCurrency === 'EGP' ? 'en-EG' : 'en-US';
+
+    return new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency: 'EGP'
+        currency: systemCurrency
     }).format(amount);
 }
 

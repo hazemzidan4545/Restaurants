@@ -193,12 +193,16 @@ def expire_points():
 
 
 def calculate_points_for_amount(amount):
-    """Calculate points for a given amount"""
-    program = LoyaltyProgram.query.filter_by(status='active').first()
-    if not program:
-        return int((float(amount) / 50.0) * 100)  # Default: 100 points per 50 EGP
-    
-    return int((float(amount) / 50.0) * program.points_per_50EGP)
+    """Calculate points for a given amount using system settings"""
+    from app.models import SystemSettings
+
+    # Get points per currency unit from system settings
+    points_per_currency = SystemSettings.get_setting('points_per_currency', 2)
+
+    # Calculate base points
+    base_points = int(float(amount) * points_per_currency)
+
+    return base_points
 
 
 def get_customer_tier_benefits(tier_level):

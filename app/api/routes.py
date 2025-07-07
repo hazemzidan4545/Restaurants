@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, current_app
 from flask_login import current_user, login_required
 from app.api import bp
 from app.models import MenuItem, Category, Order, OrderItem, User, Table, Service, ServiceRequest, TableSession
@@ -160,12 +160,27 @@ def create_order():
 
         # Process each cart item
         for cart_item in data['items']:
+            # Validate item ID format
+            item_id = cart_item['id']
+            try:
+                item_id_int = int(item_id)
+                if item_id_int > 1000000:
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'Invalid item ID {item_id}. Please clear your cart and try again.'
+                    }), 400
+            except (ValueError, TypeError):
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Invalid item ID format: {item_id}'
+                }), 400
+
             # Find menu item
-            menu_item = MenuItem.query.get(cart_item['id'])
+            menu_item = MenuItem.query.get(item_id)
             if not menu_item:
                 return jsonify({
                     'status': 'error',
-                    'message': f'Menu item {cart_item["id"]} not found'
+                    'message': f'Menu item {item_id} not found. Please refresh the page and try again.'
                 }), 400
 
             # Check availability
@@ -300,6 +315,18 @@ def update_order_status(order_id):
             # Only commit here if we didn't update a table (since update_status_based_on_orders commits)
             db.session.commit()
 
+        # Award loyalty points when order is completed
+        if data['status'] == 'completed' and previous_status != 'completed':
+            try:
+                from app.modules.loyalty.loyalty_service import award_points_for_order
+                current_app.logger.info(f"Attempting to award points for order {order_id} to user {order.user_id}")
+                result = award_points_for_order(order_id, order.user_id)
+                current_app.logger.info(f"Point awarding result for order {order_id}: {result}")
+            except Exception as e:
+                current_app.logger.error(f"Error awarding loyalty points for order {order_id}: {str(e)}")
+                import traceback
+                current_app.logger.error(f"Traceback: {traceback.format_exc()}")
+
         return jsonify({
             'status': 'success',
             'message': 'Order status updated successfully',
@@ -334,11 +361,24 @@ def update_order(order_id):
         if 'status' in data:
             valid_statuses = ['new', 'processing', 'completed', 'rejected', 'cancelled', 'on-hold', 'in-transit']
             if data['status'] in valid_statuses:
+                previous_status = order.status
                 order.status = data['status']
-                
+
                 # Set completion time if order is completed
                 if data['status'] == 'completed':
                     order.completed_at = datetime.utcnow()
+
+                # Award loyalty points when order is completed
+                if data['status'] == 'completed' and previous_status != 'completed':
+                    try:
+                        from app.modules.loyalty.loyalty_service import award_points_for_order
+                        current_app.logger.info(f"Attempting to award points for order {order_id} to user {order.user_id}")
+                        result = award_points_for_order(order_id, order.user_id)
+                        current_app.logger.info(f"Point awarding result for order {order_id}: {result}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error awarding loyalty points for order {order_id}: {str(e)}")
+                        import traceback
+                        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         
         # Update notes if provided
         if 'notes' in data:
@@ -617,11 +657,11 @@ def create_service_request():
         # Create service request
         service_request = ServiceRequest(
             service_id=service_id,
-            customer_id=current_user.user_id,
+            user_id=current_user.user_id,
             table_id=table_id,
+            request_type=data.get('request_type', 'general'),
             status='pending',
-            request_time=datetime.utcnow(),
-            notes=data.get('notes', '')
+            description=data.get('description', data.get('notes', ''))
         )
         
         db.session.add(service_request)

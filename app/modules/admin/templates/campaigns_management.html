@@ -28,11 +28,15 @@
                 </div>
                 <div class="stat-item">
                     <span class="stat-number">{{ active_campaigns if active_campaigns else 0 }}</span>
-                    <span class="stat-label">Active Campaigns</span>
+                    <span class="stat-label">Active</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number">{{ (campaigns.items|selectattr('status', 'equalto', 'scheduled')|list|length) if campaigns else 0 }}</span>
                     <span class="stat-label">Scheduled</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ (campaigns.items|selectattr('status', 'equalto', 'expired')|list|length) if campaigns else 0 }}</span>
+                    <span class="stat-label">Expired</span>
                 </div>
             </div>
         </div>

@@ -1,11 +1,7 @@
-{% extends "./base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Edit Menu Item - Admin Dashboard{% endblock %}
 {% block page_title %}Edit Menu Item{% endblock %}
-
-{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-{% endblock %}
 
 {% block content %}
 <!-- Enhanced Page Header -->
@@ -28,16 +24,16 @@
             </p>
             <div class="header-stats">
                 <div class="stat-item">
-                    <span class="stat-number">{{ menu_item.name if menu_item else 'Item' }}</span>
-                    <span class="stat-label">Editing</span>
-                </div>
-                <div class="stat-item">
                     <span class="stat-number">{{ menu_item.category.name if menu_item and menu_item.category else 'N/A' }}</span>
                     <span class="stat-label">Category</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number">{{ "%.2f"|format(menu_item.price if menu_item else 0) }} EGP</span>
-                    <span class="stat-label">Price</span>
+                    <span class="stat-number">{{ "%.2f"|format(menu_item.get_display_price() if menu_item else 0) }} {{ get_system_setting("system_currency", "EGP") }}</span>
+                    <span class="stat-label">Current Price</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ menu_item.stock if menu_item else 0 }}</span>
+                    <span class="stat-label">Stock</span>
                 </div>
             </div>
         </div>
@@ -60,7 +56,7 @@
         <div class="admin-card">
             <div class="card-header">
                 <h3 class="card-title">
-                    <i class="fas fa-utensils"></i>
+                    <i class="fas fa-edit"></i>
                     Edit Menu Item: {{ menu_item.name }}
                 </h3>
                 <div class="form-progress">
@@ -116,12 +112,12 @@
 
                                 <div class="mb-3">
                                     <label for="price" class="form-label">
-                                        <i class="fas fa-dollar-sign me-1"></i>Price (EGP) <span class="text-danger">*</span>
+                                        <i class="fas fa-dollar-sign me-1"></i>Price ({{ get_system_setting("system_currency", "EGP") }}) <span class="text-danger">*</span>
                                     </label>
                                     <div class="input-group">
-                                        <span class="input-group-text">EGP</span>
+                                        <span class="input-group-text">{{ get_system_setting("system_currency", "EGP") }}</span>
                                         <input type="number" class="form-control" id="price" name="price"
-                                               step="0.01" min="0.01" required value="{{ menu_item.price }}" placeholder="0.00"
+                                               step="0.01" min="0.01" required value="{{ menu_item.get_original_price() if menu_item.has_discount() else menu_item.price }}" placeholder="0.00"
                                                data-validation="required|min:0.01|max:9999.99">
                                         <button type="button" class="btn btn-outline-info" id="priceCalculator"
                                                 title="Price Calculator">
@@ -139,8 +135,7 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="discount_percentage" name="discount_percentage"
-                                               min="0" max="95" step="0.01" 
-                                               value="{{ menu_item.discount_percentage or '' }}" placeholder="0.00"
+                                               min="0" max="95" step="0.01" value="{{ menu_item.discount_percentage or '' }}" placeholder="0.00"
                                                data-validation="min:0|max:95">
                                         <span class="input-group-text">%</span>
                                         <button type="button" class="btn btn-outline-secondary" id="clearDiscount"
@@ -151,8 +146,8 @@
                                     <div class="invalid-feedback"></div>
                                     <div class="form-text">
                                         Optional discount percentage (0-95%)
-                                        {% if menu_item.original_price %}
-                                            <br><small class="text-info">Original price: {{ menu_item.original_price }} EGP</small>
+                                        {% if menu_item.has_discount() %}
+                                            <br><small class="text-info">Original price: {{ "%.2f"|format(menu_item.get_original_price()) }} {{ get_system_setting("system_currency", "EGP") }}</small>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -161,7 +156,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="stock" class="form-label">
-                                        <i class="fas fa-boxes me-1"></i>Stock Quantity
+                                        <i class="fas fa-boxes me-1"></i>Initial Stock
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="stock" name="stock"
@@ -195,8 +190,7 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="preparation_time"
-                                               name="preparation_time" min="1" max="180"
-                                               value="{{ menu_item.preparation_time or '' }}" placeholder="15"
+                                               name="preparation_time" min="1" max="180" value="{{ menu_item.preparation_time or '' }}" placeholder="15"
                                                data-validation="min:1|max:180">
                                         <span class="input-group-text">min</span>
                                     </div>
@@ -318,7 +312,6 @@
                                         </div>
                                     </div>
                                     <div class="invalid-feedback"></div>
-                                    <div class="form-text">Upload a new image to replace the current one</div>
                                 </div>
 
                                 <!-- Additional Options -->
@@ -355,133 +348,40 @@
                                         </label>
                                     </div>
                                 </div>
-
-                                <!-- Enhanced Item Statistics -->
-                                <div class="mb-3">
-                                    <div class="stats-card enhanced-stats-card">
-                                        <div class="stats-header">
-                                            <div class="stats-icon-wrapper">
-                                                <i class="fas fa-chart-line"></i>
-                                            </div>
-                                            <h6 class="stats-title">
-                                                Item Statistics
-                                            </h6>
-                                            <div class="stats-badge">
-                                                <i class="fas fa-info-circle"></i>
-                                            </div>
-                                        </div>
-                                        <div class="stats-grid enhanced-stats-grid">
-                                            <div class="stat-item enhanced-stat-item">
-                                                <div class="stat-icon created-icon">
-                                                    <i class="fas fa-calendar-plus"></i>
-                                                </div>
-                                                <div class="stat-content">
-                                                    <span class="stat-label">Created:</span>
-                                                    <span class="stat-value created-date">{{ menu_item.created_at.strftime('%Y-%m-%d') }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="stat-item enhanced-stat-item">
-                                                <div class="stat-icon updated-icon">
-                                                    <i class="fas fa-calendar-plus"></i>
-                                                </div>
-                                                <div class="stat-content">
-                                                    <span class="stat-label">Updated:</span>
-                                                    <span class="stat-value updated-date">{{ menu_item.updated_at.strftime('%Y-%m-%d') }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="stat-item enhanced-stat-item">
-                                                <div class="stat-icon stock-icon">
-                                                    <i class="fas fa-boxes"></i>
-                                                </div>
-                                                <div class="stat-content">
-                                                    <span class="stat-label">Current Stock:</span>
-                                                    <span class="stat-value stock-value {% if menu_item.stock and menu_item.stock > 0 %}in-stock{% else %}unlimited{% endif %}">
-                                                        {{ menu_item.stock if menu_item.stock and menu_item.stock > 0 else 'Unlimited' }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="stat-item enhanced-stat-item">
-                                                <div class="stat-icon status-icon">
-                                                    <i class="fas fa-toggle-on"></i>
-                                                </div>
-                                                <div class="stat-content">
-                                                    <span class="stat-label">Status:</span>
-                                                    <span class="status-badge status-{{ menu_item.status }}" style="font-weight: bold;">
-                                                        {% if menu_item.status == 'available' %}
-                                                            <i class="fas fa-check-circle me-1"></i>Available
-                                                        {% elif menu_item.status == 'out_of_stock' %}
-                                                            <i class="fas fa-exclamation-triangle me-1"></i>Out of Stock
-                                                        {% else %}
-                                                            <i class="fas fa-times-circle me-1"></i>{{ menu_item.status|title }}
-                                                        {% endif %}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Enhanced Form Actions -->
-                    <div class="form-actions enhanced-form-actions">
+                    <!-- Form Actions -->
+                    <div class="form-actions">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-summary enhanced-form-summary">
-                                    <div class="summary-header">
-                                        <div class="summary-icon">
-                                            <i class="fas fa-check-circle"></i>
-                                        </div>
-                                        <h6 class="summary-title">Form Completion</h6>
+                                <div class="form-summary">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>Form Completion
+                                    </h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar" id="completionProgress" style="width: 100%"></div>
                                     </div>
-                                    <div class="progress enhanced-progress mb-3">
-                                        <div class="progress-bar enhanced-progress-bar" id="completionProgress" 
-                                             style="width: 85%" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100">
-                                            <span class="progress-text">85%</span>
-                                        </div>
-                                    </div>
-                                    <div class="completion-status">
-                                        <div class="status-indicator ready">
-                                            <i class="fas fa-check me-2"></i>
-                                            <span id="completionText">Ready to update!</span>
-                                        </div>
-                                    </div>
+                                    <small class="text-success" id="completionText">Form ready for submission</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="action-buttons-container">
-                                    <div class="action-buttons enhanced-action-buttons">
-                                        <button type="button" class="btn btn-outline-info enhanced-preview-btn" id="previewBtn">
-                                            <div class="btn-icon">
-                                                <i class="fas fa-eye"></i>
-                                            </div>
-                                            <span class="btn-text">Preview</span>
-                                            <div class="btn-shine"></div>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-danger enhanced-delete-btn" id="deleteBtn">
-                                            <div class="btn-icon">
-                                                <i class="fas fa-trash"></i>
-                                            </div>
-                                            <span class="btn-text">Delete</span>
-                                            <div class="btn-shine"></div>
-                                        </button>
-                                        <a href="{{ url_for('admin.menu_management') }}" class="btn btn-secondary enhanced-cancel-btn">
-                                            <div class="btn-icon">
-                                                <i class="fas fa-times"></i>
-                                            </div>
-                                            <span class="btn-text">Cancel</span>
-                                            <div class="btn-shine"></div>
-                                        </a>
-                                        <button type="submit" class="btn btn-primary enhanced-submit-btn" id="submitBtn">
-                                            <span class="spinner-border spinner-border-sm d-none me-2" id="submitSpinner"></span>
-                                            <div class="btn-icon" id="submitIcon">
-                                                <i class="fas fa-save"></i>
-                                            </div>
-                                            <span class="btn-text" id="submitText">Update Menu Item</span>
-                                            <div class="btn-shine"></div>
-                                        </button>
-                                    </div>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-outline-secondary" id="previewBtn">
+                                        <i class="fas fa-eye me-2"></i>Preview
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" id="deleteBtn">
+                                        <i class="fas fa-trash me-2"></i>Delete
+                                    </button>
+                                    <a href="{{ url_for('admin.menu_management') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <span class="spinner-border spinner-border-sm d-none me-2" id="submitSpinner"></span>
+                                        <i class="fas fa-save me-2" id="submitIcon"></i>
+                                        <span id="submitText">Save Changes</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -500,13 +400,17 @@
                 <h5 class="modal-title">
                     <i class="fas fa-eye me-2"></i>Menu Item Preview
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal('previewModal')"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body preview-body">
                 <div class="preview-container">
                     <div class="preview-image-section">
                         <div class="preview-image-container">
-                            <img id="previewImage" src="" alt="Menu Item" class="preview-image">
+                            <img id="previewModalImage" src="" alt="Menu Item" class="preview-image">
+                            <div class="no-image-placeholder" id="previewNoImage">
+                                <i class="fas fa-image fa-3x"></i>
+                                <p>No Image</p>
+                            </div>
                         </div>
                     </div>
                     <div class="preview-details-section">
@@ -519,7 +423,16 @@
                         </div>
                         
                         <div class="preview-price-section">
-                            <span id="previewPrice" class="preview-price"></span>
+                            <div id="previewDiscountSection" class="discount-section" style="display: none;">
+                                <span class="discount-badge" id="previewDiscountBadge"></span>
+                                <div class="price-group">
+                                    <span class="original-price" id="previewOriginalPrice"></span>
+                                    <span id="previewPrice" class="preview-price"></span>
+                                </div>
+                            </div>
+                            <div id="previewRegularPrice" class="regular-price-section">
+                                <span id="previewPriceRegular" class="preview-price"></span>
+                            </div>
                         </div>
 
                         <div class="preview-description-box">
@@ -559,81 +472,57 @@
                                 <h3><i class="fas fa-exclamation-triangle me-2"></i>Allergens</h3>
                                 <p id="previewAllergens"></p>
                             </div>
+                            <div class="details-section" id="previewOptionsSection">
+                                <h3><i class="fas fa-list me-2"></i>Options</h3>
+                                <div id="previewOptions"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer preview-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('previewModal')">Close Preview</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close Preview</button>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('addMenuItemForm').submit()">
+                    <i class="fas fa-save me-2"></i>Save Item
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true" data-bs-backdrop="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content enhanced-delete-modal">
-            <div class="modal-header enhanced-delete-header">
-                <div class="delete-header-content">
-                    <div class="danger-icon-wrapper animated-pulse">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="delete-title-container">
-                        <h5 class="modal-title text-white enhanced-delete-title">Confirm Delete</h5>
-                        <p class="delete-subtitle">You are about to delete this item</p>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal('deleteModal')"></button>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body enhanced-delete-body">
-                <div class="delete-confirmation-content">
-                    <div class="delete-item-info">
-                        <div class="item-preview">
-                            <div class="item-icon">
-                                <i class="fas fa-utensils"></i>
-                            </div>
-                            <div class="item-details">
-                                <h6 class="item-name">{{ menu_item.name }}</h6>
-                                <p class="item-category text-muted">{{ menu_item.category.name if menu_item.category else 'No Category' }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="delete-question">Are you sure you want to delete this menu item?</p>
-                    <div class="alert alert-danger enhanced-warning">
-                        <div class="warning-icon">
-                            <i class="fas fa-exclamation-circle"></i>
-                        </div>
-                        <div class="warning-content">
-                            <strong>Warning:</strong> This action cannot be undone. All data associated with this menu item will be permanently deleted.
-                        </div>
-                    </div>
-                </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this menu item?</p>
+                <p class="text-muted">This action cannot be undone.</p>
             </div>
-            <div class="modal-footer enhanced-delete-footer">
-                <button type="button" class="btn btn-secondary enhanced-cancel-btn" onclick="closeModal('deleteModal')">
-                    <i class="fas fa-times me-2"></i>Cancel
-                </button>
-                <form method="POST" action="{{ url_for('admin.delete_menu_item', item_id=menu_item.item_id) }}" style="display: inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="btn btn-danger enhanced-delete-btn">
-                        <i class="fas fa-trash me-2"></i>Delete Item
-                    </button>
-                </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{{ url_for('admin.delete_menu_item', item_id=menu_item.item_id) }}" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>Delete Item
+                </a>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Add Category Modal -->
-<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true" data-bs-backdrop="true">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-plus me-2"></i>Add New Category
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal('addCategoryModal')"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="addCategoryForm">
@@ -648,8 +537,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addCategoryModal')">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveCategoryBtn" onclick="saveCategory()">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">
                     <i class="fas fa-save me-2"></i>Add Category
                 </button>
             </div>
@@ -660,894 +549,295 @@
 
 {% block extra_css %}
 <style>
-/* Force sidebar to be fixed on edit menu item page */
-.admin-sidebar {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 260px !important;
-    height: 100vh !important;
-    z-index: 1000 !important;
-    background: linear-gradient(180deg, #000000 0%, #0a0a0a 50%, #000000 100%) !important;
-    transform: translateX(0) !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+/* Enhanced Add Menu Item Styles */
+.form-section {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: rgba(var(--primary-yellow-rgb), 0.02);
+    position: relative;
 }
 
-/* Ensure main content has proper offset */
-.main-content {
-    margin-left: 260px !important;
-    position: relative !important;
-    min-height: 100vh !important;
+.section-title {
+    color: var(--primary-dark);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-yellow);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-/* Optimized CSS for better performance */
-html {
-    scroll-behavior: auto; /* We'll handle smooth scrolling with JS */
-    height: 100%;
+.section-title i {
+    color: var(--primary-yellow);
+    font-size: 1.2rem;
 }
 
-body {
-    overflow-y: auto;
-    height: 100%;
-    /* Use hardware acceleration for smoother scrolling */
-    transform: translateZ(0);
-    will-change: scroll-position;
-    -webkit-font-smoothing: antialiased;
-}
-
-.modal-open {
+.form-progress {
+    height: 4px;
+    background: rgba(var(--primary-yellow-rgb), 0.2);
+    border-radius: 2px;
+    margin-top: 1rem;
     overflow: hidden;
 }
 
-.modal {
-    overflow-y: auto;
-    /* Use hardware acceleration for modals */
-    transform: translateZ(0);
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-}
-
-.modal-dialog {
-    margin: 1.75rem auto;
-    transition: transform 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
-    will-change: transform;
-}
-
-/* Optimize animations for better performance */
-@keyframes slideUp {
-    from {
-        transform: translateY(100px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateY(100px);
-        opacity: 0;
-    }
-}
-
-/* Use hardware acceleration for animations */
-.modal-content, .modal-dialog, .btn-shine {
-    transform: translateZ(0);
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-}
-
-/* Optimize form transitions */
-.form-control, .form-select {
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Optimize progress bar animation */
 .progress-bar {
-    transition: width 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
-    will-change: width;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-yellow) 0%, #e6b800 100%);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
 }
 
-/* Optimize button hover effects */
-.enhanced-action-buttons .btn {
-    transition: transform 0.2s cubic-bezier(0.215, 0.610, 0.355, 1.000), 
-                box-shadow 0.2s cubic-bezier(0.215, 0.610, 0.355, 1.000),
-                background-color 0.2s ease;
+.form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
-/* Optimize image hover effects */
+.form-label i {
+    color: var(--primary-yellow);
+    width: 16px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-yellow);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-yellow-rgb), 0.25);
+}
+
+.form-control.is-valid {
+    border-color: var(--success-green);
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger-red);
+}
+
+.input-group-text {
+    background: var(--primary-yellow);
+    color: var(--text-dark);
+    border-color: var(--primary-yellow);
+    font-weight: 600;
+}
+
+/* Image Upload Styling */
+.image-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.image-upload-area:hover {
+    border-color: var(--primary-yellow);
+    background: rgba(var(--primary-yellow-rgb), 0.05);
+}
+
+.upload-placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.image-preview {
+    position: relative;
+    width: 100%;
+    height: 250px;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
 .image-overlay {
-    transition: opacity 0.2s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 10px;
 }
 
-/* Optimize modal animations */
-.modal.fade .modal-dialog {
-    transform: translate(0, -30px);
-    transition: transform 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
-    will-change: transform;
+.image-preview:hover .image-overlay {
+    opacity: 1;
 }
 
-.modal.show .modal-dialog {
-    transform: translate(0, 0);
+/* Form Actions */
+.form-actions {
+    background: rgba(var(--primary-dark-rgb), 0.02);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    border: 1px solid var(--border-color);
 }
 
-/* Enhanced Modal Animations */
-.modal .modal-dialog {
-    transition: transform 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
-    will-change: transform;
+.form-summary {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
-/* Reduce paint operations by using opacity for transitions */
-.btn-shine {
-    transition: left 0.4s cubic-bezier(0.215, 0.610, 0.355, 1.000);
-    will-change: left;
+.progress {
+    height: 8px;
+    background: rgba(var(--primary-yellow-rgb), 0.2);
 }
 
-/* Keep the rest of the styles but optimize animations */
-/* ... existing styles ... */
-
-/* Critical Z-index Fix - Optimized */
-.modal {
-    z-index: 1050 !important;
+.progress .progress-bar {
+    background: linear-gradient(90deg, var(--primary-yellow) 0%, #e6b800 100%);
 }
 
-.modal-backdrop {
-    z-index: 1040 !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
-    opacity: 0.5 !important;
+/* Character Counters */
+.form-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
-.modal-dialog {
-    z-index: 1060 !important;
-    max-width: 90% !important;
-    margin: 0.5rem auto !important;
+#descriptionCount, #ingredientsCount {
+    font-weight: 600;
+    color: var(--primary-yellow);
 }
 
-.modal-content {
-    z-index: 1070 !important;
-    max-height: 80vh !important;
-    overflow-y: auto !important;
+/* Checkbox Styling */
+.form-check-input:checked {
+    background-color: var(--primary-yellow);
+    border-color: var(--primary-yellow);
 }
 
-/* Size adjustments - Optimized */
-@media (min-width: 768px) {
-    .modal-dialog {
-        max-width: 600px !important;
-    }
-    
-    .modal-dialog.modal-lg {
-        max-width: 800px !important;
-    }
+.form-check-label {
+    font-weight: 500;
+    color: var(--text-dark);
 }
 
-/* Force pointer events - Optimized */
-.modal-content * {
-    pointer-events: auto !important;
+/* Button Enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
-/* Ensure buttons are clickable - Optimized */
-.modal button,
-.modal .btn,
-.modal a,
-.modal input[type="submit"] {
-    position: relative !important;
-    z-index: 1080 !important;
-    pointer-events: auto !important;
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Fix modal body size - Optimized */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
+    border-color: var(--primary-yellow);
+    color: var(--text-dark);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #e6b800 0%, #cc9900 100%);
+    border-color: #e6b800;
+    color: var(--text-dark);
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    border-color: #ccc;
+    color: #666;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Preview Modal Styling */
+.menu-item-preview {
+    padding: 1rem;
+}
+
+.preview-image-container {
+    position: relative;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-image-placeholder {
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* Enhanced Preview Modal Styling */
+.preview-modal {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.15);
+    border: none;
+}
+
+.preview-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+    padding: 20px 24px;
+}
+
+.preview-header .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.preview-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
 .preview-body {
-    max-height: 60vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+    max-height: 70vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 24px;
 }
 
-/* Make preview container more compact - Optimized */
 .preview-container {
     display: flex;
     flex-direction: column;
 }
 
 .preview-image-section {
-    height: 200px !important;
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+    background: #f8f9fa;
 }
 
-.preview-details-section {
-    padding: 1rem !important;
-}
-
-.preview-info-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem !important;
-}
-
-.info-item {
-    padding: 0.5rem !important;
-}
-
-.preview-description-box {
-    padding: 0.75rem !important;
-    margin-bottom: 0.75rem !important;
-}
-
-.preview-details-box {
-    padding: 0.75rem !important;
-}
-
-.details-section {
-    margin-bottom: 0.75rem !important;
-}
-
-/* Make delete modal more compact - Optimized */
-.enhanced-delete-body {
-    padding: 1rem !important;
-}
-
-.delete-item-info {
-    padding: 1rem !important;
-    margin-bottom: 1rem !important;
-}
-
-.delete-question {
-    margin: 1rem 0 !important;
-}
-
-/* Extreme z-index override - Optimized */
-#previewModal, #deleteModal, #addCategoryModal {
-    z-index: 9999 !important;
-}
-
-/* The rest of the CSS remains the same */
-</style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Enhanced Edit Menu Item JavaScript - Optimized for Performance
-document.addEventListener('DOMContentLoaded', function() {
-    // Cache DOM elements to avoid repeated lookups
-    const previewModalEl = document.getElementById('previewModal');
-    const deleteModalEl = document.getElementById('deleteModal');
-    const addCategoryModalEl = document.getElementById('addCategoryModal');
-    const formEl = document.getElementById('editMenuItemForm');
-    const progressBarEl = document.getElementById('completionProgress');
-    const progressTextEl = document.querySelector('.progress-text');
-    const completionTextEl = document.getElementById('completionText');
-    
-    // Enable hardware-accelerated smooth scrolling
-    document.documentElement.style.scrollBehavior = 'auto'; // We'll handle smooth scrolling manually
-    
-    // Remove existing backdrops for cleaner initialization
-    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-    
-    // Initialize modals with optimized settings
-    const previewModal = new bootstrap.Modal(previewModalEl, {
-        backdrop: false // Disable built-in backdrop for better performance
-    });
-    
-    const deleteModal = new bootstrap.Modal(deleteModalEl, {
-        backdrop: false
-    });
-    
-    const addCategoryModal = new bootstrap.Modal(addCategoryModalEl, {
-        backdrop: false
-    });
-    
-    // Store modals in window object for global access with minimal overhead
-    window.modals = { previewModal, deleteModal, addCategoryModal };
-    
-    // Use passive event listeners for better scroll performance
-    previewModalEl.addEventListener('shown.bs.modal', function() {
-        requestAnimationFrame(() => smoothScrollToModal('previewModal'));
-    }, { passive: true });
-    
-    deleteModalEl.addEventListener('shown.bs.modal', function() {
-        requestAnimationFrame(() => smoothScrollToModal('deleteModal'));
-    }, { passive: true });
-    
-    addCategoryModalEl.addEventListener('shown.bs.modal', function() {
-        requestAnimationFrame(() => smoothScrollToModal('addCategoryModal'));
-    }, { passive: true });
-    
-    // Set up optimized event listeners for buttons - use event delegation where possible
-    document.getElementById('previewBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        showPreview();
-    }, { passive: false });
-    
-    document.getElementById('deleteBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        showDelete();
-    }, { passive: false });
-    
-    document.getElementById('addCategoryBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        showAddCategory();
-    }, { passive: false });
-    
-    // Fix all close buttons with event delegation
-    document.body.addEventListener('click', function(e) {
-        if (e.target.hasAttribute('data-bs-dismiss') || e.target.closest('[data-bs-dismiss="modal"]')) {
-            e.preventDefault();
-            const modalEl = e.target.closest('.modal');
-            if (modalEl) closeModal(modalEl.id);
-        }
-    }, { passive: false });
-    
-    // Initialize progress bar
-    updateProgress();
-    
-    // Set up event listeners for form fields with debounce
-    if (formEl) {
-        const formFields = formEl.querySelectorAll('input, select, textarea');
-        formFields.forEach(field => {
-            field.addEventListener('change', debounce(updateProgress, 200), { passive: true });
-            field.addEventListener('input', debounce(updateProgress, 300), { passive: true });
-        });
-    }
-    
-    // Description counter with optimized updates
-    const description = document.getElementById('description');
-    const descriptionCount = document.getElementById('descriptionCount');
-    if (description && descriptionCount) {
-        description.addEventListener('input', debounce(function() {
-            descriptionCount.textContent = description.value.length;
-        }, 100), { passive: true });
-    }
-    
-    // Ingredients counter with optimized updates
-    const ingredients = document.getElementById('ingredients');
-    const ingredientsCount = document.getElementById('ingredientsCount');
-    if (ingredients && ingredientsCount) {
-        ingredients.addEventListener('input', debounce(function() {
-            ingredientsCount.textContent = ingredients.value.length;
-        }, 100), { passive: true });
-    }
-    
-    // Unlimited stock checkbox with optimized handling
-    const unlimitedStock = document.getElementById('unlimitedStock');
-    const stock = document.getElementById('stock');
-    if (unlimitedStock && stock) {
-        unlimitedStock.addEventListener('change', function() {
-            stock.disabled = unlimitedStock.checked;
-            if (unlimitedStock.checked) {
-                stock.value = '0';
-            }
-            requestAnimationFrame(updateProgress);
-        }, { passive: true });
-    }
-    
-    // Discount functionality
-    const discountPercentage = document.getElementById('discount_percentage');
-    const clearDiscountBtn = document.getElementById('clearDiscount');
-    if (discountPercentage && clearDiscountBtn) {
-        clearDiscountBtn.addEventListener('click', function() {
-            discountPercentage.value = '';
-            updateProgress();
-        });
-        
-        discountPercentage.addEventListener('input', function() {
-            const value = parseFloat(this.value);
-            if (value > 95) {
-                this.value = 95;
-            } else if (value < 0) {
-                this.value = 0;
-            }
-            updateProgress();
-        });
-    }
-    
-    // Image upload with optimized handlers
-    initializeImageUpload();
-});
-
-// Debounce function for performance optimization
-function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), wait);
-    };
-}
-
-// Throttle function for performance-critical operations
-function throttle(func, limit) {
-    let inThrottle;
-    return function(...args) {
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
-
-// Initialize image upload with optimized handlers
-function initializeImageUpload() {
-    const imageInput = document.getElementById('image');
-    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-    const imagePreview = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('previewImg');
-    const currentImageDisplay = document.getElementById('currentImageDisplay');
-    const imageUploadArea = document.getElementById('imageUploadArea');
-    
-    // Use event delegation where possible
-    if (uploadPlaceholder) {
-        uploadPlaceholder.addEventListener('click', () => imageInput.click(), { passive: true });
-    }
-    
-    if (imageUploadArea && !uploadPlaceholder) {
-        imageUploadArea.addEventListener('click', () => imageInput.click(), { passive: true });
-    }
-    
-    if (imageInput) {
-        imageInput.addEventListener('change', handleImageChange, { passive: true });
-    }
-    
-    // Optimize event handlers for image controls
-    const changeCurrentImage = document.getElementById('changeCurrentImage');
-    if (changeCurrentImage) {
-        changeCurrentImage.addEventListener('click', (e) => {
-            e.stopPropagation();
-            imageInput.click();
-        }, { passive: true });
-    }
-    
-    const removeCurrentImage = document.getElementById('removeCurrentImage');
-    if (removeCurrentImage) {
-        removeCurrentImage.addEventListener('click', (e) => {
-            e.stopPropagation();
-            removeImage();
-        }, { passive: true });
-    }
-    
-    const changeImage = document.getElementById('changeImage');
-    if (changeImage) {
-        changeImage.addEventListener('click', (e) => {
-            e.stopPropagation();
-            imageInput.click();
-        }, { passive: true });
-    }
-    
-    const removeImage = document.getElementById('removeImage');
-    if (removeImage) {
-        removeImage.addEventListener('click', (e) => {
-            e.stopPropagation();
-            removeImagePreview();
-        }, { passive: true });
-    }
-}
-
-// Add drag and drop functionality for image upload
-document.addEventListener('DOMContentLoaded', function() {
-    const imageUploadArea = document.getElementById('imageUploadArea');
-    const imageInput = document.getElementById('image');
-    
-    if (imageUploadArea && imageInput) {
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            imageUploadArea.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        // Highlight drop area when item is dragged over it
-        ['dragenter', 'dragover'].forEach(eventName => {
-            imageUploadArea.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            imageUploadArea.addEventListener(eventName, unhighlight, false);
-        });
-        
-        // Handle dropped files
-        imageUploadArea.addEventListener('drop', handleDrop, false);
-    }
-    
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
-    function highlight(e) {
-        imageUploadArea.classList.add('dragover');
-    }
-    
-    function unhighlight(e) {
-        imageUploadArea.classList.remove('dragover');
-    }
-    
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        
-        if (files.length > 0) {
-            imageInput.files = files;
-            handleImageChange({ target: { files: files } });
-        }
-    }
-});
-
-// Handle image file selection and preview
-function handleImageChange(event) {
-    const file = event.target.files[0];
-    const imagePreview = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('previewImg');
-    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-    const currentImageDisplay = document.getElementById('currentImageDisplay');
-    
-    if (file) {
-        // Validate file type
-        const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
-            alert('Please select a valid image file (PNG, JPG, JPEG, GIF, WebP)');
-            event.target.value = '';
-            return;
-        }
-        
-        // Validate file size (16MB max)
-        if (file.size > 16 * 1024 * 1024) {
-            alert('File size must be less than 16MB');
-            event.target.value = '';
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            if (previewImg) {
-                previewImg.src = e.target.result;
-                previewImg.alt = file.name;
-            }
-            
-            // Show preview and hide other elements
-            if (imagePreview) imagePreview.style.display = 'block';
-            if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
-            if (currentImageDisplay) currentImageDisplay.style.display = 'none';
-            
-            updateProgress();
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-// Remove image preview and show upload placeholder
-function removeImagePreview() {
-    const imageInput = document.getElementById('image');
-    const imagePreview = document.getElementById('imagePreview');
-    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-    const currentImageDisplay = document.getElementById('currentImageDisplay');
-    
-    if (imageInput) imageInput.value = '';
-    if (imagePreview) imagePreview.style.display = 'none';
-    
-    // Show appropriate placeholder
-    if (currentImageDisplay) {
-        currentImageDisplay.style.display = 'block';
-    } else if (uploadPlaceholder) {
-        uploadPlaceholder.style.display = 'flex';
-    }
-    
-    updateProgress();
-}
-
-// Remove current image (existing image)
-function removeImage() {
-    const currentImageDisplay = document.getElementById('currentImageDisplay');
-    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-    const imageInput = document.getElementById('image');
-    
-    if (currentImageDisplay) currentImageDisplay.style.display = 'none';
-    if (uploadPlaceholder) uploadPlaceholder.style.display = 'flex';
-    if (imageInput) imageInput.value = '';
-    
-    // Add a hidden input to indicate image removal
-    let removeInput = document.getElementById('remove_image');
-    if (!removeInput) {
-        removeInput = document.createElement('input');
-        removeInput.type = 'hidden';
-        removeInput.name = 'remove_image';
-        removeInput.id = 'remove_image';
-        removeInput.value = '1';
-        document.getElementById('editMenuItemForm').appendChild(removeInput);
-    } else {
-        removeInput.value = '1';
-    }
-    
-    updateProgress();
-}
-
-// Update progress bar and completion status
-function updateProgress() {
-    const form = document.getElementById('editMenuItemForm');
-    if (!form) return;
-    
-    const progressBar = document.getElementById('completionProgress');
-    const progressText = progressBar ? progressBar.querySelector('.progress-text') : null;
-    const completionText = document.getElementById('completionText');
-    const statusIndicator = document.querySelector('.status-indicator');
-    
-    // Get required fields
-    const requiredFields = form.querySelectorAll('[required]');
-    let completedFields = 0;
-    let totalFields = requiredFields.length;
-    
-    // Check each required field
-    requiredFields.forEach(field => {
-        if (field.type === 'checkbox' || field.type === 'radio') {
-            if (field.checked) completedFields++;
-        } else if (field.tagName === 'SELECT') {
-            if (field.value && field.value !== '') completedFields++;
-        } else {
-            if (field.value && field.value.trim() !== '') completedFields++;
-        }
-    });
-    
-    // Calculate percentage
-    const percentage = Math.round((completedFields / totalFields) * 100);
-    
-    // Update progress bar
-    if (progressBar) {
-        progressBar.style.width = percentage + '%';
-        progressBar.setAttribute('aria-valuenow', percentage);
-    }
-    
-    if (progressText) {
-        progressText.textContent = percentage + '%';
-    }
-    
-    // Update status
-    if (completionText && statusIndicator) {
-        if (percentage >= 100) {
-            completionText.textContent = 'Ready to update!';
-            statusIndicator.className = 'status-indicator ready';
-        } else if (percentage >= 80) {
-            completionText.textContent = 'Almost complete!';
-            statusIndicator.className = 'status-indicator ready';
-        } else {
-            completionText.textContent = `${totalFields - completedFields} fields remaining`;
-            statusIndicator.className = 'status-indicator incomplete';
-        }
-    }
-}
-
-// Enhanced button event handlers
-document.addEventListener('DOMContentLoaded', function() {
-    // Preview button
-    const previewBtn = document.getElementById('previewBtn');
-    if (previewBtn) {
-        previewBtn.addEventListener('click', function() {
-            // Show preview modal with current form data
-            showPreview();
-        });
-    }
-    
-    // Delete button
-    const deleteBtn = document.getElementById('deleteBtn');
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', function() {
-            showDelete();
-        });
-    }
-    
-    // Form submission with loading state
-    const submitBtn = document.getElementById('submitBtn');
-    const form = document.getElementById('editMenuItemForm');
-    
-    if (form && submitBtn) {
-        form.addEventListener('submit', function() {
-            const submitIcon = document.getElementById('submitIcon');
-            const submitText = document.getElementById('submitText');
-            const submitSpinner = document.getElementById('submitSpinner');
-            
-            // Show loading state
-            submitBtn.classList.add('loading');
-            if (submitIcon) submitIcon.style.display = 'none';
-            if (submitSpinner) submitSpinner.classList.remove('d-none');
-            if (submitText) submitText.textContent = 'Updating...';
-            
-            submitBtn.disabled = true;
-        });
-    }
-});
-
-// Fix sidebar positioning and mobile toggle functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Ensure sidebar scrolls with content (no forced positioning)
-    const sidebar = document.querySelector('.admin-sidebar');
-    const mainContent = document.querySelector('.main-content');
-    
-    if (sidebar && mainContent) {
-        // Ensure main content has proper margin for desktop
-        if (window.innerWidth >= 768) {
-            mainContent.style.marginLeft = '260px';
-        }
-    }
-    
-    // Mobile sidebar toggle functionality
-    const mobileToggle = document.querySelector('.mobile-toggle');
-    if (mobileToggle && sidebar) {
-        mobileToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('show');
-            this.classList.toggle('active');
-        });
-    }
-    
-    // Handle window resize for responsive sidebar
-    window.addEventListener('resize', function() {
-        if (sidebar && mainContent) {
-            if (window.innerWidth >= 768) {
-                sidebar.classList.remove('show');
-                mainContent.style.marginLeft = '260px';
-                if (mobileToggle) mobileToggle.classList.remove('active');
-            } else {
-                mainContent.style.marginLeft = '0';
-            }
-        }
-    });
-    
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(e) {
-        if (window.innerWidth < 768 && sidebar && sidebar.classList.contains('show')) {
-            if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
-                sidebar.classList.remove('show');
-                if (mobileToggle) mobileToggle.classList.remove('active');
-            }
-        }
-    });
-});
-
-// Show preview modal with current form data
-function showPreview() {
-    const form = document.getElementById('editMenuItemForm');
-    if (!form) return;
-    
-    // Get form data
-    const formData = new FormData(form);
-    const name = formData.get('name') || 'Menu Item';
-    const price = formData.get('price') || '0.00';
-    const description = formData.get('description') || 'No description available';
-    const category = document.getElementById('category_id')?.selectedOptions[0]?.text || 'No Category';
-    
-    // Update preview modal content
-    const previewTitle = document.querySelector('#previewModal .preview-title');
-    const previewPrice = document.querySelector('#previewModal .preview-price');
-    const previewDescription = document.querySelector('#previewModal .preview-description');
-    const previewCategory = document.querySelector('#previewModal .preview-category');
-    
-    if (previewTitle) previewTitle.textContent = name;
-    if (previewPrice) previewPrice.textContent = `${price} EGP`;
-    if (previewDescription) previewDescription.textContent = description;
-    if (previewCategory) previewCategory.textContent = category;
-    
-    // Scroll to top first for better modal positioning
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-    
-    // Show the modal after scrolling
-    setTimeout(() => {
-        const modal = new bootstrap.Modal(document.getElementById('previewModal'));
-        modal.show();
-        
-        // Ensure modal is centered and visible
-        setTimeout(() => {
-            const modalDialog = document.querySelector('#previewModal .modal-dialog');
-            if (modalDialog) {
-                modalDialog.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }
-        }, 150);
-    }, 300);
-}
-
-// Add missing showDelete function
-function showDelete() {
-    // Scroll to top first for better modal positioning
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-    
-    // Show the modal after scrolling
-    setTimeout(() => {
-        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        modal.show();
-        
-        // Ensure modal is centered and visible
-        setTimeout(() => {
-            const modalDialog = document.querySelector('#deleteModal .modal-dialog');
-            if (modalDialog) {
-                modalDialog.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }
-        }, 150);
-    }, 300);
-}
-
-// Add missing showAddCategory function
-function showAddCategory() {
-    // Scroll to top first for better modal positioning
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-    
-    // Show the modal after scrolling
-    setTimeout(() => {
-        const modal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
-        modal.show();
-        
-        // Ensure modal is centered and visible
-        setTimeout(() => {
-            const modalDialog = document.querySelector('#addCategoryModal .modal-dialog');
-            if (modalDialog) {
-                modalDialog.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }
-        }, 150);
-    }, 300);
-}
-
-// Enhanced close modal function
-function closeModal(modalId) {
-    const modalElement = document.getElementById(modalId);
-    if (modalElement) {
-        const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        if (modalInstance) {
-            modalInstance.hide();
-        } else {
-            modalElement.style.display = 'none';
-            modalElement.classList.remove('show');
-        }
-    }
-}
-
-// Smooth scroll to modal function
-function smoothScrollToModal(modalId) {
-    const modalElement = document.getElementById(modalId);
-    if (modalElement) {
-        // First scroll to top
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-        
-        // Then ensure modal dialog is centered
-        setTimeout(() => {
-            const modalDialog = modalElement.querySelector('.modal-dialog');
-            if (modalDialog) {
-                modalDialog.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }
-        }, 200);
-    }
-}
-</script>
-
-<!-- Fix for image loading issues -->
-<style>
-/* Ensure proper image display */
 .preview-image {
     width: 100%;
-    height: 200px;
+    height: 100%;
     object-fit: cover;
     object-position: center;
     border-radius: 12px;
@@ -1555,29 +845,954 @@ function smoothScrollToModal(modalId) {
     display: block;
 }
 
-.current-image img,
-.image-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
+.preview-details-section {
+    padding: 1.5rem;
 }
 
-/* Fix for missing image URLs */
-.current-image img[src=""] {
-    display: none;
+.preview-header-info {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 1rem;
 }
 
-.current-image img[src=""]:after {
-    content: "Image not found";
+.preview-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+}
+
+.preview-category-badge {
+    background: var(--primary-yellow);
+    color: var(--primary-dark);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.preview-price-section {
+    margin-bottom: 1rem;
+}
+
+.preview-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+.discount-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.discount-badge {
+    background: linear-gradient(45deg, #dc3545, #c82333);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    align-self: flex-start;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.price-group {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background: #f3f4f6;
+    gap: 0.75rem;
+}
+
+.original-price {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #666;
+    text-decoration: line-through;
+    position: relative;
+}
+
+.original-price::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #dc3545;
+    transform: translateY(-50%);
+}
+
+.preview-description-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.preview-description {
     color: #6b7280;
-    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.preview-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.info-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.info-item i {
+    color: var(--primary-yellow);
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.info-content label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-content span {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.9rem;
+}
+
+.preview-details-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.details-section {
+    margin-bottom: 1rem;
+}
+
+.details-section:last-child {
+    margin-bottom: 0;
+}
+
+.details-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.details-section p {
+    margin: 0;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.preview-footer {
+    border-top: 1px solid #e3e6f0;
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+}
+
+/* Modal Animation */
+.modal.fade .modal-dialog {
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: translateY(0);
+}
+
+/* Responsive Preview Modal */
+@media (max-width: 768px) {
+    .preview-info-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    
+    .preview-details-section {
+        padding: 1rem;
+    }
+    
+    .preview-title {
+        font-size: 1.3rem;
+    }
+    
+    .preview-price {
+        font-size: 1.2rem;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-section {
+        padding: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+    }
+
+    .form-actions {
+        padding: 1rem;
+    }
+
+    .form-actions .row {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions .col-md-6:last-child {
+        margin-bottom: 1rem;
+    }
+
+    .d-flex.justify-content-end {
+        justify-content: center !important;
+    }
+}
+
+/* Animation for form validation */
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Enhanced Edit Menu Item JavaScript
+class EditMenuItemManager {
+    constructor() {
+        this.form = document.getElementById('editMenuItemForm');
+        this.requiredFields = ['name', 'category_id', 'price'];
+        this.validationRules = {};
+        this.init();
+    }
+
+    init() {
+        this.setupValidation();
+        this.setupImageUpload();
+        this.setupCharacterCounters();
+        this.setupFormProgress();
+        this.setupEventListeners();
+        this.setupUnlimitedStock();
+        this.updateFormProgress();
+    }
+
+    setupValidation() {
+        // Setup validation rules
+        this.validationRules = {
+            name: { required: true, min: 2, max: 100 },
+            category_id: { required: true },
+            price: { required: true, min: 0.01, max: 9999.99 },
+            stock: { min: 0, max: 99999 },
+            preparation_time: { min: 1, max: 180 },
+            description: { max: 500 },
+            ingredients: { max: 300 },
+            allergens: { max: 100 },
+            calories: { min: 0, max: 9999 }
+        };
+
+        // Add real-time validation
+        Object.keys(this.validationRules).forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (field) {
+                field.addEventListener('blur', () => this.validateField(fieldName));
+                field.addEventListener('input', () => this.clearFieldError(fieldName));
+            }
+        });
+    }
+
+    validateField(fieldName) {
+        const field = document.getElementById(fieldName);
+        const rules = this.validationRules[fieldName];
+        const value = field.value.trim();
+
+        // Clear previous validation
+        field.classList.remove('is-valid', 'is-invalid');
+        const feedback = field.parentNode.querySelector('.invalid-feedback');
+        if (feedback) feedback.textContent = '';
+
+        // Required validation
+        if (rules.required && !value) {
+            this.setFieldError(field, 'This field is required');
+            return false;
+        }
+
+        // Skip other validations if field is empty and not required
+        if (!value && !rules.required) {
+            field.classList.add('is-valid');
+            return true;
+        }
+
+        // Length validations
+        if (rules.min && value.length < rules.min) {
+            this.setFieldError(field, `Minimum ${rules.min} characters required`);
+            return false;
+        }
+
+        if (rules.max && value.length > rules.max) {
+            this.setFieldError(field, `Maximum ${rules.max} characters allowed`);
+            return false;
+        }
+
+        // Number validations
+        if (field.type === 'number') {
+            const numValue = parseFloat(value);
+            if (rules.min !== undefined && numValue < rules.min) {
+                this.setFieldError(field, `Minimum value is ${rules.min}`);
+                return false;
+            }
+            if (rules.max !== undefined && numValue > rules.max) {
+                this.setFieldError(field, `Maximum value is ${rules.max}`);
+                return false;
+            }
+        }
+
+        field.classList.add('is-valid');
+        return true;
+    }
+
+    setFieldError(field, message) {
+        field.classList.add('is-invalid');
+        const feedback = field.parentNode.querySelector('.invalid-feedback');
+        if (feedback) feedback.textContent = message;
+
+        // Add shake animation
+        field.classList.add('shake');
+        setTimeout(() => field.classList.remove('shake'), 500);
+    }
+
+    clearFieldError(fieldName) {
+        const field = document.getElementById(fieldName);
+        field.classList.remove('is-invalid', 'shake');
+        const feedback = field.parentNode.querySelector('.invalid-feedback');
+        if (feedback) feedback.textContent = '';
+
+        // Update progress when user starts typing
+        setTimeout(() => this.updateFormProgress(), 100);
+    }
+
+    setupImageUpload() {
+        const imageInput = document.getElementById('image');
+        const uploadArea = document.getElementById('imageUploadArea');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const imagePreview = document.getElementById('imagePreview');
+        const currentImageDisplay = document.getElementById('currentImageDisplay');
+        const previewImg = document.getElementById('previewImg');
+        const removeBtn = document.getElementById('removeImage');
+        const changeBtn = document.getElementById('changeImage');
+        const changeCurrentBtn = document.getElementById('changeCurrentImage');
+        const removeCurrentBtn = document.getElementById('removeCurrentImage');
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            if (!imagePreview.style.display || imagePreview.style.display === 'none') {
+                imageInput.click();
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.handleImageFile(files[0]);
+            }
+        });
+
+        // File input change
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.handleImageFile(e.target.files[0]);
+            }
+        });
+
+        // Remove image buttons
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeImage();
+            });
+        }
+
+        if (changeBtn) {
+            changeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                imageInput.click();
+            });
+        }
+
+        if (changeCurrentBtn) {
+            changeCurrentBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                imageInput.click();
+            });
+        }
+
+        if (removeCurrentBtn) {
+            removeCurrentBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeCurrentImage();
+            });
+        }
+    }
+
+    handleImageFile(file) {
+        // Validate file
+        const maxSize = 16 * 1024 * 1024; // 16MB
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+
+        if (!allowedTypes.includes(file.type)) {
+            RestaurantApp.showNotification('Error', 'Please select a valid image file (PNG, JPG, JPEG, GIF, WebP)', 'error');
+            return;
+        }
+
+        if (file.size > maxSize) {
+            RestaurantApp.showNotification('Error', 'Image size must be less than 16MB', 'error');
+            return;
+        }
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewImg = document.getElementById('previewImg');
+            const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+            const imagePreview = document.getElementById('imagePreview');
+            const currentImageDisplay = document.getElementById('currentImageDisplay');
+
+            if (previewImg) previewImg.src = e.target.result;
+            if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
+            if (currentImageDisplay) currentImageDisplay.style.display = 'none';
+            if (imagePreview) imagePreview.style.display = 'block';
+
+            this.updateFormProgress();
+        };
+        reader.readAsDataURL(file);
+
+        // Update file input
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('image').files = dt.files;
+    }
+
+    removeImage() {
+        const imageInput = document.getElementById('image');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const currentImageDisplay = document.getElementById('currentImageDisplay');
+
+        if (imageInput) imageInput.value = '';
+        if (imagePreview) imagePreview.style.display = 'none';
+
+        // Show appropriate placeholder
+        if (currentImageDisplay && currentImageDisplay.querySelector('img').src) {
+            currentImageDisplay.style.display = 'block';
+        } else if (uploadPlaceholder) {
+            uploadPlaceholder.style.display = 'block';
+        }
+
+        this.updateFormProgress();
+    }
+
+    removeCurrentImage() {
+        const currentImageDisplay = document.getElementById('currentImageDisplay');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const imageInput = document.getElementById('image');
+
+        if (currentImageDisplay) currentImageDisplay.style.display = 'none';
+        if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
+        if (imageInput) imageInput.value = '';
+
+        // Add a hidden input to indicate image removal
+        let removeInput = document.getElementById('remove_image');
+        if (!removeInput) {
+            removeInput = document.createElement('input');
+            removeInput.type = 'hidden';
+            removeInput.name = 'remove_image';
+            removeInput.id = 'remove_image';
+            removeInput.value = '1';
+            this.form.appendChild(removeInput);
+        } else {
+            removeInput.value = '1';
+        }
+
+        this.updateFormProgress();
+    }
+
+    setupCharacterCounters() {
+        const fields = ['description', 'ingredients'];
+        fields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            const counter = document.getElementById(fieldName + 'Count');
+            if (field && counter) {
+                field.addEventListener('input', () => {
+                    counter.textContent = field.value.length;
+                    const maxLength = this.validationRules[fieldName]?.max || 0;
+                    if (field.value.length > maxLength * 0.9) {
+                        counter.style.color = 'var(--danger-red)';
+                    } else {
+                        counter.style.color = 'var(--primary-yellow)';
+                    }
+                });
+            }
+        });
+    }
+
+    setupFormProgress() {
+        // Update progress when any field changes
+        this.form.addEventListener('input', () => {
+            setTimeout(() => this.updateFormProgress(), 100);
+        });
+        this.form.addEventListener('change', () => {
+            setTimeout(() => this.updateFormProgress(), 100);
+        });
+    }
+
+    updateFormProgress() {
+        const totalFields = this.requiredFields.length + 3; // +3 for optional but important fields
+        let completedFields = 0;
+
+        // Check required fields
+        this.requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (field && field.value.trim()) {
+                completedFields++;
+            }
+        });
+
+        // Check optional important fields
+        if (document.getElementById('description').value.trim()) completedFields++;
+        if (document.getElementById('image').files.length > 0 || document.getElementById('currentImageDisplay')?.style.display !== 'none') completedFields++;
+        if (document.getElementById('preparation_time').value.trim()) completedFields++;
+
+        const percentage = (completedFields / totalFields) * 100;
+
+        // Update progress bars
+        document.getElementById('formProgress').style.width = percentage + '%';
+        document.getElementById('completionProgress').style.width = percentage + '%';
+
+        // Update completion text
+        const completionText = document.getElementById('completionText');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (percentage >= 60) { // At least required fields + some optional
+            completionText.textContent = 'Ready to submit!';
+            completionText.className = 'text-success';
+            submitBtn.disabled = false;
+        } else if (percentage >= 40) {
+            completionText.textContent = 'Almost ready...';
+            completionText.className = 'text-warning';
+            submitBtn.disabled = false; // Allow submission for edit since we have existing data
+        } else {
+            completionText.textContent = 'Form ready for submission';
+            completionText.className = 'text-success';
+            submitBtn.disabled = false; // Allow submission for edit since we have existing data
+        }
+    }
+
+    setupEventListeners() {
+        // Preview button
+        const previewBtn = document.getElementById('previewBtn');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => {
+                this.showPreview();
+            });
+        }
+
+        // Delete button
+        const deleteBtn = document.getElementById('deleteBtn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                deleteModal.show();
+            });
+        }
+
+        // Add category button
+        document.getElementById('addCategoryBtn').addEventListener('click', () => {
+            this.showAddCategoryModal();
+        });
+
+        // Price calculator
+        document.getElementById('priceCalculator').addEventListener('click', () => {
+            this.showPriceCalculator();
+        });
+
+        // Form submission
+        this.form.addEventListener('submit', (e) => {
+            this.handleFormSubmit(e);
+        });
+
+        // Auto-focus on name field
+        document.getElementById('name').focus();
+
+        // Real-time discount calculation
+        const priceInput = document.getElementById('price');
+        const discountInput = document.getElementById('discount_percentage');
+        
+        if (priceInput && discountInput) {
+            const updateDiscountDisplay = () => {
+                const price = parseFloat(priceInput.value) || 0;
+                const discount = parseFloat(discountInput.value) || 0;
+                
+                // Update display in the form
+                const discountInfo = document.getElementById('discountInfo');
+                if (discount > 0 && price > 0) {
+                    const discountedPrice = price * (1 - discount / 100);
+                    const savingsAmount = price - discountedPrice;
+                    
+                    if (!discountInfo) {
+                        const infoDiv = document.createElement('div');
+                        infoDiv.id = 'discountInfo';
+                        infoDiv.className = 'mt-2 p-2 bg-light rounded';
+                        discountInput.parentNode.appendChild(infoDiv);
+                    }
+                    
+                    document.getElementById('discountInfo').innerHTML = `
+                        <small class="text-muted">
+                            <i class="fas fa-calculator me-1"></i>
+                            Original: <strong>EGP ${price.toFixed(2)}</strong> → 
+                            Discounted: <strong class="text-success">EGP ${discountedPrice.toFixed(2)}</strong>
+                            <br>
+                            <span class="text-danger">Customer saves: EGP ${savingsAmount.toFixed(2)}</span>
+                        </small>
+                    `;
+                } else if (discountInfo) {
+                    discountInfo.remove();
+                }
+            };
+            
+            priceInput.addEventListener('input', updateDiscountDisplay);
+            discountInput.addEventListener('input', updateDiscountDisplay);
+        }
+    }
+
+    setupUnlimitedStock() {
+        const stockInput = document.getElementById('stock');
+        const unlimitedCheckbox = document.getElementById('unlimitedStock');
+
+        unlimitedCheckbox.addEventListener('change', () => {
+            if (unlimitedCheckbox.checked) {
+                stockInput.value = 0;
+                stockInput.disabled = true;
+            } else {
+                stockInput.disabled = false;
+                stockInput.focus();
+            }
+        });
+    }
+
+    showPreview() {
+        // Populate preview modal
+        const name = document.getElementById('name').value || 'Untitled Item';
+        const category = document.getElementById('category_id').selectedOptions[0]?.text || 'No Category';
+        const description = document.getElementById('description').value || 'No description provided';
+        const price = parseFloat(document.getElementById('price').value) || 0;
+        const discountPercentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
+        const stock = document.getElementById('stock').value || '0';
+        const prepTime = document.getElementById('preparation_time').value || 'Not specified';
+        const calories = document.getElementById('calories').value || 'Not specified';
+        const ingredients = document.getElementById('ingredients').value || 'Not specified';
+        const allergens = document.getElementById('allergens').value || 'None specified';
+
+        document.getElementById('previewName').textContent = name;
+        document.getElementById('previewCategory').textContent = category;
+        document.getElementById('previewDescription').textContent = description;
+        
+        // Handle discount pricing
+        const discountSection = document.getElementById('previewDiscountSection');
+        const regularPriceSection = document.getElementById('previewRegularPrice');
+        
+        if (discountPercentage > 0) {
+            const originalPrice = price; // The price field should contain the original price
+            const discountedPrice = originalPrice * (1 - discountPercentage / 100);
+            
+            document.getElementById('previewDiscountBadge').textContent = `${discountPercentage} OFF`;
+            document.getElementById('previewOriginalPrice').textContent = `EGP ${originalPrice.toFixed(2)}`;
+            document.getElementById('previewPrice').textContent = `EGP ${discountedPrice.toFixed(2)}`;
+            
+            discountSection.style.display = 'block';
+            regularPriceSection.style.display = 'none';
+        } else {
+            document.getElementById('previewPriceRegular').textContent = `EGP ${price.toFixed(2)}`;
+            discountSection.style.display = 'none';
+            regularPriceSection.style.display = 'block';
+        }
+        
+        document.getElementById('previewStock').textContent = stock === '0' ? 'Unlimited' : stock;
+        document.getElementById('previewPrepTime').textContent = prepTime === 'Not specified' ? prepTime : `${prepTime} minutes`;
+        document.getElementById('previewCalories').textContent = calories === 'Not specified' ? calories : `${calories} kcal`;
+
+        // Ingredients
+        const ingredientsDiv = document.getElementById('previewIngredients');
+        if (ingredients !== 'Not specified') {
+            ingredientsDiv.textContent = ingredients;
+        } else {
+            ingredientsDiv.textContent = 'Not specified';
+        }
+
+        // Allergens
+        const allergensDiv = document.getElementById('previewAllergens');
+        if (allergens !== 'None specified') {
+            allergensDiv.textContent = allergens;
+        } else {
+            allergensDiv.textContent = 'None specified';
+        }
+
+        // Options
+        const options = [];
+        if (document.getElementById('is_featured').checked) options.push('Featured');
+        if (document.getElementById('is_spicy').checked) options.push('Spicy');
+        if (document.getElementById('is_vegetarian').checked) options.push('Vegetarian');
+        if (document.getElementById('is_vegan').checked) options.push('Vegan');
+
+        const optionsSection = document.getElementById('previewOptionsSection');
+        const optionsDiv = document.getElementById('previewOptions');
+        if (options.length > 0) {
+            optionsDiv.innerHTML = options.map(opt => `<span class="badge bg-secondary me-1">${opt}</span>`).join('');
+            optionsSection.style.display = 'block';
+        } else {
+            optionsSection.style.display = 'none';
+        }
+
+        // Image
+        const imageInput = document.getElementById('image');
+        const previewImage = document.getElementById('previewModalImage');
+        const noImagePlaceholder = document.getElementById('previewNoImage');
+
+        if (imageInput.files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                noImagePlaceholder.style.display = 'none';
+            };
+            reader.readAsDataURL(imageInput.files[0]);
+        } else {
+            previewImage.style.display = 'none';
+            noImagePlaceholder.style.display = 'block';
+        }
+
+        // Show modal
+        new bootstrap.Modal(document.getElementById('previewModal')).show();
+    }
+
+    showAddCategoryModal() {
+        new bootstrap.Modal(document.getElementById('addCategoryModal')).show();
+
+        // Setup save category handler
+        document.getElementById('saveCategoryBtn').onclick = () => {
+            this.saveNewCategory();
+        };
+    }
+
+    saveNewCategory() {
+        const name = document.getElementById('newCategoryName').value.trim();
+        const description = document.getElementById('newCategoryDescription').value.trim();
+
+        if (!name) {
+            RestaurantApp.showNotification('Error', 'Category name is required', 'error');
+            return;
+        }
+
+        // Here you would typically make an AJAX call to save the category
+        // For now, we'll just add it to the select dropdown
+        const categorySelect = document.getElementById('category_id');
+        const newOption = document.createElement('option');
+        newOption.value = 'new_' + Date.now(); // Temporary ID
+        newOption.textContent = name;
+        newOption.selected = true;
+        categorySelect.appendChild(newOption);
+
+        // Close modal and clear form
+        bootstrap.Modal.getInstance(document.getElementById('addCategoryModal')).hide();
+        document.getElementById('newCategoryName').value = '';
+        document.getElementById('newCategoryDescription').value = '';
+
+        RestaurantApp.showNotification('Success', 'Category added successfully', 'success');
+        this.updateFormProgress();
+    }
+
+    showPriceCalculator() {
+        // Simple price calculator prompt
+        const cost = prompt('Enter the cost price (EGP):');
+        if (cost && !isNaN(cost)) {
+            const costPrice = parseFloat(cost);
+            const markup = prompt('Enter markup percentage (e.g., 50 for 50%):');
+            if (markup && !isNaN(markup)) {
+                const markupPercent = parseFloat(markup);
+                const sellingPrice = costPrice * (1 + markupPercent / 100);
+                document.getElementById('price').value = sellingPrice.toFixed(2);
+                this.validateField('price');
+                this.updateFormProgress();
+                RestaurantApp.showNotification('Success', `Calculated price: EGP ${sellingPrice.toFixed(2)}`, 'success');
+            }
+        }
+    }
+
+    handleFormSubmit(e) {
+        e.preventDefault();
+
+        // Validate all fields
+        let isValid = true;
+        this.requiredFields.forEach(fieldName => {
+            if (!this.validateField(fieldName)) {
+                isValid = false;
+            }
+        });
+
+        // Validate optional fields that have values
+        Object.keys(this.validationRules).forEach(fieldName => {
+            if (!this.requiredFields.includes(fieldName)) {
+                const field = document.getElementById(fieldName);
+                if (field && field.value.trim()) {
+                    if (!this.validateField(fieldName)) {
+                        isValid = false;
+                    }
+                }
+            }
+        });
+
+        if (!isValid) {
+            RestaurantApp.showNotification('Error', 'Please fix the errors in the form', 'error');
+            return;
+        }
+
+        // Show loading state
+        this.setSubmitLoading(true);
+
+        // Submit form
+        setTimeout(() => {
+            this.form.submit();
+        }, 500);
+    }
+
+    setSubmitLoading(loading) {
+        const submitBtn = document.getElementById('submitBtn');
+        const submitSpinner = document.getElementById('submitSpinner');
+        const submitIcon = document.getElementById('submitIcon');
+        const submitText = document.getElementById('submitText');
+
+        if (loading) {
+            submitBtn.disabled = true;
+            submitSpinner.classList.remove('d-none');
+            submitIcon.classList.add('d-none');
+            submitText.textContent = 'Saving Changes...';
+            this.form.classList.add('loading');
+        } else {
+            submitBtn.disabled = false;
+            submitSpinner.classList.add('d-none');
+            submitIcon.classList.remove('d-none');
+            submitText.textContent = 'Save Changes';
+            this.form.classList.remove('loading');
+        }
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.editMenuItemManager = new EditMenuItemManager();
+});
+
+// Additional utility functions
+function formatPrice(price) {
+    return parseFloat(price).toFixed(2);
+}
+
+function validateImageFile(file) {
+    const maxSize = 16 * 1024 * 1024; // 16MB
+    const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+
+    if (!allowedTypes.includes(file.type)) {
+        return { valid: false, message: 'Invalid file type. Please select PNG, JPG, JPEG, GIF, or WebP.' };
+    }
+
+    if (file.size > maxSize) {
+        return { valid: false, message: 'File size too large. Maximum size is 16MB.' };
+    }
+
+    return { valid: true };
+}
+
+// Auto-save draft functionality (optional)
+function saveDraft() {
+    const formData = new FormData(document.getElementById('addMenuItemForm'));
+    const draftData = {};
+
+    for (let [key, value] of formData.entries()) {
+        if (key !== 'image' && key !== 'csrf_token') {
+            draftData[key] = value;
+        }
+    }
+
+    localStorage.setItem('menuItemDraft', JSON.stringify(draftData));
+}
+
+function loadDraft() {
+    const draft = localStorage.getItem('menuItemDraft');
+    if (draft) {
+        const draftData = JSON.parse(draft);
+        Object.keys(draftData).forEach(key => {
+            const field = document.getElementById(key);
+            if (field) {
+                field.value = draftData[key];
+                if (field.type === 'checkbox') {
+                    field.checked = draftData[key] === 'on';
+                }
+            }
+        });
+    }
+}
+
+function clearDraft() {
+    localStorage.removeItem('menuItemDraft');
+}
+</script>
 {% endblock %}

@@ -157,47 +157,182 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Table Number Modal -->
+<div class="modal fade" id="tableNumberModal" tabindex="-1" aria-labelledby="tableNumberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tableNumberModalLabel">
+                    <i class="fas fa-table me-2"></i>Table Number Required
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Please enter your table number to submit a service request.</p>
+                <div class="mb-3">
+                    <label for="tableNumberInput" class="form-label">Table Number *</label>
+                    <input type="number" class="form-control" id="tableNumberInput"
+                           placeholder="Enter table number (1-10)" min="1" max="10" required>
+                    <div class="form-text">Your table number helps our staff locate you quickly.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitTableNumber()">
+                    <i class="fas fa-check me-2"></i>Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AC Preference Modal -->
+<div class="modal fade" id="acPreferenceModal" tabindex="-1" aria-labelledby="acPreferenceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="acPreferenceModalLabel">
+                    <i class="fas fa-snowflake me-2"></i>AC Adjustment Request
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Please specify your AC preference for <strong id="acServiceName"></strong>:</p>
+                <div class="mb-3">
+                    <label for="acPreference" class="form-label">Temperature Preference *</label>
+                    <select class="form-select" id="acPreference" required>
+                        <option value="">Select preference...</option>
+                        <option value="cooler">Make it cooler</option>
+                        <option value="warmer">Make it warmer</option>
+                        <option value="turn_on">Turn on AC</option>
+                        <option value="turn_off">Turn off AC</option>
+                    </select>
+                </div>
+                <input type="hidden" id="acServiceId">
+                <input type="hidden" id="acTableId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitACPreference()">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Request Modal -->
+<div class="modal fade" id="customRequestModal" tabindex="-1" aria-labelledby="customRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customRequestModalLabel">
+                    <i class="fas fa-edit me-2"></i>Custom Service Request
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Please describe your custom request for <strong id="customServiceName"></strong>:</p>
+                <div class="mb-3">
+                    <label for="customRequestDescription" class="form-label">Request Description *</label>
+                    <textarea class="form-control" id="customRequestDescription" rows="4"
+                              placeholder="Please describe what you need..." required></textarea>
+                    <div class="form-text">Be as specific as possible to help our staff assist you better.</div>
+                </div>
+                <input type="hidden" id="customServiceId">
+                <input type="hidden" id="customTableId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitCustomRequest()">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Confirmation Modal -->
+<div class="modal fade" id="serviceConfirmationModal" tabindex="-1" aria-labelledby="serviceConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="serviceConfirmationModalLabel">
+                    <i class="fas fa-question-circle me-2"></i>Confirm Service Request
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to request <strong id="confirmServiceName"></strong>?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Service:</strong> <span id="confirmServiceDescription"></span>
+                </div>
+                <input type="hidden" id="confirmServiceId">
+                <input type="hidden" id="confirmTableId">
+                <input type="hidden" id="confirmDescription">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitConfirmedRequest()">
+                    <i class="fas fa-check me-2"></i>Yes, Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// Global variables for service requests
+let currentServiceId = null;
+let currentServiceName = '';
+let currentServiceDescription = '';
+
 // Service request functionality
 function submitServiceRequest(serviceId, serviceName, serviceDescription) {
     // Get table ID from user
     let tableId = sessionStorage.getItem('currentTableId');
     if (!tableId) {
-        tableId = prompt('Please enter your table number (1-10):');
-        if (!tableId || isNaN(tableId)) {
-            alert('Please enter a valid table number.');
-            return;
-        }
-        sessionStorage.setItem('currentTableId', tableId);
+        // Store current service details for modal
+        currentServiceId = serviceId;
+        currentServiceName = serviceName;
+        currentServiceDescription = serviceDescription;
+
+        // Show table number modal
+        showTableNumberModal();
+        return;
     }
     
     // Handle special cases for certain services
     let description = serviceDescription;
     let confirmText = `Request ${serviceName} for your table?`;
     
+    // Continue with the actual service request
+    processServiceRequest(serviceId, serviceName, serviceDescription, tableId);
+}
+
+function processServiceRequest(serviceId, serviceName, serviceDescription, tableId) {
+    // Handle special cases for certain services
+    let description = serviceDescription;
+    let confirmText = `Request ${serviceName} for your table?`;
+
     // Special handling for AC adjustment
     if (serviceName.toLowerCase().includes('ac') || serviceName.toLowerCase().includes('air')) {
-        const preference = prompt('Please specify your AC preference (warmer/cooler):');
-        if (!preference) return;
-        description = `AC adjustment: ${preference}`;
-        confirmText = 'Submit AC adjustment request?';
-    }
-    
-    // Special handling for custom request
-    if (serviceName.toLowerCase().includes('custom')) {
-        const customDesc = prompt('Please describe your custom request:');
-        if (!customDesc) return;
-        description = customDesc;
-        confirmText = 'Submit your custom request?';
-    }
-    
-    // Confirm the request
-    if (!confirm(confirmText)) {
+        showACPreferenceModal(serviceId, serviceName, tableId);
         return;
     }
+
+    // Special handling for custom request
+    if (serviceName.toLowerCase().includes('custom')) {
+        showCustomRequestModal(serviceId, serviceName, tableId);
+        return;
+    }
+
+    // Show confirmation modal for regular requests
+    showServiceConfirmationModal(serviceId, serviceName, description, tableId);
     
     // Submit the request
     const requestData = {
@@ -221,15 +356,212 @@ function submitServiceRequest(serviceId, serviceName, serviceDescription) {
     })
     .then(data => {
         if (data.request_id) {
-            alert(`✅ ${serviceName} request submitted successfully!\n\nRequest ID: ${data.request_id}\nTable: ${tableId}\n\nOur staff will assist you shortly.`);
+            showServiceNotification('Success', `${serviceName} request submitted successfully! Request ID: ${data.request_id}. Our staff will assist you shortly.`, 'success');
         } else {
-            alert(`❌ Error: ${data.error || 'Failed to submit request'}`);
+            showServiceNotification('Error', data.error || 'Failed to submit request', 'error');
         }
     })
     .catch(error => {
         console.error('Error submitting service request:', error);
-        alert(`❌ Failed to submit request: ${error.message}\n\nPlease try again or contact staff directly.`);
+        showServiceNotification('Error', `Failed to submit request: ${error.message}. Please try again or contact staff directly.`, 'error');
     });
 }
+
+// Service notification function
+function showServiceNotification(title, message, type = 'info') {
+    // Create toast if it doesn't exist
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '1055';
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast
+    const toastId = 'serviceToast_' + Date.now();
+    const toastHtml = `
+        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} text-white">
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+                <strong class="me-auto">${title}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+    // Show toast
+    const toast = document.getElementById(toastId);
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: type === 'success' ? 4000 : 6000
+    });
+
+    // Remove toast from DOM after it's hidden
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+
+    bsToast.show();
+}
+
+// Modal functions
+function showTableNumberModal() {
+    const modal = new bootstrap.Modal(document.getElementById('tableNumberModal'));
+    modal.show();
+}
+
+function showACPreferenceModal(serviceId, serviceName, tableId) {
+    document.getElementById('acServiceId').value = serviceId;
+    document.getElementById('acServiceName').textContent = serviceName;
+    document.getElementById('acTableId').value = tableId;
+    const modal = new bootstrap.Modal(document.getElementById('acPreferenceModal'));
+    modal.show();
+}
+
+function showCustomRequestModal(serviceId, serviceName, tableId) {
+    document.getElementById('customServiceId').value = serviceId;
+    document.getElementById('customServiceName').textContent = serviceName;
+    document.getElementById('customTableId').value = tableId;
+    document.getElementById('customRequestDescription').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('customRequestModal'));
+    modal.show();
+}
+
+function showServiceConfirmationModal(serviceId, serviceName, description, tableId) {
+    document.getElementById('confirmServiceName').textContent = serviceName;
+    document.getElementById('confirmServiceDescription').textContent = description;
+    document.getElementById('confirmServiceId').value = serviceId;
+    document.getElementById('confirmTableId').value = tableId;
+    document.getElementById('confirmDescription').value = description;
+    const modal = new bootstrap.Modal(document.getElementById('serviceConfirmationModal'));
+    modal.show();
+}
+
+// Submit table number
+function submitTableNumber() {
+    const tableId = document.getElementById('tableNumberInput').value;
+    if (!tableId || isNaN(tableId) || tableId < 1 || tableId > 10) {
+        showServiceNotification('Error', 'Please enter a valid table number (1-10)', 'error');
+        return;
+    }
+
+    sessionStorage.setItem('currentTableId', tableId);
+    const modal = bootstrap.Modal.getInstance(document.getElementById('tableNumberModal'));
+    modal.hide();
+
+    // Continue with the original service request
+    processServiceRequest(currentServiceId, currentServiceName, currentServiceDescription, tableId);
+}
+
+// Submit AC preference
+function submitACPreference() {
+    const serviceId = document.getElementById('acServiceId').value;
+    const serviceName = document.getElementById('acServiceName').textContent;
+    const tableId = document.getElementById('acTableId').value;
+    const preference = document.getElementById('acPreference').value;
+
+    if (!preference) {
+        showServiceNotification('Error', 'Please select your AC preference', 'error');
+        return;
+    }
+
+    const description = `AC adjustment: ${preference}`;
+    const modal = bootstrap.Modal.getInstance(document.getElementById('acPreferenceModal'));
+    modal.hide();
+
+    // Submit the request directly
+    submitServiceRequestAPI(serviceId, serviceName, description, tableId);
+}
+
+// Submit custom request
+function submitCustomRequest() {
+    const serviceId = document.getElementById('customServiceId').value;
+    const serviceName = document.getElementById('customServiceName').textContent;
+    const tableId = document.getElementById('customTableId').value;
+    const description = document.getElementById('customRequestDescription').value;
+
+    if (!description.trim()) {
+        showServiceNotification('Error', 'Please describe your custom request', 'error');
+        return;
+    }
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('customRequestModal'));
+    modal.hide();
+
+    // Submit the request directly
+    submitServiceRequestAPI(serviceId, serviceName, description, tableId);
+}
+
+// Submit confirmed service request
+function submitConfirmedRequest() {
+    const serviceId = document.getElementById('confirmServiceId').value;
+    const serviceName = document.getElementById('confirmServiceName').textContent;
+    const description = document.getElementById('confirmDescription').value;
+    const tableId = document.getElementById('confirmTableId').value;
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('serviceConfirmationModal'));
+    modal.hide();
+
+    // Submit the request directly
+    submitServiceRequestAPI(serviceId, serviceName, description, tableId);
+}
+
+// API submission function
+function submitServiceRequestAPI(serviceId, serviceName, description, tableId) {
+    const requestData = {
+        service_id: serviceId,
+        table_id: parseInt(tableId),
+        description: description
+    };
+
+    fetch('/service/api/request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.request_id) {
+            showServiceNotification('Success', `${serviceName} request submitted successfully! Request ID: ${data.request_id}. Our staff will assist you shortly.`, 'success');
+        } else {
+            showServiceNotification('Error', data.error || 'Failed to submit request', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting service request:', error);
+        showServiceNotification('Error', `Failed to submit request: ${error.message}. Please try again or contact staff directly.`, 'error');
+    });
+}
+
+// Auto-focus on modal inputs when shown
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('tableNumberModal').addEventListener('shown.bs.modal', function() {
+        document.getElementById('tableNumberInput').focus();
+    });
+
+    document.getElementById('customRequestModal').addEventListener('shown.bs.modal', function() {
+        document.getElementById('customRequestDescription').focus();
+    });
+
+    // Enter key support for table number input
+    document.getElementById('tableNumberInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            submitTableNumber();
+        }
+    });
+});
 </script>
 {% endblock %}

@@ -10,7 +10,7 @@ let unifiedCart = [];
 const CART_CONFIG = {
     storageKey: 'restaurant_cart',
     maxQuantity: 99,
-    currency: 'EGP'
+    currency: window.systemSettings?.currency || 'EGP'
 };
 
 // Initialize cart system
@@ -28,7 +28,22 @@ function loadCartFromStorage() {
     try {
         const savedCart = localStorage.getItem(CART_CONFIG.storageKey);
         if (savedCart) {
-            unifiedCart = JSON.parse(savedCart);
+            const cartData = JSON.parse(savedCart);
+            // Clean up invalid items (those with timestamp IDs)
+            unifiedCart = cartData.filter(item => {
+                const itemId = parseInt(item.id);
+                const isValid = !isNaN(itemId) && itemId < 1000000;
+                if (!isValid) {
+                    console.log('Removing invalid cart item with ID:', item.id);
+                }
+                return isValid;
+            });
+
+            // Save cleaned cart back to storage if we removed items
+            if (unifiedCart.length !== cartData.length) {
+                console.log(`Cleaned cart: removed ${cartData.length - unifiedCart.length} invalid items`);
+                saveCartToStorage();
+            }
         }
     } catch (error) {
         console.error('Error loading cart from storage:', error);
@@ -51,8 +66,10 @@ function safeShowNotification(title, message, type = 'info') {
         showNotification(title, message, type);
     } else if (typeof window.RestaurantApp !== 'undefined' && window.RestaurantApp.showNotification) {
         window.RestaurantApp.showNotification(title, message, type);
+    } else if (typeof showBaseNotification === 'function') {
+        showBaseNotification(title, message, type);
     } else {
-        // Fallback to alert
+        // Last resort fallback to alert
         alert(`${title}: ${message}`);
     }
 }
@@ -63,6 +80,14 @@ function addToCart(item) {
     if (!item || !item.id || !item.name || !item.price) {
         console.error('Invalid item data:', item);
         safeShowNotification('Error', 'Invalid item data', 'danger');
+        return false;
+    }
+
+    // Validate that item ID is a valid database ID (not a timestamp)
+    const itemId = parseInt(item.id);
+    if (isNaN(itemId) || itemId > 1000000) {
+        console.error('Invalid item ID (appears to be timestamp):', item.id);
+        safeShowNotification('Error', 'Invalid item. Please refresh the page and try again.', 'danger');
         return false;
     }
 
@@ -159,12 +184,61 @@ function clearCart() {
         return;
     }
 
-    if (confirm('Are you sure you want to clear your cart?')) {
-        unifiedCart = [];
-        saveCartToStorage();
-        updateCartDisplay();
-        updateCartCount();
-        safeShowNotification('Info', 'Cart cleared', 'info');
+    // Show confirmation modal instead of browser confirm
+    showClearCartConfirmationModal();
+}
+
+function showClearCartConfirmationModal() {
+    const modalHtml = `
+        <div class="modal fade" id="clearCartConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            Clear Cart
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Are you sure you want to clear your entire cart? This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" onclick="confirmClearCart()">
+                            <i class="fas fa-trash me-2"></i>Clear Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('clearCartConfirmModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('clearCartConfirmModal'));
+    modal.show();
+}
+
+function confirmClearCart() {
+    unifiedCart = [];
+    saveCartToStorage();
+    updateCartDisplay();
+    updateCartCount();
+    safeShowNotification('Info', 'Cart cleared', 'info');
+
+    // Hide modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('clearCartConfirmModal'));
+    if (modal) {
+        modal.hide();
     }
 }
 
@@ -340,15 +414,9 @@ function editCartItem(itemId) {
     console.log('🔍 All modals on page:', document.querySelectorAll('.modal').length);
 
     if (!itemDetailModal) {
-        console.log('❌ itemDetailModal not found, using fallback prompt');
-        // Fallback: Simple prompt for special instructions
-        const newInstructions = prompt('Edit special instructions for ' + item.name + ':', item.specialInstructions || '');
-        if (newInstructions !== null) {
-            item.specialInstructions = newInstructions;
-            saveCartToStorage();
-            updateCartDisplay();
-            safeShowNotification('Success', 'Item updated successfully', 'success');
-        }
+        console.log('❌ itemDetailModal not found, using fallback modal');
+        // Fallback: Create a simple modal for special instructions
+        showEditInstructionsModal(item);
         return;
     }
 
@@ -561,4 +629,79 @@ window.refreshCartDisplay = refreshCartDisplay;
 window.updateCartDisplay = updateCartDisplay;
 window.editCartItem = editCartItem;
 window.resetItemDetailModal = resetItemDetailModal;
+
+// Fallback modal for editing instructions when itemDetailModal is not available
+function showEditInstructionsModal(item) {
+    const modalHtml = `
+        <div class="modal fade" id="editInstructionsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>
+                            Edit Special Instructions
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">Edit special instructions for <strong>${item.name}</strong>:</p>
+                        <div class="mb-3">
+                            <label for="editInstructionsText" class="form-label">Special Instructions</label>
+                            <textarea class="form-control" id="editInstructionsText" rows="3"
+                                      placeholder="Enter any special instructions...">${item.specialInstructions || ''}</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="saveEditedInstructions('${item.id}')">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('editInstructionsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editInstructionsModal'));
+    modal.show();
+
+    // Focus on textarea
+    setTimeout(() => {
+        document.getElementById('editInstructionsText').focus();
+    }, 300);
+}
+
+function saveEditedInstructions(itemId) {
+    const newInstructions = document.getElementById('editInstructionsText').value;
+
+    // Find and update the item
+    const item = unifiedCart.find(cartItem => cartItem.id == itemId);
+    if (item) {
+        item.specialInstructions = newInstructions;
+        saveCartToStorage();
+        updateCartDisplay();
+        safeShowNotification('Success', 'Item updated successfully', 'success');
+    }
+
+    // Hide modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editInstructionsModal'));
+    if (modal) {
+        modal.hide();
+    }
+}
+
+window.showEditInstructionsModal = showEditInstructionsModal;
+window.saveEditedInstructions = saveEditedInstructions;
+window.showClearCartConfirmationModal = showClearCartConfirmationModal;
+window.confirmClearCart = confirmClearCart;
 

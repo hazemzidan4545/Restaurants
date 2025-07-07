@@ -357,6 +357,116 @@ def orders():
                          pending_orders=Order.query.filter(Order.status.in_(['new', 'processing'])).count(),
                          completed_orders=Order.query.filter_by(status='completed').count())
 
+@bp.route('/analytics/revenue')
+@login_required
+def revenue_analytics():
+    """Advanced revenue analytics dashboard"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+
+    # Get time period from request args
+    period = request.args.get('period', 'month')
+
+    # Calculate date ranges
+    now = datetime.now()
+
+    if period == 'today':
+        start_date = datetime(now.year, now.month, now.day)
+        end_date = start_date + timedelta(days=1)
+    elif period == 'week':
+        start_date = now - timedelta(days=7)
+        end_date = now
+    elif period == 'month':
+        start_date = datetime(now.year, now.month, 1)
+        end_date = now
+    elif period == 'quarter':
+        quarter_start_month = ((now.month - 1) // 3) * 3 + 1
+        start_date = datetime(now.year, quarter_start_month, 1)
+        end_date = now
+    elif period == 'year':
+        start_date = datetime(now.year, 1, 1)
+        end_date = now
+    else:  # all time
+        start_date = None
+        end_date = now
+
+    # Build base query
+    base_query = Order.query
+    if start_date:
+        base_query = base_query.filter(Order.order_time >= start_date)
+    base_query = base_query.filter(Order.order_time <= end_date)
+
+    # Revenue metrics
+    revenue_data = calculate_revenue_metrics(base_query, start_date, end_date, period)
+
+    # Customer analytics
+    customer_data = calculate_customer_analytics(base_query, start_date, end_date)
+
+    # Product performance
+    product_data = calculate_product_performance(base_query, start_date, end_date)
+
+    # Time-based analytics
+    time_data = calculate_time_analytics(base_query, start_date, end_date, period)
+
+    return render_template('revenue_analytics.html',
+                         revenue_data=revenue_data,
+                         customer_data=customer_data,
+                         product_data=product_data,
+                         time_data=time_data,
+                         period=period)
+
+@bp.route('/analytics/customers')
+@login_required
+def customer_analytics():
+    """Customer behavior analytics dashboard"""
+    if not current_user.is_admin():
+        return redirect(url_for('main.index'))
+
+    # Get time period from request args
+    period = request.args.get('period', 'month')
+
+    # Calculate date ranges
+    now = datetime.now()
+
+    if period == 'week':
+        start_date = now - timedelta(days=7)
+    elif period == 'month':
+        start_date = datetime(now.year, now.month, 1)
+    elif period == 'quarter':
+        quarter_start_month = ((now.month - 1) // 3) * 3 + 1
+        start_date = datetime(now.year, quarter_start_month, 1)
+    elif period == 'year':
+        start_date = datetime(now.year, 1, 1)
+    else:  # all time
+        start_date = None
+
+    end_date = now
+
+    # Build base query
+    base_query = Order.query
+    if start_date:
+        base_query = base_query.filter(Order.order_time >= start_date)
+    base_query = base_query.filter(Order.order_time <= end_date)
+
+    # Customer behavior metrics
+    behavior_data = calculate_detailed_customer_behavior(base_query, start_date, end_date)
+
+    # Customer segmentation
+    segmentation_data = calculate_customer_segmentation(base_query, start_date, end_date)
+
+    # Order patterns
+    pattern_data = calculate_order_patterns(base_query, start_date, end_date)
+
+    # Customer lifecycle
+    lifecycle_data = calculate_customer_lifecycle(start_date, end_date)
+
+    return render_template('customer_analytics.html',
+                         behavior_data=behavior_data,
+                         segmentation_data=segmentation_data,
+                         pattern_data=pattern_data,
+                         lifecycle_data=lifecycle_data,
+                         period=period)
+
 @bp.route('/analytics/popular-items')
 @login_required
 def popular_items_analytics():
@@ -366,7 +476,7 @@ def popular_items_analytics():
 
     # Get time period from request args
     period = request.args.get('period', 'all')
-    
+
     # Calculate date range based on period
     end_date = datetime.now()
     start_date = None
@@ -804,6 +914,12 @@ def add_menu_item():
         serving_size = request.form.get('serving_size')
         dietary_info = request.form.get('dietary_info')
 
+        # Get special options
+        is_featured = 'is_featured' in request.form
+        is_spicy = 'is_spicy' in request.form
+        is_vegetarian = 'is_vegetarian' in request.form
+        is_vegan = 'is_vegan' in request.form
+
         if not name or not price or not category_id:
             flash('Name, price, and category are required', 'error')
             return render_template('add_menu_item.html', categories=categories)
@@ -837,7 +953,11 @@ def add_menu_item():
             allergens=allergens,
             serving_size=serving_size,
             dietary_info=dietary_info,
-            discount_percentage=discount_percentage or 0.00
+            discount_percentage=discount_percentage or 0.00,
+            is_featured=is_featured,
+            is_spicy=is_spicy,
+            is_vegetarian=is_vegetarian,
+            is_vegan=is_vegan
         )
         
         # Apply discount if provided
@@ -893,6 +1013,12 @@ def edit_menu_item(item_id):
         serving_size = request.form.get('serving_size')
         dietary_info = request.form.get('dietary_info')
 
+        # Get special options
+        is_featured = 'is_featured' in request.form
+        is_spicy = 'is_spicy' in request.form
+        is_vegetarian = 'is_vegetarian' in request.form
+        is_vegan = 'is_vegan' in request.form
+
         if not name or not price or not category_id:
             flash('Name, price, and category are required', 'error')
             return render_template('edit_menu_item.html', menu_item=menu_item, categories=categories)
@@ -903,8 +1029,21 @@ def edit_menu_item(item_id):
             flash('Menu item with this name already exists', 'error')
             return render_template('edit_menu_item.html', menu_item=menu_item, categories=categories)
 
+        # Handle image removal
+        remove_image = request.form.get('remove_image')
+        if remove_image == '1':
+            # Delete current image if exists
+            if menu_item.image_url:
+                old_image_path = os.path.join(current_app.root_path, current_app.config['MENU_IMAGE_FOLDER'], menu_item.image_url)
+                if os.path.exists(old_image_path):
+                    try:
+                        os.remove(old_image_path)
+                    except Exception as e:
+                        current_app.logger.error(f"Error deleting old image: {e}")
+            menu_item.image_url = None
+
         # Handle image upload
-        if 'image' in request.files:
+        elif 'image' in request.files:
             file = request.files['image']
             if file.filename:
                 # Delete old image if exists
@@ -936,6 +1075,12 @@ def edit_menu_item(item_id):
         menu_item.allergens = allergens
         menu_item.serving_size = serving_size
         menu_item.dietary_info = dietary_info
+
+        # Update special options
+        menu_item.is_featured = is_featured
+        menu_item.is_spicy = is_spicy
+        menu_item.is_vegetarian = is_vegetarian
+        menu_item.is_vegan = is_vegan
         
         # Handle discount updates
         if discount_percentage and discount_percentage > 0:
@@ -1533,9 +1678,19 @@ def add_campaign():
     """Add new promotional campaign"""
     if not current_user.is_admin():
         return redirect(url_for('main.index'))
+
+    # Get categories for the form
+    categories = Category.query.filter_by(status='active').all()
     
     if request.method == 'POST':
         try:
+            # Parse specific menu categories if provided
+            specific_categories = request.form.getlist('specific_menu_categories')
+            categories_json = None
+            if specific_categories:
+                import json
+                categories_json = json.dumps([int(cat_id) for cat_id in specific_categories if cat_id])
+
             campaign = PromotionalCampaign(
                 name=request.form.get('name'),
                 description=request.form.get('description'),
@@ -1543,7 +1698,15 @@ def add_campaign():
                 start_date=datetime.strptime(request.form.get('start_date'), '%Y-%m-%d'),
                 end_date=datetime.strptime(request.form.get('end_date'), '%Y-%m-%d'),
                 conditions=request.form.get('conditions'),
-                status=request.form.get('status', 'active')
+                status=request.form.get('status', 'active'),
+                minimum_order_amount=float(request.form.get('minimum_order_amount') or 0),
+                maximum_uses_per_customer=int(request.form.get('maximum_uses_per_customer')) if request.form.get('maximum_uses_per_customer') else None,
+                total_usage_limit=int(request.form.get('total_usage_limit')) if request.form.get('total_usage_limit') else None,
+                target_customer_tier=request.form.get('target_customer_tier') or 'all',
+                applicable_days=request.form.get('applicable_days') or 'all',
+                specific_menu_categories=categories_json,
+                discount_type=request.form.get('discount_type') or 'points_multiplier',
+                discount_value=float(request.form.get('discount_value')) if request.form.get('discount_value') else None
             )
             
             db.session.add(campaign)
@@ -1556,7 +1719,7 @@ def add_campaign():
             db.session.rollback()
             flash(f'Error adding campaign: {str(e)}', 'error')
     
-    return render_template('add_campaign.html')
+    return render_template('add_campaign.html', categories=categories)
 
 @bp.route('/campaigns/edit/<int:campaign_id>', methods=['GET', 'POST'])
 @login_required
@@ -1564,11 +1727,19 @@ def edit_campaign(campaign_id):
     """Edit existing campaign"""
     if not current_user.is_admin():
         return redirect(url_for('main.index'))
-    
+
     campaign = PromotionalCampaign.query.get_or_404(campaign_id)
+    categories = Category.query.filter_by(status='active').all()
     
     if request.method == 'POST':
         try:
+            # Parse specific menu categories if provided
+            specific_categories = request.form.getlist('specific_menu_categories')
+            categories_json = None
+            if specific_categories:
+                import json
+                categories_json = json.dumps([int(cat_id) for cat_id in specific_categories if cat_id])
+
             campaign.name = request.form.get('name')
             campaign.description = request.form.get('description')
             campaign.bonus_multiplier = float(request.form.get('bonus_multiplier', 1.0))
@@ -1576,6 +1747,14 @@ def edit_campaign(campaign_id):
             campaign.end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d')
             campaign.conditions = request.form.get('conditions')
             campaign.status = request.form.get('status')
+            campaign.minimum_order_amount = float(request.form.get('minimum_order_amount') or 0)
+            campaign.maximum_uses_per_customer = int(request.form.get('maximum_uses_per_customer')) if request.form.get('maximum_uses_per_customer') else None
+            campaign.total_usage_limit = int(request.form.get('total_usage_limit')) if request.form.get('total_usage_limit') else None
+            campaign.target_customer_tier = request.form.get('target_customer_tier') or 'all'
+            campaign.applicable_days = request.form.get('applicable_days') or 'all'
+            campaign.specific_menu_categories = categories_json
+            campaign.discount_type = request.form.get('discount_type') or 'points_multiplier'
+            campaign.discount_value = float(request.form.get('discount_value')) if request.form.get('discount_value') else None
             
             db.session.commit()
             
@@ -1586,7 +1765,7 @@ def edit_campaign(campaign_id):
             db.session.rollback()
             flash(f'Error updating campaign: {str(e)}', 'error')
     
-    return render_template('edit_campaign.html', campaign=campaign, now=datetime.now)
+    return render_template('edit_campaign.html', campaign=campaign, categories=categories, now=datetime.now)
 
 @bp.route('/campaign-statistics/<int:campaign_id>')
 @login_required
@@ -2733,3 +2912,423 @@ def system_settings():
             settings[setting.key] = setting.value
     
     return render_template('system_settings.html', settings=settings)
+
+# ======================== ANALYTICS HELPER FUNCTIONS ========================
+
+def calculate_revenue_metrics(base_query, start_date, end_date, period):
+    """Calculate comprehensive revenue metrics"""
+    from sqlalchemy import func
+
+    # Total revenue and orders
+    total_stats = base_query.with_entities(
+        func.sum(Order.total_amount).label('total_revenue'),
+        func.count(Order.order_id).label('total_orders'),
+        func.avg(Order.total_amount).label('avg_order_value')
+    ).first()
+
+    total_revenue = float(total_stats.total_revenue or 0)
+    total_orders = int(total_stats.total_orders or 0)
+    avg_order_value = float(total_stats.avg_order_value or 0)
+
+    # Revenue by status
+    status_revenue = base_query.with_entities(
+        Order.status,
+        func.sum(Order.total_amount).label('revenue'),
+        func.count(Order.order_id).label('count')
+    ).group_by(Order.status).all()
+
+    # Calculate growth (compare with previous period)
+    growth_data = calculate_growth_metrics(start_date, end_date, period)
+
+    return {
+        'total_revenue': total_revenue,
+        'total_orders': total_orders,
+        'avg_order_value': avg_order_value,
+        'status_breakdown': [
+            {
+                'status': status,
+                'revenue': float(revenue or 0),
+                'count': int(count or 0),
+                'percentage': (float(revenue or 0) / total_revenue * 100) if total_revenue > 0 else 0
+            }
+            for status, revenue, count in status_revenue
+        ],
+        'growth': growth_data
+    }
+
+def calculate_customer_analytics(base_query, start_date, end_date):
+    """Calculate customer behavior analytics"""
+    from sqlalchemy import func
+
+    # Customer metrics
+    customer_stats = base_query.join(User).with_entities(
+        func.count(func.distinct(Order.user_id)).label('unique_customers'),
+        func.count(Order.order_id).label('total_orders')
+    ).first()
+
+    unique_customers = int(customer_stats.unique_customers or 0)
+    total_orders = int(customer_stats.total_orders or 0)
+
+    # Top customers by revenue
+    top_customers = base_query.join(User).with_entities(
+        User.name,
+        User.email,
+        func.sum(Order.total_amount).label('total_spent'),
+        func.count(Order.order_id).label('order_count')
+    ).group_by(User.user_id).order_by(
+        func.sum(Order.total_amount).desc()
+    ).limit(10).all()
+
+    return {
+        'unique_customers': unique_customers,
+        'total_orders': total_orders,
+        'orders_per_customer': round(total_orders / unique_customers, 2) if unique_customers > 0 else 0,
+        'top_customers': [
+            {
+                'name': name,
+                'email': email,
+                'total_spent': float(total_spent or 0),
+                'order_count': int(order_count or 0)
+            }
+            for name, email, total_spent, order_count in top_customers
+        ]
+    }
+
+def calculate_product_performance(base_query, start_date, end_date):
+    """Calculate product performance analytics"""
+    from sqlalchemy import func
+
+    # Top products by revenue
+    top_products = base_query.join(OrderItem).join(MenuItem).with_entities(
+        MenuItem.name,
+        MenuItem.category_id,
+        func.sum(OrderItem.quantity * OrderItem.unit_price).label('revenue'),
+        func.sum(OrderItem.quantity).label('quantity_sold'),
+        func.count(func.distinct(Order.order_id)).label('orders_count')
+    ).group_by(MenuItem.item_id).order_by(
+        func.sum(OrderItem.quantity * OrderItem.unit_price).desc()
+    ).limit(15).all()
+
+    # Category performance
+    category_performance = base_query.join(OrderItem).join(MenuItem).join(Category).with_entities(
+        Category.name,
+        func.sum(OrderItem.quantity * OrderItem.unit_price).label('revenue'),
+        func.sum(OrderItem.quantity).label('quantity_sold'),
+        func.count(func.distinct(Order.order_id)).label('orders_count')
+    ).group_by(Category.category_id).order_by(
+        func.sum(OrderItem.quantity * OrderItem.unit_price).desc()
+    ).all()
+
+    return {
+        'top_products': [
+            {
+                'name': name,
+                'category_id': category_id,
+                'revenue': float(revenue or 0),
+                'quantity_sold': int(quantity_sold or 0),
+                'orders_count': int(orders_count or 0)
+            }
+            for name, category_id, revenue, quantity_sold, orders_count in top_products
+        ],
+        'category_performance': [
+            {
+                'name': name,
+                'revenue': float(revenue or 0),
+                'quantity_sold': int(quantity_sold or 0),
+                'orders_count': int(orders_count or 0)
+            }
+            for name, revenue, quantity_sold, orders_count in category_performance
+        ]
+    }
+
+def calculate_time_analytics(base_query, start_date, end_date, period):
+    """Calculate time-based analytics"""
+    from sqlalchemy import func
+
+    # Hourly distribution
+    hourly_data = base_query.with_entities(
+        func.extract('hour', Order.order_time).label('hour'),
+        func.sum(Order.total_amount).label('revenue'),
+        func.count(Order.order_id).label('orders')
+    ).group_by(func.extract('hour', Order.order_time)).all()
+
+    return {
+        'hourly_distribution': [
+            {
+                'hour': int(hour or 0),
+                'revenue': float(revenue or 0),
+                'orders': int(orders or 0)
+            }
+            for hour, revenue, orders in hourly_data
+        ]
+    }
+
+def calculate_growth_metrics(start_date, end_date, period):
+    """Calculate growth metrics compared to previous period"""
+    if not start_date:
+        return {'revenue_growth': 0, 'order_growth': 0, 'customer_growth': 0}
+
+    # Calculate previous period
+    period_length = end_date - start_date
+    prev_start = start_date - period_length
+    prev_end = start_date
+
+    # Current period metrics
+    current_stats = Order.query.filter(
+        Order.order_time >= start_date,
+        Order.order_time <= end_date
+    ).with_entities(
+        func.sum(Order.total_amount).label('revenue'),
+        func.count(Order.order_id).label('orders'),
+        func.count(func.distinct(Order.user_id)).label('customers')
+    ).first()
+
+    # Previous period metrics
+    prev_stats = Order.query.filter(
+        Order.order_time >= prev_start,
+        Order.order_time < prev_end
+    ).with_entities(
+        func.sum(Order.total_amount).label('revenue'),
+        func.count(Order.order_id).label('orders'),
+        func.count(func.distinct(Order.user_id)).label('customers')
+    ).first()
+
+    # Calculate growth percentages
+    def calc_growth(current, previous):
+        if not previous or previous == 0:
+            return 100 if current > 0 else 0
+        return round(((current - previous) / previous) * 100, 2)
+
+    return {
+        'revenue_growth': calc_growth(
+            float(current_stats.revenue or 0),
+            float(prev_stats.revenue or 0)
+        ),
+        'order_growth': calc_growth(
+            int(current_stats.orders or 0),
+            int(prev_stats.orders or 0)
+        ),
+        'customer_growth': calc_growth(
+            int(current_stats.customers or 0),
+            int(prev_stats.customers or 0)
+        )
+    }
+
+def calculate_detailed_customer_behavior(base_query, start_date, end_date):
+    """Calculate detailed customer behavior metrics"""
+    from sqlalchemy import func
+
+    # Customer spending distribution
+    spending_distribution = base_query.join(User).with_entities(
+        User.user_id,
+        User.name,
+        User.email,
+        func.sum(Order.total_amount).label('total_spent'),
+        func.count(Order.order_id).label('order_count'),
+        func.avg(Order.total_amount).label('avg_order_value'),
+        func.min(Order.order_time).label('first_order'),
+        func.max(Order.order_time).label('last_order')
+    ).group_by(User.user_id).order_by(
+        func.sum(Order.total_amount).desc()
+    ).all()
+
+    # Calculate customer lifetime value and frequency
+    customer_metrics = []
+    for user_id, name, email, total_spent, order_count, avg_order, first_order, last_order in spending_distribution:
+        # Calculate days between first and last order
+        if first_order and last_order:
+            days_active = (last_order - first_order).days + 1
+            frequency = order_count / days_active if days_active > 0 else 0
+        else:
+            days_active = 0
+            frequency = 0
+
+        customer_metrics.append({
+            'user_id': user_id,
+            'name': name,
+            'email': email,
+            'total_spent': float(total_spent or 0),
+            'order_count': int(order_count or 0),
+            'avg_order_value': float(avg_order or 0),
+            'days_active': days_active,
+            'frequency': round(frequency, 3),
+            'first_order': first_order,
+            'last_order': last_order
+        })
+
+    # Order frequency analysis
+    frequency_ranges = [
+        (1, 1, 'One-time'),
+        (2, 3, 'Occasional'),
+        (4, 7, 'Regular'),
+        (8, 15, 'Frequent'),
+        (16, float('inf'), 'VIP')
+    ]
+
+    frequency_analysis = {}
+    for min_orders, max_orders, label in frequency_ranges:
+        count = len([c for c in customer_metrics if min_orders <= c['order_count'] <= max_orders])
+        frequency_analysis[label] = count
+
+    return {
+        'customer_metrics': customer_metrics,
+        'frequency_analysis': frequency_analysis,
+        'total_customers': len(customer_metrics),
+        'avg_customer_value': sum(c['total_spent'] for c in customer_metrics) / len(customer_metrics) if customer_metrics else 0,
+        'avg_orders_per_customer': sum(c['order_count'] for c in customer_metrics) / len(customer_metrics) if customer_metrics else 0
+    }
+
+def calculate_customer_segmentation(base_query, start_date, end_date):
+    """Calculate customer segmentation based on RFM analysis"""
+    from sqlalchemy import func
+
+    # RFM Analysis (Recency, Frequency, Monetary)
+    now = datetime.now()
+
+    rfm_data = base_query.join(User).with_entities(
+        User.user_id,
+        User.name,
+        func.max(Order.order_time).label('last_order_date'),
+        func.count(Order.order_id).label('frequency'),
+        func.sum(Order.total_amount).label('monetary')
+    ).group_by(User.user_id).all()
+
+    # Calculate RFM scores
+    rfm_customers = []
+    for user_id, name, last_order_date, frequency, monetary in rfm_data:
+        if last_order_date:
+            recency = (now - last_order_date).days
+        else:
+            recency = 999  # Very old
+
+        rfm_customers.append({
+            'user_id': user_id,
+            'name': name,
+            'recency': recency,
+            'frequency': int(frequency or 0),
+            'monetary': float(monetary or 0)
+        })
+
+    # Segment customers
+    segments = {
+        'Champions': [],
+        'Loyal Customers': [],
+        'Potential Loyalists': [],
+        'New Customers': [],
+        'At Risk': [],
+        'Cannot Lose Them': [],
+        'Hibernating': []
+    }
+
+    for customer in rfm_customers:
+        r = customer['recency']
+        f = customer['frequency']
+        m = customer['monetary']
+
+        # Simple segmentation logic
+        if r <= 7 and f >= 5 and m >= 200:
+            segments['Champions'].append(customer)
+        elif r <= 14 and f >= 3 and m >= 100:
+            segments['Loyal Customers'].append(customer)
+        elif r <= 30 and f >= 2:
+            segments['Potential Loyalists'].append(customer)
+        elif r <= 7 and f == 1:
+            segments['New Customers'].append(customer)
+        elif r > 30 and r <= 60 and f >= 2:
+            segments['At Risk'].append(customer)
+        elif r > 60 and m >= 150:
+            segments['Cannot Lose Them'].append(customer)
+        else:
+            segments['Hibernating'].append(customer)
+
+    return segments
+
+def calculate_order_patterns(base_query, start_date, end_date):
+    """Calculate order patterns and preferences"""
+    from sqlalchemy import func
+
+    # Day of week analysis
+    dow_analysis = base_query.with_entities(
+        func.extract('dow', Order.order_time).label('day_of_week'),
+        func.count(Order.order_id).label('order_count'),
+        func.sum(Order.total_amount).label('revenue')
+    ).group_by(func.extract('dow', Order.order_time)).all()
+
+    # Hour of day analysis
+    hour_analysis = base_query.with_entities(
+        func.extract('hour', Order.order_time).label('hour'),
+        func.count(Order.order_id).label('order_count'),
+        func.sum(Order.total_amount).label('revenue')
+    ).group_by(func.extract('hour', Order.order_time)).all()
+
+    # Popular item combinations
+    item_combinations = base_query.join(OrderItem).join(MenuItem).with_entities(
+        MenuItem.name,
+        func.count(OrderItem.order_item_id).label('frequency')
+    ).group_by(MenuItem.item_id).order_by(
+        func.count(OrderItem.order_item_id).desc()
+    ).limit(10).all()
+
+    return {
+        'day_of_week': [
+            {
+                'day': int(dow or 0),
+                'day_name': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][int(dow or 0)],
+                'orders': int(count or 0),
+                'revenue': float(revenue or 0)
+            }
+            for dow, count, revenue in dow_analysis
+        ],
+        'hour_of_day': [
+            {
+                'hour': int(hour or 0),
+                'orders': int(count or 0),
+                'revenue': float(revenue or 0)
+            }
+            for hour, count, revenue in hour_analysis
+        ],
+        'popular_items': [
+            {
+                'name': name,
+                'frequency': int(frequency or 0)
+            }
+            for name, frequency in item_combinations
+        ]
+    }
+
+def calculate_customer_lifecycle(start_date, end_date):
+    """Calculate customer lifecycle metrics"""
+    from sqlalchemy import func
+
+    # New customers in period
+    new_customers = User.query.filter_by(role='customer')
+    if start_date:
+        new_customers = new_customers.filter(User.created_at >= start_date)
+    if end_date:
+        new_customers = new_customers.filter(User.created_at <= end_date)
+    new_customers_count = new_customers.count()
+
+    # Returning customers (customers who made orders in this period but registered before)
+    returning_query = Order.query.join(User)
+    if start_date:
+        returning_query = returning_query.filter(
+            Order.order_time >= start_date,
+            User.created_at < start_date
+        )
+    if end_date:
+        returning_query = returning_query.filter(Order.order_time <= end_date)
+
+    returning_customers = returning_query.with_entities(
+        func.count(func.distinct(Order.user_id))
+    ).scalar() or 0
+
+    # Customer retention rate (simplified)
+    total_customers = User.query.filter_by(role='customer').count()
+    retention_rate = (returning_customers / total_customers * 100) if total_customers > 0 else 0
+
+    return {
+        'new_customers': new_customers_count,
+        'returning_customers': returning_customers,
+        'total_customers': total_customers,
+        'retention_rate': round(retention_rate, 2)
+    }

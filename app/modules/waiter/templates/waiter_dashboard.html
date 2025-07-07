@@ -12,15 +12,94 @@
         </div>
     </div>
     
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ order_counts.new }}</h4>
+                            <p class="mb-0">New Orders</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-bell fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ order_counts.processing }}</h4>
+                            <p class="mb-0">In Progress</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ order_counts.completed }}</h4>
+                            <p class="mb-0">Completed</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ service_requests|length }}</h4>
+                            <p class="mb-0">Service Requests</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-concierge-bell fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Order Status Filters -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-primary active" data-status="all">All Orders</button>
-                <button type="button" class="btn btn-secondary" data-status="new">New (3)</button>
-                <button type="button" class="btn btn-secondary" data-status="processing">In Progress (2)</button>
-                <button type="button" class="btn btn-secondary" data-status="completed">Completed (8)</button>
-                <button type="button" class="btn btn-secondary" data-status="rejected">Rejected (0)</button>
+                <a href="{{ url_for('waiter.dashboard', status='all') }}"
+                   class="btn {{ 'btn-primary' if current_filter == 'all' else 'btn-secondary' }}">
+                   All Orders
+                </a>
+                <a href="{{ url_for('waiter.dashboard', status='new') }}"
+                   class="btn {{ 'btn-primary' if current_filter == 'new' else 'btn-secondary' }}">
+                   New ({{ order_counts.new }})
+                </a>
+                <a href="{{ url_for('waiter.dashboard', status='processing') }}"
+                   class="btn {{ 'btn-primary' if current_filter == 'processing' else 'btn-secondary' }}">
+                   In Progress ({{ order_counts.processing }})
+                </a>
+                <a href="{{ url_for('waiter.dashboard', status='completed') }}"
+                   class="btn {{ 'btn-primary' if current_filter == 'completed' else 'btn-secondary' }}">
+                   Completed ({{ order_counts.completed }})
+                </a>
+                <a href="{{ url_for('waiter.dashboard', status='rejected') }}"
+                   class="btn {{ 'btn-primary' if current_filter == 'rejected' else 'btn-secondary' }}">
+                   Rejected ({{ order_counts.rejected }})
+                </a>
             </div>
         </div>
     </div>
@@ -36,91 +115,86 @@
                 </div>
                 <div class="card-body">
                     <div class="row" id="orders-container">
-                        <!-- New Order -->
-                        <div class="col-lg-4 col-md-6 mb-3 order-card" data-status="new">
-                            <div class="card border-primary">
-                                <div class="card-header bg-primary text-white">
-                                    <div class="d-flex justify-content-between">
-                                        <span><strong>Order #001</strong></span>
-                                        <span class="status-badge status-new">New</span>
+                        {% if orders %}
+                            {% for order in orders %}
+                            <div class="col-lg-4 col-md-6 mb-3 order-card" data-status="{{ order.status }}" data-order-id="{{ order.order_id }}">
+                                <div class="card border-{{ 'primary' if order.status == 'new' else 'warning' if order.status == 'processing' else 'success' if order.status == 'completed' else 'danger' }}">
+                                    <div class="card-header bg-{{ 'primary' if order.status == 'new' else 'warning' if order.status == 'processing' else 'success' if order.status == 'completed' else 'danger' }} text-white">
+                                        <div class="d-flex justify-content-between">
+                                            <span><strong>Order #{{ order.order_id }}</strong></span>
+                                            <span class="status-badge status-{{ order.status }}">{{ order.status.title() }}</span>
+                                        </div>
+                                        <small>
+                                            {% if order.table %}Table {{ order.table.table_number }}{% else %}Takeaway{% endif %} •
+                                            {{ order.order_time.strftime('%H:%M') }}
+                                        </small>
                                     </div>
-                                    <small>Table T001 • 10:30 AM</small>
-                                </div>
-                                <div class="card-body">
-                                    <h6>Customer: John Doe</h6>
-                                    <ul class="list-unstyled mb-3">
-                                        <li>1x Apple Mint Hookah</li>
-                                        <li>1x Turkish Coffee</li>
-                                    </ul>
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <strong>Total: 175.00 EGP</strong>
-                                    </div>
-                                    <div class="btn-group w-100" role="group">
-                                        <button class="btn btn-success btn-sm" onclick="updateOrderStatus(1, 'processing')">
-                                            Accept
+                                    <div class="card-body">
+                                        <h6>Customer: {{ order.customer.name if order.customer else 'Unknown' }}</h6>
+                                        <ul class="list-unstyled mb-3">
+                                            {% for item in order.order_items %}
+                                            <li>{{ item.quantity }}x {{ item.menu_item.name }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <strong>Total: {{ "%.2f"|format(order.total_amount) }} EGP</strong>
+                                            {% if order.status == 'processing' %}
+                                            <small class="text-muted">
+                                                {% set prep_time = order.order_items|map(attribute='menu_item.preparation_time')|select|max %}
+                                                {% if prep_time %}Est. {{ prep_time }} min{% endif %}
+                                            </small>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if order.status == 'new' %}
+                                        <div class="btn-group w-100" role="group">
+                                            <button class="btn btn-success btn-sm" onclick="updateOrderStatus({{ order.order_id }}, 'processing')">
+                                                Accept
+                                            </button>
+                                            <button class="btn btn-danger btn-sm" onclick="updateOrderStatus({{ order.order_id }}, 'rejected')">
+                                                Reject
+                                            </button>
+                                        </div>
+                                        {% elif order.status == 'processing' %}
+                                        <button class="btn btn-success w-100" onclick="updateOrderStatus({{ order.order_id }}, 'completed')">
+                                            Mark Complete
                                         </button>
-                                        <button class="btn btn-danger btn-sm" onclick="updateOrderStatus(1, 'rejected')">
-                                            Reject
-                                        </button>
+                                        {% elif order.status == 'completed' %}
+                                        <div class="text-center text-success">
+                                            <i class="fas fa-check-circle fa-2x"></i>
+                                            <p class="mb-0 mt-2">Order Completed</p>
+                                        </div>
+                                        {% elif order.status == 'rejected' %}
+                                        <div class="text-center text-danger">
+                                            <i class="fas fa-times-circle fa-2x"></i>
+                                            <p class="mb-0 mt-2">Order Rejected</p>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Processing Order -->
-                        <div class="col-lg-4 col-md-6 mb-3 order-card" data-status="processing">
-                            <div class="card border-warning">
-                                <div class="card-header bg-warning text-dark">
-                                    <div class="d-flex justify-content-between">
-                                        <span><strong>Order #002</strong></span>
-                                        <span class="status-badge status-processing">Processing</span>
-                                    </div>
-                                    <small>Table T003 • 10:15 AM</small>
-                                </div>
-                                <div class="card-body">
-                                    <h6>Customer: Jane Smith</h6>
-                                    <ul class="list-unstyled mb-3">
-                                        <li>1x Egyptian Breakfast</li>
-                                        <li>1x Fresh Orange Juice</li>
-                                        <li>1x Chocolate Cake</li>
-                                    </ul>
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <strong>Total: 160.00 EGP</strong>
-                                        <small class="text-muted">Est. 15 min</small>
-                                    </div>
-                                    <button class="btn btn-success w-100" onclick="updateOrderStatus(2, 'completed')">
-                                        Mark Complete
-                                    </button>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No orders found</h5>
+                                    <p class="text-muted">
+                                        {% if current_filter == 'new' %}
+                                            No new orders at the moment.
+                                        {% elif current_filter == 'processing' %}
+                                            No orders currently being processed.
+                                        {% elif current_filter == 'completed' %}
+                                            No completed orders to show.
+                                        {% elif current_filter == 'rejected' %}
+                                            No rejected orders to show.
+                                        {% else %}
+                                            No orders available.
+                                        {% endif %}
+                                    </p>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Completed Order -->
-                        <div class="col-lg-4 col-md-6 mb-3 order-card" data-status="completed">
-                            <div class="card border-success">
-                                <div class="card-header bg-success text-white">
-                                    <div class="d-flex justify-content-between">
-                                        <span><strong>Order #003</strong></span>
-                                        <span class="status-badge status-completed">Completed</span>
-                                    </div>
-                                    <small>Table T002 • 09:45 AM</small>
-                                </div>
-                                <div class="card-body">
-                                    <h6>Customer: Ahmed Ali</h6>
-                                    <ul class="list-unstyled mb-3">
-                                        <li>1x Double Apple Hookah</li>
-                                        <li>1x Mint Tea</li>
-                                    </ul>
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <strong>Total: 165.00 EGP</strong>
-                                        <small class="text-success">Delivered</small>
-                                    </div>
-                                    <button class="btn btn-outline-primary w-100" onclick="printReceipt(3)">
-                                        Print Receipt
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -131,54 +205,58 @@
     <div class="row mb-4">
         <div class="col-lg-6 mb-4">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-bell me-2"></i>Service Requests
                     </h5>
+                    <a href="{{ url_for('waiter.service_requests') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
                 </div>
                 <div class="card-body">
+                    {% if service_requests %}
                     <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                        {% for request in service_requests[:3] %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center" data-request-id="{{ request.request_id }}">
                             <div>
-                                <strong>Table T001</strong><br>
-                                <small class="text-muted">Clean table • 10:35 AM</small>
+                                <strong>
+                                    {% if request.table %}
+                                        Table {{ request.table.table_number }}
+                                    {% else %}
+                                        General Request
+                                    {% endif %}
+                                </strong><br>
+                                <small class="text-muted">{{ request.request_type }} • {{ request.created_at.strftime('%H:%M') }}</small>
+                                {% if request.description %}
+                                <br><small class="text-muted">{{ request.description[:50] }}{% if request.description|length > 50 %}...{% endif %}</small>
+                                {% endif %}
                             </div>
                             <div>
-                                <button class="btn btn-sm btn-success me-2" onclick="acknowledgeRequest(1)">
+                                {% if request.status == 'pending' %}
+                                <button class="btn btn-sm btn-info me-2" onclick="updateServiceRequest({{ request.request_id }}, 'acknowledged')">
                                     Acknowledge
                                 </button>
-                                <button class="btn btn-sm btn-primary" onclick="completeRequest(1)">
+                                <button class="btn btn-sm btn-success" onclick="updateServiceRequest({{ request.request_id }}, 'completed')">
                                     Complete
                                 </button>
-                            </div>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Table T003</strong><br>
-                                <small class="text-muted">Refill coals • 10:20 AM</small>
-                            </div>
-                            <div>
+                                {% elif request.status == 'acknowledged' %}
                                 <span class="badge bg-info me-2">Acknowledged</span>
-                                <button class="btn btn-sm btn-primary" onclick="completeRequest(2)">
+                                <button class="btn btn-sm btn-success" onclick="updateServiceRequest({{ request.request_id }}, 'completed')">
                                     Complete
                                 </button>
+                                {% else %}
+                                <span class="badge bg-success">Completed</span>
+                                {% endif %}
                             </div>
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Table T002</strong><br>
-                                <small class="text-muted">Custom: Need extra napkins • 10:40 AM</small>
-                            </div>
-                            <div>
-                                <button class="btn btn-sm btn-success me-2" onclick="acknowledgeRequest(3)">
-                                    Acknowledge
-                                </button>
-                                <button class="btn btn-sm btn-primary" onclick="completeRequest(3)">
-                                    Complete
-                                </button>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-bell-slash fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No pending service requests</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -273,40 +351,219 @@ document.querySelectorAll('[data-status]').forEach(button => {
 });
 
 function updateOrderStatus(orderId, status) {
-    // This would make an AJAX call to update the order status
-    RestaurantApp.showNotification('Success', `Order #${orderId} status updated to ${status}`, 'success');
-    
-    // Update the UI
-    const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
-    if (orderCard) {
-        orderCard.dataset.status = status;
-        // Update the status badge and card styling
-    }
+    fetch('{{ url_for("waiter.update_order_status") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+        },
+        body: JSON.stringify({
+            order_id: orderId,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            RestaurantApp.showNotification('Success', data.message, 'success');
+
+            // Update the UI
+            const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+            if (orderCard) {
+                orderCard.dataset.status = status;
+
+                // Update card border and header colors
+                const card = orderCard.querySelector('.card');
+                const header = orderCard.querySelector('.card-header');
+
+                // Remove old classes
+                card.className = card.className.replace(/border-\w+/g, '');
+                header.className = header.className.replace(/bg-\w+/g, '');
+
+                // Add new classes based on status
+                if (status === 'new') {
+                    card.classList.add('border-primary');
+                    header.classList.add('bg-primary');
+                } else if (status === 'processing') {
+                    card.classList.add('border-warning');
+                    header.classList.add('bg-warning');
+                } else if (status === 'completed') {
+                    card.classList.add('border-success');
+                    header.classList.add('bg-success');
+                } else if (status === 'rejected') {
+                    card.classList.add('border-danger');
+                    header.classList.add('bg-danger');
+                }
+
+                // Update status badge
+                const statusBadge = orderCard.querySelector('.status-badge');
+                if (statusBadge) {
+                    statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                    statusBadge.className = `status-badge status-${status}`;
+                }
+
+                // Update action buttons
+                const cardBody = orderCard.querySelector('.card-body');
+                const buttonContainer = cardBody.querySelector('.btn-group, .w-100');
+
+                if (status === 'new') {
+                    buttonContainer.innerHTML = `
+                        <button class="btn btn-success btn-sm" onclick="updateOrderStatus(${orderId}, 'processing')">
+                            Accept
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="updateOrderStatus(${orderId}, 'rejected')">
+                            Reject
+                        </button>
+                    `;
+                    buttonContainer.className = 'btn-group w-100';
+                } else if (status === 'processing') {
+                    buttonContainer.innerHTML = `
+                        <button class="btn btn-success w-100" onclick="updateOrderStatus(${orderId}, 'completed')">
+                            Mark Complete
+                        </button>
+                    `;
+                    buttonContainer.className = 'w-100';
+                } else if (status === 'completed') {
+                    buttonContainer.innerHTML = `
+                        <div class="text-center text-success">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                            <p class="mb-0 mt-2">Order Completed</p>
+                        </div>
+                    `;
+                } else if (status === 'rejected') {
+                    buttonContainer.innerHTML = `
+                        <div class="text-center text-danger">
+                            <i class="fas fa-times-circle fa-2x"></i>
+                            <p class="mb-0 mt-2">Order Rejected</p>
+                        </div>
+                    `;
+                }
+            }
+        } else {
+            RestaurantApp.showNotification('Error', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        RestaurantApp.showNotification('Error', 'Failed to update order status', 'error');
+    });
 }
 
-function acknowledgeRequest(requestId) {
-    RestaurantApp.showNotification('Success', 'Service request acknowledged', 'success');
+function updateServiceRequest(requestId, status) {
+    fetch('{{ url_for("waiter.update_service_request") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+        },
+        body: JSON.stringify({
+            request_id: requestId,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            RestaurantApp.showNotification('Success', data.message, 'success');
+
+            // Update the UI
+            const requestItem = document.querySelector(`[data-request-id="${requestId}"]`);
+            if (requestItem) {
+                const actionDiv = requestItem.querySelector('div:last-child');
+
+                if (status === 'acknowledged') {
+                    actionDiv.innerHTML = `
+                        <span class="badge bg-info me-2">Acknowledged</span>
+                        <button class="btn btn-sm btn-success" onclick="updateServiceRequest(${requestId}, 'completed')">
+                            Complete
+                        </button>
+                    `;
+                } else if (status === 'completed') {
+                    actionDiv.innerHTML = `<span class="badge bg-success">Completed</span>`;
+                }
+            }
+        } else {
+            RestaurantApp.showNotification('Error', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        RestaurantApp.showNotification('Error', 'Failed to update service request', 'error');
+    });
 }
 
-function completeRequest(requestId) {
-    RestaurantApp.showNotification('Success', 'Service request completed', 'success');
+function refreshDashboard() {
+    location.reload();
+}
+
+function showNotifications() {
+    // This would show a notifications modal or panel
+    RestaurantApp.showNotification('Info', 'Notifications feature coming soon', 'info');
 }
 
 function printReceipt(orderId) {
+    // This would open a print dialog or send to printer
     RestaurantApp.showNotification('Info', `Printing receipt for order #${orderId}`, 'info');
 }
 
 // Real-time updates
 if (typeof socket !== 'undefined') {
     socket.on('new_order', function(data) {
-        RestaurantApp.showNotification('New Order', `Order #${data.order_id} from Table ${data.table}`, 'info');
-        // Add new order card to the UI
+        RestaurantApp.showNotification('New Order', `Order #${data.order_id} from ${data.customer_name}`, 'info');
+        // Refresh the page to show new order
+        setTimeout(() => location.reload(), 2000);
     });
-    
-    socket.on('service_request', function(data) {
-        RestaurantApp.showNotification('Service Request', `${data.type} requested at Table ${data.table}`, 'warning');
-        // Add new service request to the UI
+
+    socket.on('new_service_request', function(data) {
+        RestaurantApp.showNotification('Service Request',
+            `${data.request_type.replace('_', ' ').toUpperCase()} requested by ${data.customer_name}`,
+            'warning');
+
+        // Add new service request to the UI if we're on the dashboard
+        addServiceRequestToUI(data);
     });
+
+    socket.on('order_status_updated', function(data) {
+        RestaurantApp.showNotification('Order Updated',
+            `Order #${data.order_id} status changed to ${data.new_status}`,
+            'info');
+    });
+
+    socket.on('service_request_updated', function(data) {
+        RestaurantApp.showNotification('Service Updated',
+            `Service request #${data.request_id} marked as ${data.new_status}`,
+            'success');
+    });
+}
+
+function addServiceRequestToUI(data) {
+    // Add new service request to the recent requests list
+    const serviceRequestsList = document.querySelector('.list-group-flush');
+    if (serviceRequestsList && serviceRequestsList.children.length < 3) {
+        const newRequestHTML = `
+            <div class="list-group-item d-flex justify-content-between align-items-center" data-request-id="${data.request_id}">
+                <div>
+                    <strong>${data.table_id ? 'Table ' + data.table_id : 'General Request'}</strong><br>
+                    <small class="text-muted">${data.request_type.replace('_', ' ')} • ${new Date(data.timestamp).toLocaleTimeString()}</small>
+                    ${data.description ? '<br><small class="text-muted">' + data.description.substring(0, 50) + (data.description.length > 50 ? '...' : '') + '</small>' : ''}
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-info me-2" onclick="updateServiceRequest(${data.request_id}, 'acknowledged')">
+                        Acknowledge
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="updateServiceRequest(${data.request_id}, 'completed')">
+                        Complete
+                    </button>
+                </div>
+            </div>
+        `;
+        serviceRequestsList.insertAdjacentHTML('afterbegin', newRequestHTML);
+
+        // Remove the last item if we have more than 3
+        if (serviceRequestsList.children.length > 3) {
+            serviceRequestsList.removeChild(serviceRequestsList.lastElementChild);
+        }
+    }
 }
 </script>
 {% endblock %}

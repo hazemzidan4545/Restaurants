@@ -1,0 +1,197 @@
+{% extends "shared/base.html" %}
+
+{% block title %}Service Requests - Waiter Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-gradient">
+                    <i class="fas fa-bell me-2"></i>Service Requests
+                </h1>
+                <a href="{{ url_for('waiter.dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('waiter.service_requests', status='all') }}" 
+                   class="btn {{ 'btn-primary' if current_filter == 'all' else 'btn-secondary' }}">
+                   All Requests
+                </a>
+                <a href="{{ url_for('waiter.service_requests', status='pending') }}" 
+                   class="btn {{ 'btn-primary' if current_filter == 'pending' else 'btn-secondary' }}">
+                   Pending ({{ request_counts.pending }})
+                </a>
+                <a href="{{ url_for('waiter.service_requests', status='acknowledged') }}" 
+                   class="btn {{ 'btn-primary' if current_filter == 'acknowledged' else 'btn-secondary' }}">
+                   Acknowledged ({{ request_counts.acknowledged }})
+                </a>
+                <a href="{{ url_for('waiter.service_requests', status='completed') }}" 
+                   class="btn {{ 'btn-primary' if current_filter == 'completed' else 'btn-secondary' }}">
+                   Completed ({{ request_counts.completed }})
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Requests List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Service Requests
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Table</th>
+                                    <th>Request Type</th>
+                                    <th>Customer</th>
+                                    <th>Description</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in requests %}
+                                <tr data-request-id="{{ request.request_id }}">
+                                    <td>
+                                        {% if request.table %}
+                                            <strong>{{ request.table.table_number }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ request.request_type }}</span>
+                                    </td>
+                                    <td>{{ request.customer.name if request.customer else 'Unknown' }}</td>
+                                    <td>
+                                        {% if request.description %}
+                                            {{ request.description[:100] }}{% if request.description|length > 100 %}...{% endif %}
+                                        {% else %}
+                                            <span class="text-muted">No description</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ request.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if request.status == 'pending' else 'info' if request.status == 'acknowledged' else 'success' }}">
+                                            {{ request.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if request.status == 'pending' %}
+                                        <button class="btn btn-sm btn-info me-1" onclick="updateServiceRequest({{ request.request_id }}, 'acknowledged')">
+                                            <i class="fas fa-eye me-1"></i>Acknowledge
+                                        </button>
+                                        <button class="btn btn-sm btn-success" onclick="updateServiceRequest({{ request.request_id }}, 'completed')">
+                                            <i class="fas fa-check me-1"></i>Complete
+                                        </button>
+                                        {% elif request.status == 'acknowledged' %}
+                                        <button class="btn btn-sm btn-success" onclick="updateServiceRequest({{ request.request_id }}, 'completed')">
+                                            <i class="fas fa-check me-1"></i>Complete
+                                        </button>
+                                        {% else %}
+                                        <span class="text-success">
+                                            <i class="fas fa-check-circle"></i> Completed
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No service requests found</h5>
+                        <p class="text-muted">
+                            {% if current_filter == 'pending' %}
+                                No pending service requests at the moment.
+                            {% elif current_filter == 'acknowledged' %}
+                                No acknowledged service requests to show.
+                            {% elif current_filter == 'completed' %}
+                                No completed service requests to show.
+                            {% else %}
+                                No service requests available.
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+function updateServiceRequest(requestId, status) {
+    fetch('{{ url_for("waiter.update_service_request") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+        },
+        body: JSON.stringify({
+            request_id: requestId,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            RestaurantApp.showNotification('Success', data.message, 'success');
+            
+            // Update the UI
+            const row = document.querySelector(`[data-request-id="${requestId}"]`);
+            if (row) {
+                const statusCell = row.cells[5];
+                const actionCell = row.cells[6];
+                
+                // Update status badge
+                if (status === 'acknowledged') {
+                    statusCell.innerHTML = '<span class="badge bg-info">Acknowledged</span>';
+                    actionCell.innerHTML = `
+                        <button class="btn btn-sm btn-success" onclick="updateServiceRequest(${requestId}, 'completed')">
+                            <i class="fas fa-check me-1"></i>Complete
+                        </button>
+                    `;
+                } else if (status === 'completed') {
+                    statusCell.innerHTML = '<span class="badge bg-success">Completed</span>';
+                    actionCell.innerHTML = `
+                        <span class="text-success">
+                            <i class="fas fa-check-circle"></i> Completed
+                        </span>
+                    `;
+                }
+            }
+        } else {
+            RestaurantApp.showNotification('Error', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        RestaurantApp.showNotification('Error', 'Failed to update service request', 'error');
+    });
+}
+</script>
+{% endblock %}

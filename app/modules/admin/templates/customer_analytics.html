@@ -1,0 +1,474 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Customer Analytics - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-gradient">
+                    <i class="fas fa-users-cog me-2"></i>Customer Analytics
+                </h1>
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Period Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('admin.customer_analytics', period='week') }}" 
+                           class="btn {{ 'btn-primary' if period == 'week' else 'btn-outline-primary' }}">
+                            This Week
+                        </a>
+                        <a href="{{ url_for('admin.customer_analytics', period='month') }}" 
+                           class="btn {{ 'btn-primary' if period == 'month' else 'btn-outline-primary' }}">
+                            This Month
+                        </a>
+                        <a href="{{ url_for('admin.customer_analytics', period='quarter') }}" 
+                           class="btn {{ 'btn-primary' if period == 'quarter' else 'btn-outline-primary' }}">
+                            This Quarter
+                        </a>
+                        <a href="{{ url_for('admin.customer_analytics', period='year') }}" 
+                           class="btn {{ 'btn-primary' if period == 'year' else 'btn-outline-primary' }}">
+                            This Year
+                        </a>
+                        <a href="{{ url_for('admin.customer_analytics', period='all') }}" 
+                           class="btn {{ 'btn-primary' if period == 'all' else 'btn-outline-primary' }}">
+                            All Time
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ behavior_data.total_customers }}</h4>
+                            <p class="mb-0">Total Customers</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ lifecycle_data.new_customers }}</h4>
+                            <p class="mb-0">New Customers</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-plus fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ "%.2f"|format(behavior_data.avg_customer_value) }} EGP</h4>
+                            <p class="mb-0">Avg Customer Value</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ "%.1f"|format(lifecycle_data.retention_rate) }}%</h4>
+                            <p class="mb-0">Retention Rate</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-heart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Segmentation -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Customer Segmentation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="segmentationChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Frequency Distribution -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Order Frequency Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="frequencyChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Patterns -->
+    <div class="row mb-4">
+        <!-- Day of Week Pattern -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-week me-2"></i>Orders by Day of Week
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dayOfWeekChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hour of Day Pattern -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Orders by Hour of Day
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="hourOfDayChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Details Tables -->
+    <div class="row mb-4">
+        <!-- Top Customers -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-crown me-2"></i>Top Customers
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if behavior_data.customer_metrics %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Total Spent</th>
+                                    <th>Orders</th>
+                                    <th>Avg Order</th>
+                                    <th>Frequency</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in behavior_data.customer_metrics[:10] %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ customer.name }}</strong>
+                                            <br><small class="text-muted">{{ customer.email }}</small>
+                                        </div>
+                                    </td>
+                                    <td>{{ "%.2f"|format(customer.total_spent) }} EGP</td>
+                                    <td>{{ customer.order_count }}</td>
+                                    <td>{{ "%.2f"|format(customer.avg_order_value) }} EGP</td>
+                                    <td>
+                                        {% if customer.frequency > 0.1 %}
+                                            <span class="badge bg-success">High</span>
+                                        {% elif customer.frequency > 0.05 %}
+                                            <span class="badge bg-warning">Medium</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Low</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No customer data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Segments Details -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-layer-group me-2"></i>Segment Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Segment</th>
+                                    <th>Customers</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for segment_name, customers in segmentation_data.items() %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ segment_name }}</strong>
+                                    </td>
+                                    <td>{{ customers|length }}</td>
+                                    <td>
+                                        {% set percentage = (customers|length / behavior_data.total_customers * 100) if behavior_data.total_customers > 0 else 0 %}
+                                        {{ "%.1f"|format(percentage) }}%
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Items -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>Most Popular Items
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if pattern_data.popular_items %}
+                    <div class="row">
+                        {% for item in pattern_data.popular_items %}
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">{{ item.name }}</h6>
+                                    <p class="card-text">
+                                        <span class="badge bg-primary">{{ item.frequency }} orders</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-utensils fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No item data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Customer Segmentation Chart
+const segmentationCtx = document.getElementById('segmentationChart').getContext('2d');
+const segmentationData = {
+    labels: [{% for segment_name, customers in segmentation_data.items() %}'{{ segment_name }}'{% if not loop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+        data: [{% for segment_name, customers in segmentation_data.items() %}{{ customers|length }}{% if not loop.last %},{% endif %}{% endfor %}],
+        backgroundColor: [
+            '#28a745', // Champions - green
+            '#007bff', // Loyal Customers - blue
+            '#17a2b8', // Potential Loyalists - teal
+            '#ffc107', // New Customers - yellow
+            '#fd7e14', // At Risk - orange
+            '#dc3545', // Cannot Lose Them - red
+            '#6c757d'  // Hibernating - gray
+        ],
+        borderWidth: 2,
+        borderColor: '#fff'
+    }]
+};
+
+new Chart(segmentationCtx, {
+    type: 'doughnut',
+    data: segmentationData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const total = {{ behavior_data.total_customers }};
+                        const percentage = total > 0 ? (value / total * 100).toFixed(1) : 0;
+                        return `${label}: ${value} customers (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Order Frequency Distribution Chart
+const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
+const frequencyData = {
+    labels: [{% for label, count in behavior_data.frequency_analysis.items() %}'{{ label }}'{% if not loop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+        label: 'Customers',
+        data: [{% for label, count in behavior_data.frequency_analysis.items() %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2
+    }]
+};
+
+new Chart(frequencyCtx, {
+    type: 'bar',
+    data: frequencyData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Day of Week Chart
+const dayOfWeekCtx = document.getElementById('dayOfWeekChart').getContext('2d');
+const dayOfWeekData = {
+    labels: [{% for day in pattern_data.day_of_week %}'{{ day.day_name }}'{% if not loop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+        label: 'Orders',
+        data: [{% for day in pattern_data.day_of_week %}{{ day.orders }}{% if not loop.last %},{% endif %}{% endfor %}],
+        backgroundColor: 'rgba(255, 193, 7, 0.6)',
+        borderColor: 'rgba(255, 193, 7, 1)',
+        borderWidth: 2
+    }]
+};
+
+new Chart(dayOfWeekCtx, {
+    type: 'bar',
+    data: dayOfWeekData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Hour of Day Chart
+const hourOfDayCtx = document.getElementById('hourOfDayChart').getContext('2d');
+const hourOfDayData = {
+    labels: [{% for hour in range(24) %}'{{ hour }}:00'{% if not loop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+        label: 'Orders',
+        data: [
+            {% for hour in range(24) %}
+                {% set hour_data = pattern_data.hour_of_day|selectattr('hour', 'equalto', hour)|first %}
+                {{ hour_data.orders if hour_data else 0 }}{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        backgroundColor: 'rgba(40, 167, 69, 0.6)',
+        borderColor: 'rgba(40, 167, 69, 1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+    }]
+};
+
+new Chart(hourOfDayCtx, {
+    type: 'line',
+    data: hourOfDayData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Auto-refresh every 10 minutes
+setInterval(function() {
+    location.reload();
+}, 600000);
+</script>
+{% endblock %}

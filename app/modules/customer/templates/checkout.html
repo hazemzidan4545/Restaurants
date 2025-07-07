@@ -473,12 +473,12 @@ function setupPaymentOptions() {
     // Handle final checkout
     checkoutBtn.addEventListener('click', function() {
         if (!selectedPaymentMethod) {
-            alert('Please select a payment method');
+            showCheckoutNotification('Error', 'Please select a payment method', 'error');
             return;
         }
 
         if (unifiedCart.length === 0) {
-            alert('Your cart is empty');
+            showCheckoutNotification('Error', 'Your cart is empty', 'error');
             return;
         }
 
@@ -531,14 +531,14 @@ function processCheckout() {
             window.location.href = `/customer/order-confirmation/${data.data.order_id}`;
         } else {
             // Handle error
-            alert(`Order failed: ${data.message}`);
+            showCheckoutNotification('Error', `Order failed: ${data.message}`, 'error');
             checkoutBtn.textContent = 'Checkout';
             checkoutBtn.disabled = false;
         }
     })
     .catch(error => {
         console.error('Checkout error:', error);
-        alert('Failed to process order. Please try again.');
+        showCheckoutNotification('Error', 'Failed to process order. Please try again.', 'error');
         checkoutBtn.textContent = 'Checkout';
         checkoutBtn.disabled = false;
     });
@@ -546,7 +546,50 @@ function processCheckout() {
 
 // Mobile menu toggle
 function toggleMobileMenu() {
-    alert('Mobile menu coming soon!');
+    showCheckoutNotification('Info', 'Mobile menu coming soon!', 'info');
+}
+
+// Checkout notification function
+function showCheckoutNotification(title, message, type = 'info') {
+    // Create toast if it doesn't exist
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '1055';
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast
+    const toastId = 'checkoutToast_' + Date.now();
+    const toastHtml = `
+        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} text-white">
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+                <strong class="me-auto">${title}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+    // Show toast
+    const toast = document.getElementById(toastId);
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: type === 'success' ? 3000 : 5000
+    });
+
+    // Remove toast from DOM after it's hidden
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+
+    bsToast.show();
 }
 </script>
 {% endblock %}

@@ -22,7 +22,12 @@ class User(UserMixin, db.Model):
     
     # Relationships
     orders = db.relationship('Order', backref='customer', lazy='dynamic')
-    service_requests = db.relationship('ServiceRequest', backref='customer', lazy='dynamic')
+    service_requests = db.relationship('ServiceRequest',
+                                     foreign_keys='ServiceRequest.user_id',
+                                     backref='customer', lazy='dynamic')
+    handled_requests = db.relationship('ServiceRequest',
+                                     foreign_keys='ServiceRequest.handled_by',
+                                     backref='handler', lazy='dynamic')
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     feedback = db.relationship('Feedback', backref='user', lazy='dynamic')
     loyalty_account = db.relationship('CustomerLoyalty', back_populates='user', uselist=False)
@@ -263,6 +268,12 @@ class MenuItem(db.Model):
     serving_size = db.Column(db.String(50), nullable=True)
     dietary_info = db.Column(db.String(255), nullable=True)  # vegetarian, vegan, gluten-free, etc.
 
+    # Special options
+    is_featured = db.Column(db.Boolean, nullable=False, default=False)
+    is_spicy = db.Column(db.Boolean, nullable=False, default=False)
+    is_vegetarian = db.Column(db.Boolean, nullable=False, default=False)
+    is_vegan = db.Column(db.Boolean, nullable=False, default=False)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -401,6 +412,8 @@ class MenuItem(db.Model):
             self.price = self.original_price
         self.discount_percentage = 0.00
         self.original_price = None
+
+
 
     def __repr__(self):
         return f'<MenuItem {self.name}>'
@@ -564,11 +577,16 @@ class ServiceRequest(db.Model):
 
     request_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-    table_id = db.Column(db.Integer, db.ForeignKey('tables.table_id'), nullable=False)
+    table_id = db.Column(db.Integer, db.ForeignKey('tables.table_id'), nullable=True)  # Allow null for general requests
     service_id = db.Column(db.Integer, nullable=True)  # Removed FK constraint for now
     request_type = db.Column(db.String(50), nullable=False)  # 'clean_table', 'refill_coals', 'adjust_ac', etc.
-    status = db.Column(db.String(12), nullable=False, default='pending')  # Changed from Enum to String
-    description = db.Column(db.Text, nullable=True)  # Changed from notes to description
+    status = db.Column(db.String(12), nullable=False, default='pending')  # 'pending', 'acknowledged', 'completed'
+    description = db.Column(db.Text, nullable=True)  # Additional details about the request
+    handled_by = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)  # Waiter who handled the request
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Keep timestamp for backward compatibility
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -770,13 +788,62 @@ class PromotionalCampaign(db.Model):
     conditions = db.Column(db.Text, nullable=True)
     status = db.Column(db.Enum('active', 'inactive', 'expired', name='campaign_status'),
                       nullable=False, default='active')
+
+    # Enhanced campaign settings
+    minimum_order_amount = db.Column(db.Float, nullable=True, default=0.0)
+    maximum_uses_per_customer = db.Column(db.Integer, nullable=True)
+    total_usage_limit = db.Column(db.Integer, nullable=True)
+    target_customer_tier = db.Column(db.String(20), nullable=True)  # bronze, silver, gold, platinum, all
+    applicable_days = db.Column(db.String(20), nullable=True)  # all, weekdays, weekends, specific
+    specific_menu_categories = db.Column(db.Text, nullable=True)  # JSON string of category IDs
+    discount_type = db.Column(db.String(20), nullable=True)  # Changed from Enum to String for SQLite compatibility
+    discount_value = db.Column(db.Float, nullable=True)  # For percentage or fixed discounts
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def is_active(self):
         """Check if campaign is currently active"""
         now = datetime.utcnow()
         return (self.status == 'active' and
                 self.start_date <= now <= self.end_date)
+
+    def is_applicable_for_customer(self, customer):
+        """Check if campaign is applicable for a specific customer"""
+        if not self.is_active():
+            return False
+
+        # Check customer tier requirement
+        if self.target_customer_tier and self.target_customer_tier != 'all':
+            if not customer or customer.tier_level != self.target_customer_tier:
+                return False
+
+        return True
+
+    def is_applicable_for_order(self, order_amount, customer=None):
+        """Check if campaign is applicable for a specific order"""
+        if not self.is_active():
+            return False
+
+        # Check minimum order amount
+        if self.minimum_order_amount and order_amount < self.minimum_order_amount:
+            return False
+
+        # Check customer-specific requirements
+        if customer and not self.is_applicable_for_customer(customer):
+            return False
+
+        return True
+
+    def get_applicable_categories(self):
+        """Get list of applicable category IDs"""
+        if not self.specific_menu_categories:
+            return None
+        try:
+            import json
+            return json.loads(self.specific_menu_categories)
+        except:
+            return None
 
     def __repr__(self):
         return f'<PromotionalCampaign {self.name}>'

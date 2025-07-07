@@ -87,8 +87,13 @@ def table_landing(table_id):
     # Get all categories for menu navigation
     categories = Category.query.filter_by(status='active').all()
     
-    return render_template('table_landing.html', 
+    return render_template('table_landing.html',
                          table=table,
                          table_session=table_session,
                          popular_items=popular_items,
                          categories=categories)
+
+@bp.route('/clear-cart')
+def clear_cart():
+    """Cart cleanup utility page"""
+    return render_template('clear_cart.html')

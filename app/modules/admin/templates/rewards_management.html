@@ -31,6 +31,10 @@
                     <span class="stat-label">Active Rewards</span>
                 </div>
                 <div class="stat-item">
+                    <span class="stat-number">{{ inactive_rewards if inactive_rewards else 0 }}</span>
+                    <span class="stat-label">Inactive Rewards</span>
+                </div>
+                <div class="stat-item">
                     <span class="stat-number">{{ total_redemptions if total_redemptions else 0 }}</span>
                     <span class="stat-label">Total Redemptions</span>
                 </div>
@@ -64,49 +68,7 @@
         --border-radius: 8px;
     }
 
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
 
-    .stat-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        text-align: center;
-        transition: transform 0.3s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-2px);
-    }
-
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin: 0.5rem 0;
-        color: var(--primary-dark);
-    }
-
-    .stat-label {
-        color: #666;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin: 0;
-    }
-
-    .stat-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .total .stat-icon { color: var(--info-blue); }
-    .active .stat-icon { color: var(--success-green); }
-    .inactive .stat-icon { color: var(--warning-orange); }
-    .redemptions .stat-icon { color: var(--primary-yellow); }
 
     .rewards-table-container {
         background: white;
@@ -135,6 +97,12 @@
         display: flex;
         gap: 1rem;
         align-items: center;
+    }
+
+    .table-info {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        font-weight: 500;
     }
 
     .btn {
@@ -304,10 +272,6 @@
     }
 
     @media (max-width: 768px) {
-        .stats-row {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
         .table-header {
             flex-direction: column;
             gap: 1rem;
@@ -332,51 +296,19 @@
 
 <!-- Main Content Container -->
 <div class="container-fluid">
-    <!-- Statistics Row -->
-    <div class="stats-row">
-        <div class="stat-card total">
-            <div class="stat-icon">
-                <i class="fas fa-gift"></i>
-            </div>
-            <div class="stat-number">{{ total_rewards if total_rewards else 0 }}</div>
-            <p class="stat-label">Total Rewards</p>
-        </div>
-        <div class="stat-card active">
-            <div class="stat-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-number">{{ active_rewards }}</div>
-            <p class="stat-label">Active Rewards</p>
-        </div>
-        <div class="stat-card inactive">
-            <div class="stat-icon">
-                <i class="fas fa-pause-circle"></i>
-            </div>
-            <div class="stat-number">{{ inactive_rewards }}</div>
-            <p class="stat-label">Inactive Rewards</p>
-        </div>
-        <div class="stat-card redemptions">
-            <div class="stat-icon">
-                <i class="fas fa-trophy"></i>
-            </div>
-            <div class="stat-number">{{ total_redemptions }}</div>
-            <p class="stat-label">Total Redemptions</p>
-        </div>
-    </div>
 
     <!-- Rewards Table -->
     <div class="rewards-table-container">
         <div class="table-header">
-            <h2 class="table-title">All Rewards</h2>
+            <h2 class="table-title">
+                <i class="fas fa-gift me-2"></i>
+                All Rewards
+            </h2>
             <div class="table-actions">
-                <button class="btn btn-warning btn-sm" onclick="toggleBulkActions()">
-                    <i class="fas fa-tasks"></i>
-                    Bulk Actions
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="exportRewards()">
-                    <i class="fas fa-download"></i>
-                    Export
-                </button>
+                <span class="table-info">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Showing {{ rewards.items|length }} of {{ rewards.total }} rewards
+                </span>
             </div>
         </div>
 

@@ -64,25 +64,122 @@
                             <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter campaign description..."></textarea>
                         </div>
 
+                        <!-- Campaign Type and Discount Settings -->
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
+                                    <label for="discount_type" class="form-label">Campaign Type</label>
+                                    <select class="form-select" id="discount_type" name="discount_type" onchange="toggleDiscountFields()">
+                                        <option value="points_multiplier">Points Multiplier</option>
+                                        <option value="percentage_discount">Percentage Discount</option>
+                                        <option value="fixed_amount">Fixed Amount Discount</option>
+                                    </select>
+                                    <div class="form-text">Choose the type of campaign benefit</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3" id="multiplier_field">
                                     <label for="bonus_multiplier" class="form-label">Bonus Multiplier</label>
-                                    <input type="number" class="form-control" id="bonus_multiplier" name="bonus_multiplier" 
+                                    <input type="number" class="form-control" id="bonus_multiplier" name="bonus_multiplier"
                                            min="0" step="0.1" value="1.0" placeholder="1.0">
                                     <div class="form-text">Points multiplier (e.g., 2.0 for double points)</div>
                                 </div>
+                                <div class="mb-3" id="discount_field" style="display: none;">
+                                    <label for="discount_value" class="form-label">Discount Value</label>
+                                    <input type="number" class="form-control" id="discount_value" name="discount_value"
+                                           min="0" step="0.01" placeholder="0">
+                                    <div class="form-text" id="discount_help">Discount percentage or fixed amount</div>
+                                </div>
                             </div>
-                            <div class="col-md-4">
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="row">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="start_date" name="start_date" required>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="end_date" class="form-label">End Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="end_date" name="end_date" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campaign Restrictions -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="minimum_order_amount" class="form-label">Minimum Order Amount</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="minimum_order_amount" name="minimum_order_amount"
+                                               min="0" step="0.01" placeholder="0.00">
+                                        <span class="input-group-text">EGP</span>
+                                    </div>
+                                    <div class="form-text">Minimum order value to qualify for campaign</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="target_customer_tier" class="form-label">Target Customer Tier</label>
+                                    <select class="form-select" id="target_customer_tier" name="target_customer_tier">
+                                        <option value="all">All Customers</option>
+                                        <option value="bronze">Bronze Tier</option>
+                                        <option value="silver">Silver Tier</option>
+                                        <option value="gold">Gold Tier</option>
+                                        <option value="platinum">Platinum Tier</option>
+                                    </select>
+                                    <div class="form-text">Restrict campaign to specific customer tiers</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Usage Limits -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="maximum_uses_per_customer" class="form-label">Max Uses Per Customer</label>
+                                    <input type="number" class="form-control" id="maximum_uses_per_customer" name="maximum_uses_per_customer"
+                                           min="1" placeholder="Unlimited">
+                                    <div class="form-text">Maximum times each customer can use this campaign</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="total_usage_limit" class="form-label">Total Usage Limit</label>
+                                    <input type="number" class="form-control" id="total_usage_limit" name="total_usage_limit"
+                                           min="1" placeholder="Unlimited">
+                                    <div class="form-text">Maximum total uses across all customers</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Applicable Days and Categories -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="applicable_days" class="form-label">Applicable Days</label>
+                                    <select class="form-select" id="applicable_days" name="applicable_days">
+                                        <option value="all">All Days</option>
+                                        <option value="weekdays">Weekdays Only</option>
+                                        <option value="weekends">Weekends Only</option>
+                                    </select>
+                                    <div class="form-text">When this campaign can be used</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="specific_menu_categories" class="form-label">Applicable Categories</label>
+                                    <select class="form-select" id="specific_menu_categories" name="specific_menu_categories" multiple>
+                                        <option value="">All Categories</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.category_id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Leave empty for all categories, or select specific ones</div>
                                 </div>
                             </div>
                         </div>
@@ -108,7 +205,32 @@
 </div>
 
 <script>
+function toggleDiscountFields() {
+    const discountType = document.getElementById('discount_type').value;
+    const multiplierField = document.getElementById('multiplier_field');
+    const discountField = document.getElementById('discount_field');
+    const discountHelp = document.getElementById('discount_help');
+
+    if (discountType === 'points_multiplier') {
+        multiplierField.style.display = 'block';
+        discountField.style.display = 'none';
+    } else {
+        multiplierField.style.display = 'none';
+        discountField.style.display = 'block';
+
+        if (discountType === 'percentage_discount') {
+            discountHelp.textContent = 'Discount percentage (e.g., 10 for 10% off)';
+            document.getElementById('discount_value').setAttribute('max', '95');
+        } else if (discountType === 'fixed_amount') {
+            discountHelp.textContent = 'Fixed discount amount in EGP';
+            document.getElementById('discount_value').removeAttribute('max');
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize form fields
+    toggleDiscountFields();
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('start_date').min = today;

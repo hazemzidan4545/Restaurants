@@ -1465,7 +1465,10 @@
              data-item-id="{{ item.item_id }}"
              data-item-name="{{ item.name }}"
              data-item-description="{{ item.description }}"
-             data-item-price="{{ item.price }}"
+             data-item-price="{{ item.get_display_price() }}"
+             data-item-original-price="{{ item.get_original_price() }}"
+             data-item-discount-percentage="{{ item.discount_percentage or 0 }}"
+             data-item-has-discount="{{ item.has_discount() }}"
              data-item-image="{% if item.image_url %}{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}{% else %}https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop{% endif %}"
              data-item-category="{{ item.category.name }}"
              data-item-ingredients="{{ item.ingredients or '' }}"
@@ -1501,20 +1504,19 @@
                 
                 <div class="menu-item-footer">
                     <div class="price-section">
-                        {% if item.discount_percentage and item.discount_percentage > 0 %}
-                            <div class="menu-item-discount-badge">{{ item.discount_percentage }}% OFF</div>
+                        {% if item.has_discount() %}
                             <div class="discount-prices">
-                                <div class="menu-item-original-price">{{ item.original_price }} EGP</div>
-                                <div class="menu-item-price">{{ item.price }} EGP</div>
+                                <div class="menu-item-original-price">{{ "%.2f"|format(item.get_original_price()) }} {{ get_system_setting("system_currency", "EGP") }}</div>
+                                <div class="menu-item-price">{{ "%.2f"|format(item.get_display_price()) }} {{ get_system_setting("system_currency", "EGP") }}</div>
                             </div>
                         {% else %}
-                            <div class="menu-item-price">{{ item.price }} EGP</div>
+                            <div class="menu-item-price">{{ "%.2f"|format(item.get_display_price()) }} {{ get_system_setting("system_currency", "EGP") }}</div>
                         {% endif %}
                     </div>
                     <button class="add-btn add-to-cart"
                             data-item-id="{{ item.item_id }}"
                             data-item-name="{{ item.name }}"
-                            data-item-price="{{ item.price }}"
+                            data-item-price="{{ item.get_display_price() }}"
                             data-item-image="{% if item.image_url %}{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}{% else %}https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop{% endif %}"
                             onclick="event.stopPropagation(); addToCartFromButton(this)">
                         order
@@ -1562,9 +1564,13 @@ document.querySelectorAll('.category-tab').forEach(button => {
 
 // Function to show item detail from card data attributes
 function showItemDetailFromCard(card) {
+    const itemId = card.dataset.itemId;
     const name = card.dataset.itemName;
     const description = card.dataset.itemDescription;
     const price = card.dataset.itemPrice;
+    const originalPrice = card.dataset.itemOriginalPrice;
+    const discountPercentage = parseFloat(card.dataset.itemDiscountPercentage) || 0;
+    const hasDiscount = card.dataset.itemHasDiscount === 'True';
     const image = card.dataset.itemImage;
     const category = card.dataset.itemCategory;
     const ingredients = card.dataset.itemIngredients;
@@ -1577,6 +1583,7 @@ function showItemDetailFromCard(card) {
     const ratingCount = parseInt(card.dataset.ratingCount) || 0;
 
     showItemDetail(name, ingredients, price, image, {
+        id: itemId,
         description: description,
         category: category,
         calories: calories,
@@ -1584,6 +1591,9 @@ function showItemDetailFromCard(card) {
         allergens: allergens,
         servingSize: servingSize,
         dietaryInfo: dietaryInfo,
+        originalPrice: originalPrice,
+        discountPercentage: discountPercentage,
+        hasDiscount: hasDiscount,
         rating: {
             average: ratingAverage,
             count: ratingCount
@@ -1598,6 +1608,7 @@ function showItemDetailFromCard(card) {
 function showItemDetail(name, ingredients, price, image, options = {}) {
     // Enhanced currentItem object with all features
     currentItem = {
+        id: options.id,
         name,
         ingredients,
         price,
@@ -1614,15 +1625,29 @@ function showItemDetail(name, ingredients, price, image, options = {}) {
     // Set basic item information
     document.getElementById('modalItemName').textContent = name;
     document.getElementById('modalItemIngredients').textContent = ingredients;
-    document.getElementById('modalItemPrice').textContent = price;
-    document.getElementById('modalTotalPrice').textContent = price;
-    document.getElementById('itemQuantity').textContent = '1';
-    
-    // Remove old price element from DOM if present
-    const oldPriceElem = document.getElementById('modalItemOldPrice');
-    if (oldPriceElem) {
-        oldPriceElem.parentNode.removeChild(oldPriceElem);
+
+    // Handle discount display in modal
+    const priceElement = document.getElementById('modalItemPrice');
+    const priceContainer = priceElement.parentElement;
+
+    // Remove existing discount elements
+    const existingOriginalPrice = priceContainer.querySelector('.original-price');
+    if (existingOriginalPrice) existingOriginalPrice.remove();
+
+    if (currentItem.hasDiscount && currentItem.discountPercentage > 0) {
+        // Create original price element
+        const originalPriceElement = document.createElement('span');
+        originalPriceElement.className = 'original-price';
+        originalPriceElement.textContent = `${parseFloat(currentItem.originalPrice).toFixed(2)} ${window.systemSettings?.currency || 'EGP'}`;
+        originalPriceElement.style.cssText = 'text-decoration: line-through; color: #666; font-size: 0.9rem; margin-right: 8px;';
+
+        // Insert element before price
+        priceContainer.insertBefore(originalPriceElement, priceElement);
     }
+
+    document.getElementById('modalItemPrice').textContent = `${parseFloat(price).toFixed(2)} ${window.systemSettings?.currency || 'EGP'}`;
+    document.getElementById('modalTotalPrice').textContent = `${parseFloat(price).toFixed(2)} ${window.systemSettings?.currency || 'EGP'}`;
+    document.getElementById('itemQuantity').textContent = '1';
 
     // Update rating display
     updateModalRating(currentItem.rating);
@@ -1766,7 +1791,8 @@ function updateModalPrice() {
     const qty = parseInt(document.getElementById('itemQuantity').textContent);
     const basePrice = parseFloat(currentItem.price);
     const totalPrice = (basePrice * qty).toFixed(2);
-    document.getElementById('modalTotalPrice').textContent = totalPrice;
+    const currency = window.systemSettings?.currency || 'EGP';
+    document.getElementById('modalTotalPrice').textContent = `${totalPrice} ${currency}`;
 }
 
 // Override the global add to cart modal functionality for menu page
@@ -1812,9 +1838,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
+            // Validate that we have a valid item ID
+            if (!currentItem.id) {
+                // Use the global notification system from base template
+                if (typeof RestaurantApp !== 'undefined' && RestaurantApp.showNotification) {
+                    RestaurantApp.showNotification('Error', 'Unable to add item to cart. Please try again.', 'error');
+                } else {
+                    console.error('Error: Unable to add item to cart. Please try again.');
+                }
+                return;
+            }
+
             // Regular add to cart functionality
             const cartItem = {
-                id: currentItem.id || Date.now().toString(), // Generate ID if not available
+                id: currentItem.id, // Use actual menu item ID
                 name: currentItem.name,
                 price: parseFloat(currentItem.price),
                 quantity: qty,

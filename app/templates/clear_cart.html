@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cart - Restaurant Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0"><i class="fas fa-shopping-cart"></i> Cart Cleanup</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>If you're experiencing issues with your cart (like "Menu item not found" errors), this tool will help clean up any invalid items.</p>
+                        
+                        <div id="cartStatus" class="alert alert-info">
+                            <i class="fas fa-spinner fa-spin"></i> Checking cart status...
+                        </div>
+                        
+                        <div id="cartActions" style="display: none;">
+                            <button id="cleanCartBtn" class="btn btn-warning">
+                                <i class="fas fa-broom"></i> Clean Cart
+                            </button>
+                            <button id="clearCartBtn" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Clear Entire Cart
+                            </button>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <a href="{{ url_for('customer.home') }}" class="btn btn-primary">
+                                <i class="fas fa-home"></i> Back to Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkCartStatus();
+            
+            document.getElementById('cleanCartBtn').addEventListener('click', cleanCart);
+            document.getElementById('clearCartBtn').addEventListener('click', clearCart);
+        });
+        
+        function checkCartStatus() {
+            const cartKey = 'restaurant_cart';
+            const savedCart = localStorage.getItem(cartKey);
+            const statusDiv = document.getElementById('cartStatus');
+            const actionsDiv = document.getElementById('cartActions');
+            
+            if (!savedCart) {
+                statusDiv.innerHTML = '<i class="fas fa-check-circle text-success"></i> No cart found - you\'re all set!';
+                statusDiv.className = 'alert alert-success';
+                return;
+            }
+            
+            try {
+                const cartData = JSON.parse(savedCart);
+                const invalidItems = cartData.filter(item => {
+                    const itemId = parseInt(item.id);
+                    return isNaN(itemId) || itemId > 1000000;
+                });
+                
+                if (invalidItems.length === 0) {
+                    statusDiv.innerHTML = `<i class="fas fa-check-circle text-success"></i> Cart is clean! Found ${cartData.length} valid items.`;
+                    statusDiv.className = 'alert alert-success';
+                } else {
+                    statusDiv.innerHTML = `<i class="fas fa-exclamation-triangle text-warning"></i> Found ${invalidItems.length} invalid items out of ${cartData.length} total items.`;
+                    statusDiv.className = 'alert alert-warning';
+                    actionsDiv.style.display = 'block';
+                }
+                
+            } catch (error) {
+                statusDiv.innerHTML = '<i class="fas fa-times-circle text-danger"></i> Cart data is corrupted and needs to be cleared.';
+                statusDiv.className = 'alert alert-danger';
+                actionsDiv.style.display = 'block';
+            }
+        }
+        
+        function cleanCart() {
+            const cartKey = 'restaurant_cart';
+            const savedCart = localStorage.getItem(cartKey);
+            
+            if (!savedCart) return;
+            
+            try {
+                const cartData = JSON.parse(savedCart);
+                const validItems = cartData.filter(item => {
+                    const itemId = parseInt(item.id);
+                    return !isNaN(itemId) && itemId < 1000000;
+                });
+                
+                localStorage.setItem(cartKey, JSON.stringify(validItems));
+                
+                const statusDiv = document.getElementById('cartStatus');
+                statusDiv.innerHTML = `<i class="fas fa-check-circle text-success"></i> Cart cleaned! Removed ${cartData.length - validItems.length} invalid items.`;
+                statusDiv.className = 'alert alert-success';
+                
+                document.getElementById('cartActions').style.display = 'none';
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                
+            } catch (error) {
+                clearCart();
+            }
+        }
+        
+        function clearCart() {
+            // Show confirmation modal instead of browser confirm
+            showClearCartModal();
+        }
+
+        function showClearCartModal() {
+            const modalHtml = `
+                <div class="modal fade" id="clearCartModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Clear Cart
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="mb-0">Are you sure you want to clear your entire cart? This action cannot be undone.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" onclick="confirmClearCart()">
+                                    <i class="fas fa-trash me-2"></i>Clear Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('clearCartModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('clearCartModal'));
+            modal.show();
+        }
+
+        function confirmClearCart() {
+            localStorage.removeItem('restaurant_cart');
+
+            const statusDiv = document.getElementById('cartStatus');
+            statusDiv.innerHTML = '<i class="fas fa-check-circle text-success"></i> Cart cleared successfully!';
+            statusDiv.className = 'alert alert-success';
+
+            document.getElementById('cartActions').style.display = 'none';
+
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('clearCartModal'));
+            if (modal) {
+                modal.hide();
+            }
+
+            setTimeout(() => {
+                window.location.href = '{{ url_for("customer.home") }}';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

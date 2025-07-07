@@ -1415,7 +1415,7 @@ class AddMenuItemManager {
             const originalPrice = price; // The price field should contain the original price
             const discountedPrice = originalPrice * (1 - discountPercentage / 100);
             
-            document.getElementById('previewDiscountBadge').textContent = `${discountPercentage}% OFF`;
+            document.getElementById('previewDiscountBadge').textContent = `${discountPercentage} OFF`;
             document.getElementById('previewOriginalPrice').textContent = `EGP ${originalPrice.toFixed(2)}`;
             document.getElementById('previewPrice').textContent = `EGP ${discountedPrice.toFixed(2)}`;
             

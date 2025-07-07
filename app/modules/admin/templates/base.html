@@ -493,88 +493,305 @@
             }
         }
 
-        /* Enhanced Notification Styles */
-        .notification-dropdown {
-            min-width: 350px;
+        /* Enhanced Search Styles */
+        .search-box {
+            position: relative;
+            min-width: 320px;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid rgba(243, 205, 33, 0.2);
+            border-radius: 15px;
+            padding: 14px 50px 14px 20px;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #f3cd21;
+            box-shadow: 0 0 0 4px rgba(243, 205, 33, 0.15), 0 8px 25px rgba(0, 0, 0, 0.12);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        .search-input::placeholder {
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .search-input:focus + .search-icon {
+            color: #f3cd21;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* Search Results Dropdown */
+        .search-results-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(243, 205, 33, 0.2);
+            z-index: 1000;
             max-height: 400px;
             overflow-y: auto;
+            display: none;
+            backdrop-filter: blur(20px);
+        }
+
+        .search-result-item {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(243, 205, 33, 0.1);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: linear-gradient(135deg, rgba(243, 205, 33, 0.08), rgba(243, 205, 33, 0.12));
+            transform: translateX(4px);
+        }
+
+        .search-result-item i {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f3cd21, #e6b800);
+            color: #2c3e50;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .search-result-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-result-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+
+        .search-result-description {
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .search-result-item mark {
+            background: rgba(243, 205, 33, 0.4);
+            color: #2c3e50;
+            padding: 1px 3px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .search-no-results {
+            padding: 30px 20px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .search-no-results i {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.6;
+            color: #9ca3af;
+        }
+
+        .search-no-results .no-results-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .search-no-results .no-results-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        /* Enhanced Notification Styles */
+        .notification-dropdown {
+            min-width: 380px;
+            max-height: 450px;
+            overflow-y: auto;
             border: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            border-radius: 15px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.98);
         }
 
         .notification-item {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
-            padding: 12px 16px;
-            border-bottom: 1px solid #f1f3f4;
-            transition: background-color 0.2s ease;
+            gap: 15px;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(243, 205, 33, 0.1);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
         }
 
         .notification-item:hover {
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, rgba(243, 205, 33, 0.05), rgba(243, 205, 33, 0.08));
+            transform: translateX(2px);
         }
 
-        .notification-item i {
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
             font-size: 16px;
-            margin-top: 4px;
-            min-width: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
-        .notification-item div {
+        .notification-icon.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .notification-icon.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .notification-icon.info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .notification-icon.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .notification-content {
             flex: 1;
             min-width: 0;
         }
 
-        .notification-item strong {
-            display: block;
+        .notification-title {
             font-size: 14px;
             font-weight: 600;
-            color: #333;
-            margin-bottom: 2px;
-        }
-
-        .notification-item .small {
-            font-size: 12px;
-            color: #666;
+            color: #2c3e50;
+            margin-bottom: 4px;
             line-height: 1.3;
         }
 
-        .notification-item small {
+        .notification-message {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+
+        .notification-time {
             font-size: 11px;
-            color: #999;
-            margin-top: 4px;
-            display: block;
+            color: #9ca3af;
+            font-weight: 500;
         }
 
         .notification-badge {
-            background: #ff4757;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
             font-size: 10px;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 10px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 12px;
             position: absolute;
-            top: -5px;
-            right: -5px;
-            min-width: 18px;
+            top: -6px;
+            right: -6px;
+            min-width: 20px;
             text-align: center;
             line-height: 14px;
-            animation: pulse 2s infinite;
+            animation: notificationPulse 2s infinite;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        @keyframes notificationPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
+            }
         }
 
         .dropdown-header {
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-bottom: 1px solid rgba(243, 205, 33, 0.2);
             font-weight: 600;
-            color: #495057;
+            color: #2c3e50;
+            padding: 16px 20px;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .notification-header-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notification-header-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .notification-action-btn {
+            background: rgba(243, 205, 33, 0.1);
+            border: 1px solid rgba(243, 205, 33, 0.3);
+            color: #2c3e50;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .notification-action-btn:hover {
+            background: rgba(243, 205, 33, 0.2);
+            transform: translateY(-1px);
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -618,6 +835,20 @@
                     <a href="{{ url_for('admin.category_management') }}" class="nav-link {% if request.endpoint == 'admin.category_management' %}active{% endif %}">
                         <i class="fas fa-tags"></i>
                         <span class="nav-text">Categories</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.revenue_analytics') }}" class="nav-link {% if request.endpoint == 'admin.revenue_analytics' %}active{% endif %}">
+                        <i class="fas fa-chart-area"></i>
+                        <span class="nav-text">Revenue Analytics</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="{{ url_for('admin.customer_analytics') }}" class="nav-link {% if request.endpoint == 'admin.customer_analytics' %}active{% endif %}">
+                        <i class="fas fa-users-cog"></i>
+                        <span class="nav-text">Customer Analytics</span>
                     </a>
                 </div>
 
@@ -709,8 +940,9 @@
 
             <div class="top-nav-actions">
                 <div class="search-box">
-                    <input type="text" class="search-input" placeholder="Search..." id="globalSearch">
+                    <input type="text" class="search-input" placeholder="Search menu items, orders, customers..." id="globalSearch" autocomplete="off">
                     <i class="fas fa-search search-icon"></i>
+                    <div class="search-results-dropdown" id="searchResults"></div>
                 </div>
 
                 <div class="nav-icons">
@@ -728,9 +960,16 @@
                             <li><a class="dropdown-item" href="{{ url_for('admin.add_service') }}">
                                 <i class="fas fa-concierge-bell me-2"></i>Add Service
                             </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.add_reward') }}">
+                                <i class="fas fa-gift me-2"></i>Add Reward
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.add_campaign') }}">
+                                <i class="fas fa-bullhorn me-2"></i>Add Campaign
+                            </a></li>
                         </ul>
                     </div>
-                    
+
                     <div class="dropdown">
                         <a href="#" class="nav-icon" title="Notifications" data-bs-toggle="dropdown" id="notificationToggle">
                             <i class="fas fa-bell"></i>
@@ -738,39 +977,51 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end notification-dropdown" id="notificationDropdown">
                             <li class="dropdown-header">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span>Notifications</span>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="markAllAsRead()">
-                                        <i class="fas fa-check"></i>
+                                <div class="notification-header-actions">
+                                    <span class="notification-header-title">
+                                        <i class="fas fa-bell me-2"></i>Notifications
+                                    </span>
+                                    <button class="notification-action-btn" onclick="markAllAsRead()" title="Mark all as read">
+                                        <i class="fas fa-check me-1"></i>Mark All Read
                                     </button>
                                 </div>
                             </li>
                             <div id="notificationList">
-                                <li class="text-center p-3">
-                                    <div class="spinner-border spinner-border-sm" role="status">
-                                        <span class="visually-hidden">Loading...</span>
+                                <li class="text-center p-4">
+                                    <div class="spinner-border spinner-border-sm text-warning" role="status">
+                                        <span class="visually-hidden">Loading notifications...</span>
                                     </div>
+                                    <div class="mt-2 text-muted">Loading notifications...</div>
                                 </li>
                             </div>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-center" href="#" onclick="clearAllNotifications()">Clear All</a></li>
+                            <li class="text-center p-2">
+                                <button class="notification-action-btn w-100" onclick="clearAllNotifications()">
+                                    <i class="fas fa-trash me-1"></i>Clear All Notifications
+                                </button>
+                            </li>
                         </ul>
                     </div>
-                    
+
                     <div class="dropdown">
                         <a href="#" class="nav-icon" title="Profile" data-bs-toggle="dropdown">
                             <i class="fas fa-user"></i>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li class="dropdown-header">{{ current_user.name if current_user.name else 'Admin' }}</li>
+                            <li class="dropdown-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle text-warning"></i>
+                                    <span>{{ current_user.name if current_user.name else 'Admin' }}</span>
+                                </div>
+                            </li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.profile') }}">
                                 <i class="fas fa-user-cog me-2"></i>Profile Settings
                             </a></li>
-                            <li><a class="dropdown-item" href="#">
+                            <li><a class="dropdown-item" href="{{ url_for('admin.system_settings') }}">
                                 <i class="fas fa-cog me-2"></i>System Settings
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i>Logout
                             </a></li>
                         </ul>
@@ -806,6 +1057,16 @@
 
     <!-- Bootstrap JavaScript - Load synchronously for modal functionality -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- System Settings for JavaScript -->
+    <script>
+        window.systemSettings = {
+            currency: '{{ get_system_setting("system_currency", "EGP") }}',
+            pointsPerCurrency: {{ get_system_setting("points_per_currency", 2) }},
+            pointValue: {{ get_system_setting("point_value", 0.5) }}
+        };
+    </script>
+
     <script src="{{ url_for('static', filename='js/admin-performance.js') }}" defer></script>
 
     <!-- Performance: Admin JavaScript optimizations -->
@@ -909,7 +1170,7 @@
             document.head.appendChild(link);
         });
 
-        // Real-time notification system
+        // Enhanced Real-time notification system
         function updateNotifications() {
             fetch('{{ url_for("admin.api_notifications") }}')
                 .then(response => response.json())
@@ -917,35 +1178,45 @@
                     if (data.success) {
                         const badge = document.getElementById('notificationBadge');
                         const notificationList = document.getElementById('notificationList');
-                        
+
+                        // Update badge
                         if (data.has_new && data.total_count > 0) {
                             badge.textContent = data.total_count;
                             badge.style.display = 'inline';
+                            badge.classList.add('pulse-animation');
                         } else {
                             badge.style.display = 'none';
+                            badge.classList.remove('pulse-animation');
                         }
-                        
+
                         // Clear existing notifications
                         notificationList.innerHTML = '';
-                        
+
                         if (data.notifications.length === 0) {
                             notificationList.innerHTML = `
-                                <li class="text-center p-3 text-muted">
-                                    <i class="fas fa-bell-slash"></i>
-                                    <div>No new notifications</div>
+                                <li class="text-center p-4">
+                                    <div class="notification-icon info mx-auto mb-3" style="width: 60px; height: 60px; font-size: 24px;">
+                                        <i class="fas fa-bell-slash"></i>
+                                    </div>
+                                    <div class="text-muted">
+                                        <div class="fw-semibold">All caught up!</div>
+                                        <div class="small">No new notifications</div>
+                                    </div>
                                 </li>
                             `;
                         } else {
                             data.notifications.forEach(notification => {
                                 const notificationItem = document.createElement('li');
                                 notificationItem.innerHTML = `
-                                    <a class="dropdown-item" href="${notification.url}" data-notification-id="${notification.id}">
+                                    <a class="dropdown-item p-0" href="${notification.url}" data-notification-id="${notification.id}">
                                         <div class="notification-item">
-                                            <i class="${notification.icon} text-${notification.color}"></i>
-                                            <div>
-                                                <strong>${notification.title}</strong>
-                                                <div class="small text-muted">${notification.message}</div>
-                                                <small class="text-muted">${notification.time}</small>
+                                            <div class="notification-icon ${notification.color}">
+                                                <i class="${notification.icon}"></i>
+                                            </div>
+                                            <div class="notification-content">
+                                                <div class="notification-title">${notification.title}</div>
+                                                <div class="notification-message">${notification.message}</div>
+                                                <div class="notification-time">${notification.time}</div>
                                             </div>
                                         </div>
                                     </a>
@@ -959,9 +1230,14 @@
                     console.error('Error fetching notifications:', error);
                     const notificationList = document.getElementById('notificationList');
                     notificationList.innerHTML = `
-                        <li class="text-center p-3 text-danger">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <div>Error loading notifications</div>
+                        <li class="text-center p-4">
+                            <div class="notification-icon error mx-auto mb-3" style="width: 60px; height: 60px; font-size: 24px;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="text-danger">
+                                <div class="fw-semibold">Connection Error</div>
+                                <div class="small">Unable to load notifications</div>
+                            </div>
                         </li>
                     `;
                 });
@@ -989,23 +1265,72 @@
                 });
         }
 
-        // Utility functions for notifications
+        // Enhanced Utility functions for notifications
         function markAllAsRead() {
             const badge = document.getElementById('notificationBadge');
-            badge.style.display = 'none';
-            // You can add an API call here to mark notifications as read in the backend
+            const notificationList = document.getElementById('notificationList');
+
+            // Hide badge with animation
+            badge.classList.remove('pulse-animation');
+            badge.style.transform = 'scale(0)';
+            setTimeout(() => {
+                badge.style.display = 'none';
+                badge.style.transform = 'scale(1)';
+            }, 200);
+
+            // Update notification items to show as read
+            const notificationItems = notificationList.querySelectorAll('.notification-item');
+            notificationItems.forEach(item => {
+                item.style.opacity = '0.7';
+                const icon = item.querySelector('.notification-icon');
+                if (icon) {
+                    icon.style.background = 'rgba(156, 163, 175, 0.2)';
+                }
+            });
+
+            // Show success toast
+            showNotification('Notifications', 'All notifications marked as read', 'success');
+
+            // Optional: API call to mark as read in backend
+            // fetch('/admin/api/mark-notifications-read', { method: 'POST' });
         }
 
         function clearAllNotifications() {
             const notificationList = document.getElementById('notificationList');
-            notificationList.innerHTML = `
-                <li class="text-center p-3 text-muted">
-                    <i class="fas fa-bell-slash"></i>
-                    <div>No new notifications</div>
-                </li>
-            `;
             const badge = document.getElementById('notificationBadge');
-            badge.style.display = 'none';
+
+            // Animate out existing notifications
+            const items = notificationList.querySelectorAll('.notification-item');
+            items.forEach((item, index) => {
+                setTimeout(() => {
+                    item.style.transform = 'translateX(100%)';
+                    item.style.opacity = '0';
+                }, index * 50);
+            });
+
+            // Update content after animation
+            setTimeout(() => {
+                notificationList.innerHTML = `
+                    <li class="text-center p-4">
+                        <div class="notification-icon info mx-auto mb-3" style="width: 60px; height: 60px; font-size: 24px;">
+                            <i class="fas fa-bell-slash"></i>
+                        </div>
+                        <div class="text-muted">
+                            <div class="fw-semibold">All cleared!</div>
+                            <div class="small">No notifications to show</div>
+                        </div>
+                    </li>
+                `;
+
+                badge.style.display = 'none';
+                badge.classList.remove('pulse-animation');
+
+                // Show success toast
+                showNotification('Notifications', 'All notifications cleared', 'success');
+            }, items.length * 50 + 200);
+
+            // Optional: API call to clear notifications in backend
+            // fetch('/admin/api/clear-notifications', { method: 'POST' });
         }
 
         // Update notifications on page load
@@ -1016,34 +1341,83 @@
         setInterval(updateNotifications, 30000);
         setInterval(updateOrderNotifications, 30000);
 
-        // Toast notification function
-        function showNotification(title, message, type = 'info') {
+        // Enhanced Toast notification function
+        function showNotification(title, message, type = 'info', duration = 4000) {
+            const toastContainer = getOrCreateToastContainer();
+
             const toast = document.createElement('div');
-            toast.className = 'toast-notification';
+            toast.className = `toast-notification toast-${type}`;
+
+            const iconMap = {
+                'success': 'fas fa-check-circle',
+                'warning': 'fas fa-exclamation-triangle',
+                'error': 'fas fa-times-circle',
+                'info': 'fas fa-info-circle'
+            };
+
             toast.innerHTML = `
-                <div class="toast-title">${title}</div>
-                <div class="toast-message">${message}</div>
+                <div class="toast-content">
+                    <div class="toast-icon">
+                        <i class="${iconMap[type] || iconMap.info}"></i>
+                    </div>
+                    <div class="toast-text">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="closeToast(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="toast-progress">
+                    <div class="toast-progress-bar" style="animation-duration: ${duration}ms;"></div>
+                </div>
             `;
 
-            // Add type-specific styling
-            if (type === 'success') {
-                toast.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-            } else if (type === 'warning') {
-                toast.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-            } else if (type === 'error') {
-                toast.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            toastContainer.appendChild(toast);
+
+            // Show toast with animation
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            // Auto-hide toast
+            const timeoutId = setTimeout(() => {
+                closeToast(toast.querySelector('.toast-close'));
+            }, duration);
+
+            // Store timeout ID for manual close
+            toast.dataset.timeoutId = timeoutId;
+        }
+
+        function getOrCreateToastContainer() {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            return container;
+        }
+
+        function closeToast(closeButton) {
+            const toast = closeButton.closest('.toast-notification');
+            if (!toast) return;
+
+            // Clear timeout
+            const timeoutId = toast.dataset.timeoutId;
+            if (timeoutId) {
+                clearTimeout(parseInt(timeoutId));
             }
 
-            document.body.appendChild(toast);
+            toast.classList.remove('show');
+            toast.classList.add('hide');
 
-            // Show toast
-            setTimeout(() => toast.classList.add('show'), 100);
-
-            // Hide and remove toast after 4 seconds
             setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => document.body.removeChild(toast), 300);
-            }, 4000);
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
         }
 
         // Listen for new order events (if using WebSocket/Socket.IO)
@@ -1056,12 +1430,48 @@
             });
         }
 
-        // Global search functionality
+        // Enhanced Global search functionality
         const globalSearch = document.getElementById('globalSearch');
         if (globalSearch) {
             globalSearch.addEventListener('input', debounce(function(e) {
                 performGlobalSearch(e.target.value);
             }, 300));
+
+            globalSearch.addEventListener('focus', function() {
+                if (this.value.trim()) {
+                    performGlobalSearch(this.value);
+                }
+            });
+
+            globalSearch.addEventListener('keydown', function(e) {
+                const resultsContainer = document.getElementById('searchResults');
+                if (!resultsContainer || resultsContainer.style.display === 'none') return;
+
+                const items = resultsContainer.querySelectorAll('.search-result-item');
+                let currentIndex = Array.from(items).findIndex(item => item.classList.contains('selected'));
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (currentIndex < items.length - 1) {
+                        if (currentIndex >= 0) items[currentIndex].classList.remove('selected');
+                        items[currentIndex + 1].classList.add('selected');
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (currentIndex > 0) {
+                        items[currentIndex].classList.remove('selected');
+                        items[currentIndex - 1].classList.add('selected');
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (currentIndex >= 0) {
+                        items[currentIndex].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    clearSearchResults();
+                    this.blur();
+                }
+            });
 
             // Hide search results when clicking outside
             document.addEventListener('click', function(e) {
@@ -1084,24 +1494,61 @@
             };
         }
 
-        // Global search function
-        function performGlobalSearch(query) {
+        // Enhanced Global search function
+        async function performGlobalSearch(query) {
             if (!query.trim()) {
                 clearSearchResults();
                 return;
             }
 
-            // Search in current page content
-            const searchableElements = document.querySelectorAll('[data-searchable], .table td, .card-title, .nav-link');
+            const resultsContainer = document.getElementById('searchResults');
+            if (!resultsContainer) return;
+
+            // Show loading state
+            resultsContainer.innerHTML = `
+                <div class="search-loading">
+                    <div class="d-flex align-items-center justify-content-center p-3">
+                        <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
+                        <span class="text-muted">Searching...</span>
+                    </div>
+                </div>
+            `;
+            resultsContainer.style.display = 'block';
+
+            try {
+                // Search via API for better results
+                const response = await fetch(`{{ url_for('admin.api_search') }}?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    displaySearchResults(data.results, query);
+                } else {
+                    // Fallback to local search if API returns no results
+                    performLocalSearch(query);
+                }
+            } catch (error) {
+                console.error('Search API error:', error);
+                // Fallback to local search
+                performLocalSearch(query);
+            }
+        }
+
+        // Local search fallback
+        function performLocalSearch(query) {
+            const searchableElements = document.querySelectorAll('[data-searchable], .table td, .card-title, .nav-link, .stat-number, .page-title');
             let results = [];
 
             searchableElements.forEach(function(element) {
                 const text = element.textContent.toLowerCase();
                 if (text.includes(query.toLowerCase())) {
+                    const rect = element.getBoundingClientRect();
                     results.push({
+                        title: element.textContent.trim(),
+                        type: element.dataset.searchable || getElementType(element),
+                        description: getElementDescription(element),
                         element: element,
-                        text: element.textContent.trim(),
-                        type: element.dataset.searchable || 'content'
+                        url: '#',
+                        isLocal: true
                     });
                 }
             });
@@ -1109,29 +1556,51 @@
             displaySearchResults(results, query);
         }
 
-        // Display search results
+        function getElementType(element) {
+            if (element.classList.contains('nav-link')) return 'navigation';
+            if (element.classList.contains('card-title')) return 'card';
+            if (element.classList.contains('stat-number')) return 'statistic';
+            if (element.tagName === 'TD') return 'table_data';
+            return 'content';
+        }
+
+        function getElementDescription(element) {
+            const parent = element.closest('.card, .nav-item, .stat-item, tr');
+            if (parent) {
+                const description = parent.querySelector('.card-text, .nav-text, .stat-label, td:nth-child(2)');
+                if (description && description !== element) {
+                    return description.textContent.trim().substring(0, 80);
+                }
+            }
+            return '';
+        }
+
+        // Enhanced Display search results
         function displaySearchResults(results, query) {
             let resultsContainer = document.getElementById('searchResults');
-            if (!resultsContainer) {
-                resultsContainer = document.createElement('div');
-                resultsContainer.id = 'searchResults';
-                resultsContainer.className = 'search-results-dropdown';
-                document.querySelector('.search-box').appendChild(resultsContainer);
-            }
+            if (!resultsContainer) return;
 
             if (results.length === 0) {
                 resultsContainer.innerHTML = `
                     <div class="search-no-results">
-                        <i class="fas fa-search"></i>
-                        <span>No results found for "${query}"</span>
+                        <i class="fas fa-search-minus"></i>
+                        <div class="no-results-title">No results found</div>
+                        <div class="no-results-subtitle">Try searching for menu items, orders, or customers</div>
                     </div>
                 `;
             } else {
                 resultsContainer.innerHTML = results.slice(0, 8).map(function(result, index) {
+                    const icon = getIconForType(result.type);
+                    const title = result.title || result.text || 'Untitled';
+                    const description = result.description || '';
+
                     return `
-                        <div class="search-result-item" data-index="${index}">
-                            <i class="fas fa-${getIconForType(result.type)}"></i>
-                            <span>${highlightQuery(result.text.substring(0, 80), query)}${result.text.length > 80 ? '...' : ''}</span>
+                        <div class="search-result-item" data-index="${index}" data-url="${result.url || '#'}">
+                            <i class="fas fa-${icon}"></i>
+                            <div class="search-result-content">
+                                <div class="search-result-title">${highlightQuery(title.substring(0, 60), query)}${title.length > 60 ? '...' : ''}</div>
+                                ${description ? `<div class="search-result-description">${highlightQuery(description, query)}</div>` : ''}
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -1139,15 +1608,27 @@
                 // Add click handlers
                 resultsContainer.querySelectorAll('.search-result-item').forEach(function(item, index) {
                     item.addEventListener('click', function() {
-                        const targetElement = results[index].element;
-                        if (targetElement) {
-                            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            targetElement.classList.add('highlight-search');
+                        const result = results[index];
+
+                        if (result.isLocal && result.element) {
+                            // Local element - scroll to it
+                            result.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            result.element.classList.add('highlight-search');
                             setTimeout(function() {
-                                targetElement.classList.remove('highlight-search');
-                            }, 2000);
+                                result.element.classList.remove('highlight-search');
+                            }, 3000);
+                        } else if (result.url && result.url !== '#') {
+                            // External URL - navigate to it
+                            window.location.href = result.url;
                         }
+
                         clearSearchResults();
+                    });
+
+                    // Add hover effects
+                    item.addEventListener('mouseenter', function() {
+                        resultsContainer.querySelectorAll('.search-result-item').forEach(i => i.classList.remove('selected'));
+                        this.classList.add('selected');
                     });
                 });
             }
@@ -1228,33 +1709,224 @@
             100% { left: 100%; }
         }
 
-        /* Toast notification styles */
-        .toast-notification {
+        /* Enhanced Toast notification styles */
+        .toast-container {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-            z-index: 9999;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+
+        .toast-notification {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            transform: translateX(450px) scale(0.9);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-left: 4px solid #3b82f6;
+            position: relative;
         }
 
         .toast-notification.show {
-            transform: translateX(0);
+            transform: translateX(0) scale(1);
+            opacity: 1;
         }
 
-        .toast-notification .toast-title {
+        .toast-notification.hide {
+            transform: translateX(450px) scale(0.9);
+            opacity: 0;
+        }
+
+        .toast-notification.toast-success {
+            border-left-color: #10b981;
+        }
+
+        .toast-notification.toast-warning {
+            border-left-color: #f59e0b;
+        }
+
+        .toast-notification.toast-error {
+            border-left-color: #ef4444;
+        }
+
+        .toast-notification.toast-info {
+            border-left-color: #3b82f6;
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .toast-success .toast-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .toast-warning .toast-icon {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .toast-error .toast-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .toast-info .toast-icon {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .toast-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-title {
             font-weight: 600;
-            margin-bottom: 5px;
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 2px;
+            line-height: 1.3;
         }
 
-        .toast-notification .toast-message {
-            font-size: 0.9rem;
-            opacity: 0.9;
+        .toast-message {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .toast-close:hover {
+            background: rgba(156, 163, 175, 0.1);
+            color: #6b7280;
+        }
+
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .toast-progress-bar {
+            height: 100%;
+            background: currentColor;
+            width: 100%;
+            transform-origin: left;
+            animation: toastProgress linear forwards;
+        }
+
+        .toast-success .toast-progress-bar {
+            background: #10b981;
+        }
+
+        .toast-warning .toast-progress-bar {
+            background: #f59e0b;
+        }
+
+        .toast-error .toast-progress-bar {
+            background: #ef4444;
+        }
+
+        .toast-info .toast-progress-bar {
+            background: #3b82f6;
+        }
+
+        @keyframes toastProgress {
+            from { transform: scaleX(1); }
+            to { transform: scaleX(0); }
+        }
+
+        /* Search result selection styles */
+        .search-result-item.selected {
+            background: linear-gradient(135deg, rgba(243, 205, 33, 0.15), rgba(243, 205, 33, 0.2));
+            transform: translateX(6px);
+        }
+
+        .search-result-item.selected i {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #f3cd21;
+        }
+
+        /* Highlight animation for search results */
+        .highlight-search {
+            animation: highlightPulse 3s ease-in-out;
+        }
+
+        @keyframes highlightPulse {
+            0%, 100% {
+                background: transparent;
+                box-shadow: none;
+            }
+            25%, 75% {
+                background: rgba(243, 205, 33, 0.2);
+                box-shadow: 0 0 0 4px rgba(243, 205, 33, 0.1);
+            }
+            50% {
+                background: rgba(243, 205, 33, 0.3);
+                box-shadow: 0 0 0 8px rgba(243, 205, 33, 0.15);
+            }
+        }
+
+        /* Loading state for search */
+        .search-loading {
+            padding: 20px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .toast-container {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+
+            .toast-notification {
+                transform: translateY(-100px) scale(0.9);
+            }
+
+            .toast-notification.show {
+                transform: translateY(0) scale(1);
+            }
+
+            .toast-notification.hide {
+                transform: translateY(-100px) scale(0.9);
+            }
         }
     </style>
 </body>

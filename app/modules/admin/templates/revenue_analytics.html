@@ -1,0 +1,411 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Revenue Analytics - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-gradient">
+                    <i class="fas fa-chart-line me-2"></i>Revenue Analytics
+                </h1>
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Period Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('admin.revenue_analytics', period='today') }}" 
+                           class="btn {{ 'btn-primary' if period == 'today' else 'btn-outline-primary' }}">
+                            Today
+                        </a>
+                        <a href="{{ url_for('admin.revenue_analytics', period='week') }}" 
+                           class="btn {{ 'btn-primary' if period == 'week' else 'btn-outline-primary' }}">
+                            This Week
+                        </a>
+                        <a href="{{ url_for('admin.revenue_analytics', period='month') }}" 
+                           class="btn {{ 'btn-primary' if period == 'month' else 'btn-outline-primary' }}">
+                            This Month
+                        </a>
+                        <a href="{{ url_for('admin.revenue_analytics', period='quarter') }}" 
+                           class="btn {{ 'btn-primary' if period == 'quarter' else 'btn-outline-primary' }}">
+                            This Quarter
+                        </a>
+                        <a href="{{ url_for('admin.revenue_analytics', period='year') }}" 
+                           class="btn {{ 'btn-primary' if period == 'year' else 'btn-outline-primary' }}">
+                            This Year
+                        </a>
+                        <a href="{{ url_for('admin.revenue_analytics', period='all') }}" 
+                           class="btn {{ 'btn-primary' if period == 'all' else 'btn-outline-primary' }}">
+                            All Time
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ "%.2f"|format(revenue_data.total_revenue) }} EGP</h4>
+                            <p class="mb-0">Total Revenue</p>
+                            {% if revenue_data.growth.revenue_growth != 0 %}
+                            <small class="text-light">
+                                <i class="fas fa-{{ 'arrow-up' if revenue_data.growth.revenue_growth > 0 else 'arrow-down' }}"></i>
+                                {{ revenue_data.growth.revenue_growth }}% vs previous period
+                            </small>
+                            {% endif %}
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ revenue_data.total_orders }}</h4>
+                            <p class="mb-0">Total Orders</p>
+                            {% if revenue_data.growth.order_growth != 0 %}
+                            <small class="text-light">
+                                <i class="fas fa-{{ 'arrow-up' if revenue_data.growth.order_growth > 0 else 'arrow-down' }}"></i>
+                                {{ revenue_data.growth.order_growth }}% vs previous period
+                            </small>
+                            {% endif %}
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ "%.2f"|format(revenue_data.avg_order_value) }} EGP</h4>
+                            <p class="mb-0">Avg Order Value</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-receipt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ customer_data.unique_customers }}</h4>
+                            <p class="mb-0">Unique Customers</p>
+                            {% if revenue_data.growth.customer_growth != 0 %}
+                            <small class="text-light">
+                                <i class="fas fa-{{ 'arrow-up' if revenue_data.growth.customer_growth > 0 else 'arrow-down' }}"></i>
+                                {{ revenue_data.growth.customer_growth }}% vs previous period
+                            </small>
+                            {% endif %}
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Revenue by Status -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Revenue by Order Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hourly Distribution -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Hourly Revenue Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="hourlyChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products and Customers -->
+    <div class="row mb-4">
+        <!-- Top Products -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>Top Products by Revenue
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if product_data.top_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Revenue</th>
+                                    <th>Qty Sold</th>
+                                    <th>Orders</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in product_data.top_products[:10] %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ "%.2f"|format(product.revenue) }} EGP</td>
+                                    <td>{{ product.quantity_sold }}</td>
+                                    <td>{{ product.orders_count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-chart-bar fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No product data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Customers -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-crown me-2"></i>Top Customers by Spending
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if customer_data.top_customers %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Total Spent</th>
+                                    <th>Orders</th>
+                                    <th>Avg Order</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in customer_data.top_customers %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ customer.name }}</strong>
+                                            <br><small class="text-muted">{{ customer.email }}</small>
+                                        </div>
+                                    </td>
+                                    <td>{{ "%.2f"|format(customer.total_spent) }} EGP</td>
+                                    <td>{{ customer.order_count }}</td>
+                                    <td>{{ "%.2f"|format(customer.total_spent / customer.order_count) }} EGP</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No customer data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Performance -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>Category Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if product_data.category_performance %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Revenue</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Orders</th>
+                                    <th>Avg Revenue per Order</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in product_data.category_performance %}
+                                <tr>
+                                    <td><strong>{{ category.name }}</strong></td>
+                                    <td>{{ "%.2f"|format(category.revenue) }} EGP</td>
+                                    <td>{{ category.quantity_sold }}</td>
+                                    <td>{{ category.orders_count }}</td>
+                                    <td>{{ "%.2f"|format(category.revenue / category.orders_count if category.orders_count > 0 else 0) }} EGP</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-tags fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">No category data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Revenue by Status Chart
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusData = {
+    labels: [{% for status in revenue_data.status_breakdown %}'{{ status.status.title() }}'{% if not loop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+        data: [{% for status in revenue_data.status_breakdown %}{{ status.revenue }}{% if not loop.last %},{% endif %}{% endfor %}],
+        backgroundColor: [
+            '#007bff', // new - blue
+            '#ffc107', // processing - yellow
+            '#28a745', // completed - green
+            '#dc3545'  // rejected - red
+        ],
+        borderWidth: 2,
+        borderColor: '#fff'
+    }]
+};
+
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: statusData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const percentage = (value / {{ revenue_data.total_revenue }} * 100).toFixed(1);
+                        return `${label}: ${value.toFixed(2)} EGP (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Hourly Distribution Chart
+const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+const hourlyData = {
+    labels: [{% for hour in range(24) %}'{{ hour }}:00'{% if not loop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+        label: 'Revenue (EGP)',
+        data: [
+            {% for hour in range(24) %}
+                {% set hour_data = time_data.hourly_distribution|selectattr('hour', 'equalto', hour)|first %}
+                {{ hour_data.revenue if hour_data else 0 }}{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+    }]
+};
+
+new Chart(hourlyCtx, {
+    type: 'line',
+    data: hourlyData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toFixed(0) + ' EGP';
+                    }
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `Revenue: ${context.parsed.y.toFixed(2)} EGP`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Auto-refresh every 5 minutes
+setInterval(function() {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}

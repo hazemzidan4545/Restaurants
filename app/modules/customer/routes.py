@@ -1,7 +1,8 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify, session
 from flask_login import login_required, current_user
 from app.modules.customer import bp
-from app.models import MenuItem, Category, Order, OrderItem, Payment, CustomerPreferences, Feedback, db, Table
+from app.models import MenuItem, Category, Order, OrderItem, Payment, CustomerPreferences, Feedback, ServiceRequest, Service, db, Table
+from app.extensions import socketio
 from sqlalchemy.orm import joinedload
 from datetime import datetime
 import os
@@ -615,3 +616,87 @@ def delete_order(order_id):
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': f'Failed to delete order: {str(e)}'}), 500
+
+@bp.route('/service-requests')
+@login_required
+def service_requests():
+    """Customer service requests page"""
+    if not current_user.is_customer():
+        return redirect(url_for('main.index'))
+
+    # Get available services
+    services = Service.query.filter_by(is_active=True).order_by(Service.display_order, Service.name).all()
+
+    # Get customer's recent service requests
+    recent_requests = ServiceRequest.query.filter_by(user_id=current_user.user_id).order_by(
+        ServiceRequest.created_at.desc()
+    ).limit(10).all()
+
+    return render_template('service_requests.html', services=services, recent_requests=recent_requests)
+
+@bp.route('/service-request', methods=['POST'])
+@login_required
+def create_service_request():
+    """Create a new service request"""
+    if not current_user.is_customer():
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
+
+        request_type = data.get('request_type')
+        description = data.get('description', '')
+        table_id = data.get('table_id')
+
+        if not request_type:
+            return jsonify({'success': False, 'message': 'Request type is required'}), 400
+
+        # Create service request
+        service_request = ServiceRequest(
+            user_id=current_user.user_id,
+            table_id=table_id,
+            request_type=request_type,
+            description=description,
+            status='pending'
+        )
+
+        db.session.add(service_request)
+        db.session.commit()
+
+        # Send real-time notification to waiters
+        socketio.emit('new_service_request', {
+            'request_id': service_request.request_id,
+            'customer_name': current_user.name,
+            'customer_id': current_user.user_id,
+            'request_type': request_type,
+            'description': description,
+            'table_id': table_id,
+            'timestamp': service_request.created_at.isoformat() if service_request.created_at else datetime.utcnow().isoformat(),
+            'status': 'pending'
+        }, room='waiter')
+
+        # Also notify admins
+        socketio.emit('new_service_request', {
+            'request_id': service_request.request_id,
+            'customer_name': current_user.name,
+            'customer_id': current_user.user_id,
+            'request_type': request_type,
+            'description': description,
+            'table_id': table_id,
+            'timestamp': service_request.created_at.isoformat() if service_request.created_at else datetime.utcnow().isoformat(),
+            'status': 'pending'
+        }, room='admin')
+
+        return jsonify({
+            'success': True,
+            'message': 'Service request submitted successfully',
+            'request_id': service_request.request_id
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating service request: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to submit request'}), 500

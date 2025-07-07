@@ -573,7 +573,7 @@
             <div style="text-align: center; padding: 20px; color: #666;">
                 <i class="fas fa-gift" style="font-size: 2rem; margin-bottom: 10px; color: var(--primary-yellow);"></i>
                 <p>Join our loyalty program to start earning points and rewards!</p>
-                <button class="btn btn-primary" onclick="alert('Loyalty enrollment feature coming soon!')">Join Loyalty Program</button>
+                <button class="btn btn-primary" onclick="showSettingsNotification('Info', 'Loyalty enrollment feature coming soon!', 'info')">Join Loyalty Program</button>
             </div>
             {% endif %}
             
@@ -639,11 +639,11 @@
                     <i class="fas fa-edit"></i> Edit Profile
                 </a>
                 
-                <button class="btn btn-secondary" onclick="alert('Export feature coming soon!')">
+                <button class="btn btn-secondary" onclick="showSettingsNotification('Info', 'Export feature coming soon!', 'info')">
                     <i class="fas fa-download"></i> Export Data
                 </button>
-                
-                <button class="btn btn-secondary" onclick="alert('Support contact feature coming soon!')">
+
+                <button class="btn btn-secondary" onclick="showSettingsNotification('Info', 'Support contact feature coming soon!', 'info')">
                     <i class="fas fa-headset"></i> Contact Support
                 </button>
             </div>
@@ -656,17 +656,66 @@
                 </div>
                 <p style="margin-bottom: 20px; color: #666;">This action cannot be undone. Your account will be deactivated and you'll need to contact support to reactivate it.</p>
                 
-                <form method="POST" onsubmit="return confirm('Are you absolutely sure you want to deactivate your account? This action cannot be undone.')">
+                <form method="POST" id="deactivateAccountForm">
                     <div class="form-group">
                         <label for="deactivate_password" class="form-label">Enter your password to confirm *</label>
                         <input type="password" id="deactivate_password" name="deactivate_password" class="form-input" required>
                     </div>
-                    
-                    <button type="submit" name="deactivate_account" value="1" class="btn btn-danger">
+
+                    <button type="button" class="btn btn-danger" onclick="showDeactivateConfirmation()">
                         <i class="fas fa-user-times"></i> Deactivate Account
                     </button>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Deactivation Confirmation Modal -->
+<div class="modal fade" id="deactivateConfirmModal" tabindex="-1" aria-labelledby="deactivateConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deactivateConfirmModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Account Deactivation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                <p class="mb-3">Are you absolutely sure you want to deactivate your account?</p>
+                <p class="mb-3">When you deactivate your account:</p>
+                <ul class="mb-3">
+                    <li>You will lose access to all your data</li>
+                    <li>Your order history will be permanently deleted</li>
+                    <li>Your loyalty points will be forfeited</li>
+                    <li>You cannot recover your account later</li>
+                </ul>
+                <p class="text-muted">Please type your password to confirm this action.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeactivateBtn">
+                    <i class="fas fa-user-times me-2"></i>Yes, Deactivate My Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div id="settingsNotificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i id="settingsToastIcon" class="fas fa-info-circle me-2"></i>
+            <strong class="me-auto" id="settingsToastTitle">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="settingsToastMessage">
+            Your message here
         </div>
     </div>
 </div>
@@ -712,13 +761,88 @@
     // Preference toggles with real-time updates
     document.addEventListener('DOMContentLoaded', function() {
         const preferenceToggles = document.querySelectorAll('input[data-preference]');
-        
+
         preferenceToggles.forEach(toggle => {
             toggle.addEventListener('change', function() {
                 updatePreference(this.dataset.preference, this.checked);
             });
         });
     });
+
+    // Account deactivation confirmation
+    function showDeactivateConfirmation() {
+        const passwordField = document.getElementById('deactivate_password');
+
+        if (!passwordField.value.trim()) {
+            showSettingsNotification('Error', 'Please enter your password first', 'error');
+            passwordField.focus();
+            return;
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('deactivateConfirmModal'));
+        modal.show();
+    }
+
+    // Handle deactivation confirmation
+    document.getElementById('confirmDeactivateBtn').addEventListener('click', function() {
+        const form = document.getElementById('deactivateAccountForm');
+        const passwordField = document.getElementById('deactivate_password');
+
+        // Add the deactivate_account field
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'deactivate_account';
+        hiddenField.value = '1';
+        form.appendChild(hiddenField);
+
+        // Hide modal and submit form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deactivateConfirmModal'));
+        modal.hide();
+
+        // Submit the form
+        form.submit();
+    });
+
+    // Settings notification function
+    function showSettingsNotification(title, message, type = 'info') {
+        const toast = document.getElementById('settingsNotificationToast');
+        const toastTitle = document.getElementById('settingsToastTitle');
+        const toastMessage = document.getElementById('settingsToastMessage');
+        const toastIcon = document.getElementById('settingsToastIcon');
+
+        // Set content
+        toastTitle.textContent = title;
+        toastMessage.textContent = message;
+
+        // Set icon and styling based on type
+        const toastHeader = toast.querySelector('.toast-header');
+        toastHeader.className = 'toast-header'; // Reset classes
+
+        switch(type) {
+            case 'success':
+                toastIcon.className = 'fas fa-check-circle me-2 text-success';
+                toastHeader.classList.add('bg-success', 'text-white');
+                break;
+            case 'error':
+                toastIcon.className = 'fas fa-exclamation-circle me-2 text-danger';
+                toastHeader.classList.add('bg-danger', 'text-white');
+                break;
+            case 'warning':
+                toastIcon.className = 'fas fa-exclamation-triangle me-2 text-warning';
+                toastHeader.classList.add('bg-warning', 'text-dark');
+                break;
+            default:
+                toastIcon.className = 'fas fa-info-circle me-2 text-info';
+                toastHeader.classList.add('bg-info', 'text-white');
+        }
+
+        // Show toast
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: type === 'success' ? 3000 : 5000
+        });
+        bsToast.show();
+    }
 
     function updatePreference(preference, value) {
         fetch('{{ url_for("customer.update_preferences") }}', {

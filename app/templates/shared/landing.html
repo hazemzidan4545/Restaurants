@@ -259,6 +259,36 @@
     color: var(--text-dark);
 }
 
+.price-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.discount-badge {
+    background: #dc3545;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 8px;
+    text-transform: uppercase;
+}
+
+.price-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.original-price {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #666;
+    text-decoration: line-through;
+}
+
 .order-btn {
     background: linear-gradient(135deg, var(--primary-yellow) 0%, #e6b800 100%);
     color: var(--text-dark);
@@ -543,11 +573,20 @@
                     <h6 class="order-name">{{ item.name }}</h6>
                     <p class="order-description">{{ item.description[:50] }}{% if item.description|length > 50 %}...{% endif %}</p>
                     <div class="order-footer">
-                        <span class="order-price">{{ item.price }} EGP</span>
+                        {% if item.has_discount() %}
+                            <div class="price-section">
+                                <div class="price-group">
+                                    <span class="original-price">{{ "%.2f"|format(item.get_original_price()) }} {{ get_system_setting("system_currency", "EGP") }}</span>
+                                    <span class="order-price">{{ "%.2f"|format(item.get_display_price()) }} {{ get_system_setting("system_currency", "EGP") }}</span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <span class="order-price">{{ "%.2f"|format(item.get_display_price()) }} {{ get_system_setting("system_currency", "EGP") }}</span>
+                        {% endif %}
                         <button class="order-btn"
                                 data-item-id="{{ item.item_id }}"
                                 data-item-name="{{ item.name }}"
-                                data-item-price="{{ item.price }}"
+                                data-item-price="{{ item.get_display_price() }}"
                                 data-item-description="{{ item.description }}"
                                 data-item-image="{% if item.image_url %}{{ url_for('main.uploaded_file', filename='menu_images/' + item.image_url) }}{% else %}https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop{% endif %}"
                                 onclick="addLandingItemToCartFromData(this)">Order</button>
@@ -581,8 +620,12 @@
 {% block extra_js %}
 <script>
 function showQRScanner() {
-    // For now, just show an alert. QR scanner functionality will be implemented later
-    alert('QR Scanner functionality will be available soon!');
+    // For now, just show a notification. QR scanner functionality will be implemented later
+    if (typeof showBaseNotification === 'function') {
+        showBaseNotification('Info', 'QR Scanner functionality will be available soon!', 'info');
+    } else {
+        alert('QR Scanner functionality will be available soon!');
+    }
 }
 
 // Add functionality to navigation icons
@@ -601,7 +644,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (notificationIcon) {
         notificationIcon.addEventListener('click', function(e) {
             e.preventDefault();
-            alert('No new notifications');
+            if (typeof showBaseNotification === 'function') {
+                showBaseNotification('Info', 'No new notifications', 'info');
+            } else {
+                alert('No new notifications');
+            }
         });
     }
 

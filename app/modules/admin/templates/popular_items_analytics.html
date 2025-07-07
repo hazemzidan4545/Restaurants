@@ -344,8 +344,16 @@
                     <span class="stat-label">Total Orders</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number">{{ "%.2f"|format(total_revenue) }} EGP</span>
+                    <span class="stat-number">{{ "%.2f"|format(total_revenue) }} {{ get_system_setting("system_currency", "EGP") }}</span>
                     <span class="stat-label">Total Revenue</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ analytics_data|length }}</span>
+                    <span class="stat-label">Popular Items</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ "%.1f"|format(analytics_data[0].total_ordered / total_orders * 100) if analytics_data and total_orders > 0 else 0 }}%</span>
+                    <span class="stat-label">Top Item Share</span>
                 </div>
             </div>
         </div>
@@ -359,65 +367,6 @@
 </div>
 
 <div class="admin-content">
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-4 mb-4">
-            <div class="admin-card stats-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stats-icon bg-primary">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-number" data-counter="{{ total_orders }}">{{ total_orders }}</div>
-                            <div class="stats-label">Total Orders</div>
-                            <div class="stats-trend-badge trend-positive">
-                                <i class="fas fa-arrow-up"></i> Recent Growth
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="admin-card stats-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stats-icon bg-success">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-number" data-counter="{{ total_revenue }}">{{ "%.2f"|format(total_revenue) }} EGP</div>
-                            <div class="stats-label">Total Revenue</div>
-                            <div class="stats-trend-badge trend-positive">
-                                <i class="fas fa-chart-line"></i> Increasing
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="admin-card stats-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stats-icon bg-warning">
-                            <i class="fas fa-fire"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-number" data-counter="{{ analytics_data|length }}">{{ analytics_data|length }}</div>
-                            <div class="stats-label">Popular Items</div>
-                            <div class="stats-trend-badge trend-neutral">
-                                <i class="fas fa-star"></i> Featured
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Time Filter -->
     <div class="admin-card mb-4">
